@@ -1,0 +1,70 @@
+/*
+    black
+    #060a1c
+    #121936
+    #1e2447
+    #0c217c
+    #334399
+
+    #a3a5ab
+    #dedee3
+    white
+*/
+
+
+body{
+    background-color: #121936;
+    color:#dedee3;
+}
+
+#header{
+    padding: 20px;
+    background-color: #1e2447;
+    border-radius: 10px;
+
+}
+#main{
+    padding:10px;
+}
+#mainGrid{
+    display:grid;
+    width:100%;
+    height:100%;
+    justify-content: center;
+}
+#loginPanel{
+    background-color:#1e2447 ;
+    width:200px;
+    height:500px;
+    justify-content: center;
+    display:grid;
+    padding:10px;
+    border-radius: 10px;
+}
+#loginButton{
+    justify-self: center;
+}
+#loginTitle h3{
+    justify-self: center;
+} 
+input{
+    justify-self: center;
+    align-self: center;
+    width: 90%;
+    height: 40px;
+    background-color: #334399;
+    border: 2px solid #0c217c;
+    border-radius: 8px;
+    color: white;
+    padding: 0px 10px;
+    font-size: 16px;
+}
+#adminCalenderSettingsPanel{
+    background-color:#1e2447 ;
+    width:200px;
+    height:500px;
+    justify-content: center;
+    display:grid;
+    padding:10px;
+    border-radius: 10px;
+}
