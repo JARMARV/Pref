@@ -1,6 +1,6 @@
 const loginButton = document.getElementById("loginButton!")
 const loginPanel = document.getElementById("loginPanel")
-const adminCalenderSettingsPanel = document.getElementById("adminCalenderSettingsPanel")
+const adminCalendarSettingsPanel = document.getElementById("adminCalendarSettingsPanel")
 const darkenedSite =document.getElementById("darkenedSite")
 
 

@@ -10,7 +10,9 @@
     #dedee3
     white
 */
-
+p{
+    margin:0px;
+}
 
 body{
     background-color: #121936;
@@ -18,11 +20,12 @@ body{
 }
 
 #header{
-    padding: 20px;
+    width:100%;
+    padding:20px;
     background-color: #1e2447;
     border-radius: 10px;
     display: grid;
-
+    box-sizing: border-box;
 }
 #main{
     padding:10px;
@@ -30,8 +33,9 @@ body{
 #mainGrid{
     display:grid;
     width:100%;
-    height:100%;
     justify-content: center;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
 }
 #loginPanel{
     background-color:#1e2447 ;
@@ -61,7 +65,7 @@ input{
     padding: 0px 10px;
     font-size: 16px;
 }
-#adminCalenderSettingsPanel{
+#adminCalendarSettingsPanel, #adminModuleCreationPanel{
     background-color:#1e2447 ;
     width:200px;
     height:500px;
@@ -69,18 +73,118 @@ input{
     display:none;
     padding:10px;
     border-radius: 10px;
-    z-index: 10;
+    position: absolute;
+    z-index: 2;
+    right: 50vw;
+    top:400px;
 }
 #darkenedSite{
     position: absolute;
     top: 0px;
     left: 0px;
-    width: 100%;
-    height: 100%;
     background-color: rgba(0,0,0,0.5);
     z-index: 1;
     display:none;
+    width: 100%;
+    height: 100%;
 }
-#submitCalenderSettingsButton{
+#submitCalendarSettingsButton{
     justify-self: center;
+}
+#mainCalendar{
+    margin:40px;
+    justify-self: center;
+    box-sizing: border-box;
+    display:grid;
+    grid-template-columns: 100px 1fr;
+    grid-template-rows: 100px 1fr ;
+    width:90%;
+    height:800px;
+    position: relative;
+}
+
+
+.calendarTimeSlot::after{
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 1000px;
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+#calendarDateRow{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 100%;
+    grid-column: 2/3;
+    grid-row: 1/2;
+    width:100%;
+    padding:10px;
+    height:100%;
+    background-color: red;
+    box-sizing: border-box;
+}
+#calendarWeek{
+    display:grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 100%;
+    grid-column: 1/2;
+    grid-row: 1/2;
+    align-items: center;
+    font-size: 40px;
+    width:100%;
+    height:100%;
+    background-color: green;
+}
+#calendarWeek p{
+    justify-self: center;
+}
+#calendarTimeColumn{
+    display:grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 100%;
+    grid-column: 1/2;
+    grid-row: 2/3;
+    width:100%;
+    height:100%;
+    background-color: yellow;
+}
+.calendarTimeSlot{
+    color: purple;
+    font-size: 25px;
+    justify-self: right;
+    align-self: center;
+    position: relative;
+    display: block;
+    padding-right: 10px;
+}
+#calendarColumns{
+    justify-self: center;
+    align-self: center;
+    box-sizing: border-box;
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: 100%;
+    grid-column: 2/3;
+    grid-row: 2/3;
+    width:100%;
+    height:100%;
+    background-color: orange;
+}
+.calendarColumn{
+    width:100%;
+    height:100%;
+    background-color: pink;
+    border-left: 1px solid rgba(255, 255, 255, 0.5);
+    box-sizing: border-box;
+}
+.calendarDaySlot{
+    background-color: pink;
+    font-size: 40px;
+    color: red;
+    justify-self: center;
+    align-self: center;
+    
 }

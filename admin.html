@@ -9,41 +9,84 @@
     <link rel="icon" href="" type="image/x-icon">
 </head>
 <body>
+
     <div id="header">
         <h2>this is the header</h2>
-        <button id="newTableButton">New</button>
+        <button id="newTableButton">New Table</button>
+        <button id="newModuleButton">New Module</button>
     </div>
-    <div id="darkenedSite"></div>
-    <div id="mainGrid">
-        <div id="adminCalenderSettingsPanel">
-            <div>
-                <h3>Test</h3>
-            </div>
-            <div>
-                start date
-                <input id="startDate" type="date">
-            </div>
-            <div>   
-                end date
-                <input id="endDate" type="date">
-            </div>
-            <div>
-                earliest start time
-                <input id="startTime" type="time" value="00:00">
-            </div>
-            <div>
-                latest end time
-                <input id="endTime" type="time" value="23:59" >
-            </div>
 
-            <button id="submitCalenderSettingsButton">
-                submit
-            </button>
+    <div id="darkenedSite"></div>
+
+    <div id="adminCalendarSettingsPanel">
+        <div>
+            <h3>Test</h3>
         </div>
-        <div id="mainCalender">
-             <div>
-                
-             </div>
+        <div>
+            start date
+            <input id="startDate" type="date" value="2024-01-01">
+        </div>
+        <div>   
+            end date
+            <input id="endDate" type="date" value="2024-12-31">
+        </div>
+        <div>
+            earliest start time
+            <input id="startTime" type="time" value="05:30">
+        </div>
+        <div>
+            latest end time
+            <input id="endTime" type="time" value="10:20" >
+        </div>
+
+        <button id="submitCalendarSettingsButton">
+            submit
+        </button>
+    </div>
+
+    <div id="adminModuleCreationPanel">
+        <div>
+            <h3>Test</h3>
+        </div>
+        <div>
+            earliest start time
+            <input id="startTimeModule" type="time" value="09:30">
+        </div>
+        <div>
+            latest end time
+            <input id="endTimeModule" type="time" value="10:20" >
+        </div>
+        <button id="submitModuleCreationButton">
+            submit
+        </button>
+    </div>
+
+    <div id="mainGrid">
+        <div id="mainCalendar">
+            <div id="calendarWeek">
+                <p>CW5 july</p>
+            </div>
+            <div id="calendarDateRow">
+                <div class="calendarDaySlot">MO</div>
+                <div class="calendarDaySlot">TU</div>
+                <div class="calendarDaySlot">WE</div>
+                <div class="calendarDaySlot">TH</div>
+                <div class="calendarDaySlot">FR</div>
+                <div class="calendarDaySlot">SA</div>
+                <div class="calendarDaySlot">SU</div>
+            </div>
+            <div id="calendarTimeColumn">
+
+            </div>
+            <div id="calendarColumns">
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+            </div>
         </div>
     </div>
     <script src="admin.js"></script>
