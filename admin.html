@@ -10,13 +10,13 @@
 </head>
 <body>
 
+    <div id="darkenedSite"></div>
+
     <div id="header">
         <h2>this is the header</h2>
         <button id="newTableButton">New Table</button>
         <button id="newModuleButton">New Module</button>
     </div>
-
-    <div id="darkenedSite"></div>
 
     <div id="adminCalendarSettingsPanel">
         <div>
@@ -49,12 +49,24 @@
             <h3>Test</h3>
         </div>
         <div>
-            earliest start time
+            day
+            <input id="dayOfModule" type="date" value="2024-01-01">
+        </div>
+        <div>
+            start time
             <input id="startTimeModule" type="time" value="09:30">
         </div>
         <div>
-            latest end time
+            end time
             <input id="endTimeModule" type="time" value="10:20" >
+        </div>
+        <div>
+            location
+            <input id="locationInfoModule" type="text" value="101">
+        </div>
+        <div>
+            additional information
+            <input id="moduleInfo" type="text" value="no additional information">
         </div>
         <button id="submitModuleCreationButton">
             submit
@@ -63,23 +75,25 @@
 
     <div id="mainGrid">
         <div id="mainCalendar">
-            <div id="calendarWeek">
-                <p>CW5 july</p>
+            <div id="calendarMonth">
+                <div></div>
             </div>
             <div id="calendarDateRow">
-                <div class="calendarDaySlot">MO</div>
-                <div class="calendarDaySlot">TU</div>
-                <div class="calendarDaySlot">WE</div>
-                <div class="calendarDaySlot">TH</div>
-                <div class="calendarDaySlot">FR</div>
-                <div class="calendarDaySlot">SA</div>
-                <div class="calendarDaySlot">SU</div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
             </div>
             <div id="calendarTimeColumn">
 
             </div>
             <div id="calendarColumns">
-                <div class="calendarColumn"></div>
+                <div class="calendarColumn">
+                    <div class="CalendarModule"> </div>
+                </div>
                 <div class="calendarColumn"></div>
                 <div class="calendarColumn"></div>
                 <div class="calendarColumn"></div>

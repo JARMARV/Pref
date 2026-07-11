@@ -75,8 +75,8 @@ input{
     border-radius: 10px;
     position: absolute;
     z-index: 2;
-    right: 50vw;
-    top:400px;
+    justify-self: center;
+    top:200px;
 }
 #darkenedSite{
     position: absolute;
@@ -86,7 +86,7 @@ input{
     z-index: 1;
     display:none;
     width: 100%;
-    height: 100%;
+    height: 100000px;
 }
 #submitCalendarSettingsButton{
     justify-self: center;
@@ -126,7 +126,7 @@ input{
     background-color: red;
     box-sizing: border-box;
 }
-#calendarWeek{
+#calendarMonth{
     display:grid;
     grid-template-columns: 100%;
     grid-template-rows: 100%;
@@ -137,9 +137,6 @@ input{
     width:100%;
     height:100%;
     background-color: green;
-}
-#calendarWeek p{
-    justify-self: center;
 }
 #calendarTimeColumn{
     display:grid;
@@ -187,4 +184,17 @@ input{
     justify-self: center;
     align-self: center;
     
+}
+.CalendarModule{
+    width:100%;
+    height:90px;
+    background-color: blue;
+    position: relative;
+    top:90px;
+}
+.calendarDayNumber{
+    font-size: 27px;
+    color: red;
+    justify-self: center;
+    align-self: center;
 }
