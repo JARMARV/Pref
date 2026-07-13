@@ -37,16 +37,6 @@ body{
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
 }
-#loginPanel{
-    background-color:#1e2447 ;
-    width:200px;
-    height:500px;
-    justify-content: center;
-    display:grid;
-    padding:10px;
-    border-radius: 10px;
-    z-index: 10;
-}
 #loginButton{
     justify-self: center;
 }
@@ -65,9 +55,8 @@ input{
     padding: 0px 10px;
     font-size: 16px;
 }
-#adminCalendarSettingsPanel, #adminModuleCreationPanel{
+#adminCalendarSettingsPanel, #adminSlotCreationPanel, #adminModuleCreationPanel, #loginPanel{
     background-color:#1e2447 ;
-    width:200px;
     height:500px;
     justify-content: center;
     display:none;
@@ -77,6 +66,9 @@ input{
     z-index: 11;
     justify-self: center;
     top:200px;
+}
+#adminCalendarSettingsPanel, #adminSlotCreationPanel, #loginPanel{
+    width:200px;
 }
 #darkenedSite{
     position: absolute;
@@ -187,15 +179,25 @@ input{
     align-self: center;
     
 }
-.CalendarModule{
+.CalendarSlot{
     width:100%;
-    background-color: blue;
+    background-color: orangered;
     position: absolute;
     z-index: 2;
+    display:flex;
+    flex-wrap: nowrap;
+    border:0px;
+    padding:0px
 }
 .calendarDayNumber{
     font-size: 27px;
     color: red;
     justify-self: center;
     align-self: center;
+}
+.calendarModule{
+    height:100%;
+    width:100%;
+    background-color: #0c217c;
+    border-radius: 10px;
 }

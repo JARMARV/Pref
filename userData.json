@@ -3,31 +3,50 @@
         "userName": "admin",
         "password": "admin",
         "authorizationLevel": "localAdmin",
+        "Organization": "EkgAdenau",
         "events": [
             {
                 "startDate": "2026-07-05T07:30",
                 "endDate": "2026-07-11T15:30",
-                "modules": [
+                "slots": [
                     {
                         "start": "2026-07-08T09:00",
                         "end": "2026-07-08T10:00",
-                        "location": "101",
-                        "additionalInfo": "no additional information",
-                        "moduleWeekIndex": 0
+                        "slotWeekIndex": 0,
+                        "modules": [
+                            {
+                                "locationInfoShort": "101",
+                                "locationInfo": "Raum 101",
+                                "additionalInfo": "no additional information",
+                                "name": "test1"
+                            },
+                            {
+                                "locationInfoShort": "102",
+                                "locationInfo": "Raum 102",
+                                "additionalInfo": "no additional information",
+                                "name": "test2"
+                            },
+                            {
+                                "locationInfoShort": "103",
+                                "locationInfo": "Raum 103",
+                                "additionalInfo": "no additional information",
+                                "name": "test3"
+                            }
+                        ]
                     },
                     {
                         "start":"2026-07-11T11:00",
                         "end":"2026-07-11T12:30",
                         "location": "101",
                         "additionalInfo": "no additional information",
-                        "moduleWeekIndex": 0
+                        "slotWeekIndex": 0
                     },
                     {
                         "start":"2026-07-11T13:00",
                         "end":"2026-07-11T14:00",
                         "location": "101",
                         "additionalInfo": "no additional information",
-                        "moduleWeekIndex": 0
+                        "slotWeekIndex": 0
                     }
                 ]
             }

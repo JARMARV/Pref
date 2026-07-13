@@ -3,12 +3,13 @@ const darkenedSite =document.getElementById("darkenedSite")
 const newTableButton =document.getElementById("newTableButton")
 const submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton")
 const calendarTimeColumn = document.getElementById("calendarTimeColumn")
-const newModuleButton = document.getElementById("newModuleButton")
-const submitModuleCreationButton = document.getElementById("submitModuleCreationButton")
+const newSlotButton = document.getElementById("newSlotButton")
+const submitSlotCreationButton = document.getElementById("submitSlotCreationButton")
 const mainCalendar = document.getElementById("mainCalendar")
 const calendarColumns = document.getElementById("calendarColumns")
 const calendarDateRow = document.getElementById("calendarDateRow")
 const calendarMonth = document.getElementById("calendarMonth")
+const adminModuleCreationPanel = document.getElementById("adminModuleCreationPanel")
 
 //data for the calendar creation
 const startTime = document.getElementById("startTime")
@@ -17,17 +18,17 @@ const startDate = document.getElementById("startDate")
 const endDate = document.getElementById("endDate")
 const hourIncrement = 90
 
-//data for the module creation
-const dayOfModule = document.getElementById("dayOfModule")
-const startTimeModule = document.getElementById("startTimeModule")
-const endTimeModule = document.getElementById("endTimeModule")
-const locationInfoModule = document.getElementById("locationInfoModule")
-const moduleInfo = document.getElementById("moduleInfo")
+//data for the slot creation
+const dayOfSlot = document.getElementById("dayOfSlot")
+const startTimeSlot = document.getElementById("startTimeSlot")
+const endTimeSlot = document.getElementById("endTimeSlot")
+const locationInfoSlot = document.getElementById("locationInfoSlot")
+const slotInfo = document.getElementById("slotInfo")
 
 //user data
-var userName = "testUser"
-var userID = "testID"
-var userAuthrization = "localAdmin"
+let userName = "testUser"
+let userID = "testID"
+let userAuthrization = "localAdmin"
 
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
@@ -76,9 +77,18 @@ function drawCalendar(){
 }
 
 function updateCalendar(){
-    drawCalendarTimeColumn()
-    drawDateRow()
-    drawModules()
+    drawCalendarTimeColumn();
+    drawDateRow();
+    drawSlots();
+    let slots = document.getElementsByClassName("CalendarSlot");
+    for (let i = 0; i < slots.length ; i++ ){
+        slots[i].addEventListener("click",event => {
+            adminModuleCreationPanel.style.display = "grid";
+            darkenedSite.style.display = "block";
+
+
+        })
+    }
 }
 
 function drawCalendarTimeColumn(){
@@ -95,17 +105,15 @@ function drawCalendarTimeColumn(){
     calendarTimeColumn.style.gridTemplateRows = `repeat(${maxTimeSpan}, 1fr)`;
 }   
 
-function drawModules(){
-
-    //get the starting hour of the event
-    //alert(new Date(userData[0].events[0].startDate).getHours())
-    //get the time range of the event
-    //alert(((new Date(userData[0].events[0].endDate).getTime()-new Date(userData[0].events[0].startDate).getTime())/3600000)%24)
-    for (let i = 0; i < userData[0].events[0].modules.length; i++){
-        if (userData[0].events[0].modules[i].moduleWeekIndex === currentWeekIndex ){
-            const ModuleStartDate = new Date(userData[0].events[0].modules[i].start)
-            calendarColumns.children[ModuleStartDate.getDay()-1].innerHTML +=`
-                <div class="CalendarModule" style="top:${((ModuleStartDate.getHours()+0.5+(ModuleStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].modules[i].end).getTime()-new Date(userData[0].events[0].modules[i].start).getTime())/3600000)%24*hourIncrement}px"> </div>     
+function drawSlots(){
+    for (let i = 0; i < userData[0].events[0].slots.length; i++){
+        if (userData[0].events[0].slots[i].slotWeekIndex === currentWeekIndex ){
+            const slotStartDate = new Date(userData[0].events[0].slots[i].start)
+            calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
+                <button class="CalendarSlot" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
+                    <div class="calendarModule"></div>
+                    <div class="calendarModule"></div>
+                </button>
              `
         }       
     }
@@ -131,25 +139,23 @@ function drawDateRow(){
 
 
 
-newModuleButton.addEventListener("click", event => {
-    adminModuleCreationPanel.style.display = "grid";
+newSlotButton.addEventListener("click", event => {
+    adminSlotCreationPanel.style.display = "grid";
     darkenedSite.style.display = "block";
 })
-submitModuleCreationButton.addEventListener("click", event => {
+
+
+submitSlotCreationButton.addEventListener("click", event => {
     if (false){
         alert("please fill out all information")
     }
     else{
-        adminModuleCreationPanel.style.display ="none";
+        adminSlotCreationPanel.style.display ="none";
         darkenedSite.style.display = "none";
-        const moduleDay = dayOfModule.value;
-        const moduleStartTime = startTimeModule.value;
-        const moduleEndTime = endTimeModule.value;
-        const moduleLocation = locationInfoModule.value;
-        const moduleAdditionalInfo = moduleInfo.value;
-
-
-
-
+        const slotDay = dayOfSlot.value;
+        const slotStartTime = startTimeSlot.value;
+        const slotEndTime = endTimeSlot.value;
+        const slotLocation = locationInfoSlot.value;
+        const slotAdditionalInfo = slotInfo.value;
     }
 })
