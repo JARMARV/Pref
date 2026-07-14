@@ -172,6 +172,7 @@ input{
     position: relative;
 }
 .calendarDaySlot{
+    box-sizing: border-box;
     background-color: pink;
     font-size: 40px;
     color: red;
@@ -180,15 +181,29 @@ input{
     
 }
 .CalendarSlot{
+    box-sizing: border-box;
     width:100%;
-    background-color: orangered;
     position: absolute;
     z-index: 2;
     display:flex;
     flex-wrap: nowrap;
     border:0px;
-    padding:0px
+    padding:0px;
+    cursor:pointer;
+    border-radius: 10px;
+
 }
+.calendarSlotActive{
+    background-color: orangered;
+    animation:bobbing 2s infinite ease-in-out;
+}
+.calendarSlotInactive{
+    background-color: navy;
+}
+
+
+
+
 .calendarDayNumber{
     font-size: 27px;
     color: red;
@@ -196,8 +211,31 @@ input{
     align-self: center;
 }
 .calendarModule{
+    box-sizing: border-box;
     height:100%;
     width:100%;
     background-color: #0c217c;
     border-radius: 10px;
+}
+@keyframes bobbing{
+    0%{
+        transform:scale(0.98);
+    }
+    50%{
+        transform:scale(1.02);
+    }
+    100%{
+        transform:scale(0.98);
+    }
+}
+.calendarModule {
+    padding-top: 5px;
+    justify-items: left;
+    padding-left: 5px;
+    overflow:hidden;
+}
+.calendarModule > *{
+    overflow:hidden;
+    white-space: nowrap;
+    color:aqua
 }

@@ -109,12 +109,30 @@ function drawSlots(){
     for (let i = 0; i < userData[0].events[0].slots.length; i++){
         if (userData[0].events[0].slots[i].slotWeekIndex === currentWeekIndex ){
             const slotStartDate = new Date(userData[0].events[0].slots[i].start)
-            calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
-                <button class="CalendarSlot" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
-                    <div class="calendarModule"></div>
-                    <div class="calendarModule"></div>
-                </button>
-             `
+            if (!userData[0].events[0].slots[i].modules){
+                calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
+                    <button class="CalendarSlot calendarSlotActive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
+                        <div>Click to set Modules</div>
+                    </button>
+                `
+            }
+            else{
+                let modulesHTML ="";
+                for(let j = 0; j < userData[0].events[0].slots[i].modules.length; j++){
+                    modulesHTML +=`
+                        <div class="calendarModule">
+                            <div class="moduleName" style="font-size: 1rem;">${userData[0].events[0].slots[i].modules[j].name}</div>
+                            <div class="moduleGeneralInfo">${userData[0].events[0].slots[i].modules[j].additionalInfo}</div>
+                            <div class="moduleLocation">${userData[0].events[0].slots[i].modules[j].locationInfoShort}</div>
+                        </div>
+                    `
+                }
+                calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
+                    <button class="CalendarSlot calendarSlotInactive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
+                        ${modulesHTML}
+                    </button>
+                `
+            }
         }       
     }
 }
