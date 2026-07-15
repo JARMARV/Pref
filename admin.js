@@ -9,7 +9,7 @@ const mainCalendar = document.getElementById("mainCalendar")
 const calendarColumns = document.getElementById("calendarColumns")
 const calendarDateRow = document.getElementById("calendarDateRow")
 const calendarMonth = document.getElementById("calendarMonth")
-const adminModuleCreationPanel = document.getElementById("adminModuleCreationPanel")
+const adminModulePanel = document.getElementById("adminModulePanel")
 
 //data for the calendar creation
 const startTime = document.getElementById("startTime")
@@ -80,15 +80,7 @@ function updateCalendar(){
     drawCalendarTimeColumn();
     drawDateRow();
     drawSlots();
-    let slots = document.getElementsByClassName("CalendarSlot");
-    for (let i = 0; i < slots.length ; i++ ){
-        slots[i].addEventListener("click",event => {
-            adminModuleCreationPanel.style.display = "grid";
-            darkenedSite.style.display = "block";
-
-
-        })
-    }
+    addSlotButtons();
 }
 
 function drawCalendarTimeColumn(){
@@ -137,6 +129,18 @@ function drawSlots(){
     }
 }
 
+function addSlotButtons(){
+    let slots = document.getElementsByClassName("CalendarSlot");
+    for (let i = 0; i < slots.length ; i++ ){
+        slots[i].addEventListener("click",event => {
+            adminModulePanel.style.display = "flex";
+            darkenedSite.style.display = "block";
+
+
+        })
+    }
+}
+
 function drawDateRow(){
     const StartDate = new Date(userData[0].events[0].startDate);
     const EndDate = new Date(userData[0].events[0].endDate);
@@ -153,9 +157,6 @@ function drawDateRow(){
         }
     }
 }
-
-
-
 
 newSlotButton.addEventListener("click", event => {
     adminSlotCreationPanel.style.display = "grid";

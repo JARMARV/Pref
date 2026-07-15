@@ -43,7 +43,22 @@ body{
 #loginTitle h3{
     justify-self: center;
 } 
-input{
+#adminCalendarSettingsPanel, #adminSlotCreationPanel, #adminModulePanel, #loginPanel{
+    background-color:#1e2447 ;
+    justify-content: center;
+    display:none;
+    border-radius: 10px;
+    position: absolute;
+    z-index: 11;
+    justify-self: center;
+    top:200px;
+}
+#adminCalendarSettingsPanel, #adminSlotCreationPanel, #loginPanel{
+    width:200px;
+    height:500px;
+    padding:10px;
+}
+.inputStyle1{
     justify-self: center;
     align-self: center;
     width: 90%;
@@ -55,20 +70,22 @@ input{
     padding: 0px 10px;
     font-size: 16px;
 }
-#adminCalendarSettingsPanel, #adminSlotCreationPanel, #adminModuleCreationPanel, #loginPanel{
-    background-color:#1e2447 ;
-    height:500px;
-    justify-content: center;
-    display:none;
-    padding:10px;
-    border-radius: 10px;
-    position: absolute;
-    z-index: 11;
-    justify-self: center;
-    top:200px;
+.inputStyle2{
+    background: none;
+    border:none;
 }
-#adminCalendarSettingsPanel, #adminSlotCreationPanel, #loginPanel{
-    width:200px;
+#adminModulePanel{
+    max-width: 90vw;
+    overflow-x: visible;
+    overflow-y: visible;
+    height:200px;
+    flex-direction: row;
+    gap:10px;
+    padding:10px;
+}
+.adminModulePanelSlot{
+    min-width:100px;
+    width:1fr
 }
 #darkenedSite{
     position: absolute;
@@ -238,4 +255,45 @@ input{
     overflow:hidden;
     white-space: nowrap;
     color:aqua
+}
+.adminModulePanelSlot{
+    display:flex;
+    flex-direction: column;
+    padding:5px;
+    border:white 2px solid;
+    border-radius: 10px;   
+}
+.moduleName{
+    font-size: 20px;
+    margin-bottom: 10px;
+    color:aqua;
+}
+.moduleInfo{
+    font-size: 16px;
+    margin-bottom: 10px;
+    color:aqua;
+}
+.moduleLocation{
+    font-size: 16px;
+    margin-bottom: 10px;
+    color:aqua;
+}
+.moduleLocationShort{
+    font-size: 16px;
+    margin-bottom: 10px;
+    color:aqua;
+}
+.closeWindow{
+    display:block;
+    position:absolute;
+    top: 0;
+    right: 0;
+    transform: translate(90% ,-90%);
+    width:30px;
+    height:30px;
+    background-color: red;
+    padding:0px;
+    border:0px;
+    z-index: 12;
+    cursor: pointer;
 }
