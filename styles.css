@@ -76,16 +76,18 @@ body{
 }
 #adminModulePanel{
     max-width: 90vw;
+    width:auto;
     overflow-x: visible;
     overflow-y: visible;
-    height:200px;
+    height:auto;
     flex-direction: row;
     gap:10px;
     padding:10px;
 }
 .adminModulePanelSlot{
     min-width:100px;
-    width:1fr
+    width:1fr;
+    min-height: 300px;
 }
 #darkenedSite{
     position: absolute;
@@ -267,21 +269,22 @@ body{
     font-size: 20px;
     margin-bottom: 10px;
     color:aqua;
+    overflow:auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    resize: none;
 }
-.moduleInfo{
+.moduleInfo , .moduleLocationShort{
+    scrollbar-width: none;
     font-size: 16px;
     margin-bottom: 10px;
     color:aqua;
+    overflow:auto;
+    -ms-overflow-style: none;
+    resize: none;
 }
-.moduleLocation{
-    font-size: 16px;
-    margin-bottom: 10px;
-    color:aqua;
-}
-.moduleLocationShort{
-    font-size: 16px;
-    margin-bottom: 10px;
-    color:aqua;
+.scrollable::-webkit-scrollbar .moduleInfo , .moduleLocationShort,.moduleName{
+    display: none;
 }
 .closeWindow{
     display:block;

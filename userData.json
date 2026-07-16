@@ -16,19 +16,16 @@
                         "modules": [
                             {
                                 "locationInfoShort": "101",
-                                "locationInfo": "Raum 101",
                                 "additionalInfo": "no additional information",
                                 "name": "test1"
                             },
                             {
                                 "locationInfoShort": "102",
-                                "locationInfo": "Raum 102",
                                 "additionalInfo": "no additional information",
                                 "name": "test2"
                             },
                             {
                                 "locationInfoShort": "103",
-                                "locationInfo": "Raum 103",
                                 "additionalInfo": "no additional information",
                                 "name": "test3"
                             }
