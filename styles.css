@@ -133,22 +133,21 @@ body{
     grid-column: 2/3;
     grid-row: 1/2;
     width:100%;
-    padding:10px;
     height:100%;
     background-color: red;
     box-sizing: border-box;
 }
 #calendarMonth{
-    display:grid;
     grid-template-columns: 100%;
     grid-template-rows: 100%;
     grid-column: 1/2;
     grid-row: 1/2;
-    align-items: center;
-    font-size: 40px;
+    align-content: center;
+    font-size: auto;
     width:100%;
     height:100%;
     background-color: green;
+    text-align: center;
 }
 #calendarTimeColumn{
     display:grid;
@@ -219,10 +218,6 @@ body{
 .calendarSlotInactive{
     background-color: navy;
 }
-
-
-
-
 .calendarDayNumber{
     font-size: 27px;
     color: red;
@@ -265,7 +260,7 @@ body{
     border:white 2px solid;
     border-radius: 10px;   
 }
-.moduleName{
+.moduleName,.moduleNamePanel{
     font-size: 20px;
     margin-bottom: 10px;
     color:aqua;
@@ -274,7 +269,7 @@ body{
     scrollbar-width: none;
     resize: none;
 }
-.moduleInfo , .moduleLocationShort{
+.moduleInfo ,.moduleInfoPanel, .moduleLocationShort, .moduleLocationShortPanel{
     scrollbar-width: none;
     font-size: 16px;
     margin-bottom: 10px;
@@ -283,10 +278,10 @@ body{
     -ms-overflow-style: none;
     resize: none;
 }
-.scrollable::-webkit-scrollbar .moduleInfo , .moduleLocationShort,.moduleName{
+.scrollable::-webkit-scrollbar .moduleInfo ,.moduleInfoPanel, .moduleLocationShort, .moduleLocationShortPanel,.moduleName,.moduleNamePanel{
     display: none;
 }
-.closeWindow{
+.closeModulesWindow{
     display:block;
     position:absolute;
     top: 0;

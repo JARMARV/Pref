@@ -22,8 +22,6 @@ const hourIncrement = 90
 const dayOfSlot = document.getElementById("dayOfSlot")
 const startTimeSlot = document.getElementById("startTimeSlot")
 const endTimeSlot = document.getElementById("endTimeSlot")
-const locationInfoSlot = document.getElementById("locationInfoSlot")
-const slotInfo = document.getElementById("slotInfo")
 
 //user data
 let userName = "testUser"
@@ -67,6 +65,8 @@ submitCalendarSettingsButton.addEventListener("click", event => {
     else{
         adminCalendarSettingsPanel.style.display ="none";
         darkenedSite.style.display = "none";
+        userData[0].events[0].startDate = startDate.value + "T" + startTime.value
+        userData[0].events[0].endDate = endDate.value + "T" + endTime.value
         updateCalendar()
     }
 })
@@ -80,7 +80,7 @@ function updateCalendar(){
     drawCalendarTimeColumn();
     drawDateRow();
     drawSlots();
-    makeSlotLogic();
+    makeSlots();
 }
 
 function drawCalendarTimeColumn(){
@@ -98,10 +98,13 @@ function drawCalendarTimeColumn(){
 }   
 
 function drawSlots(){
+    for (let i = 0; i < calendarColumns.children.length; i++){
+        calendarColumns.children[i].innerHTML = ``;
+    }
     for (let i = 0; i < userData[0].events[0].slots.length; i++){
         if (userData[0].events[0].slots[i].slotWeekIndex === currentWeekIndex ){
             const slotStartDate = new Date(userData[0].events[0].slots[i].start)
-            if (!userData[0].events[0].slots[i].modules){
+            if (!userData[0].events[0].slots[i].modules.length){
                 calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
                     <button class="CalendarSlot calendarSlotActive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
                         <div>Click to set Modules</div>
@@ -120,7 +123,7 @@ function drawSlots(){
                     `
                 }
                 calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
-                    <button class="CalendarSlot calendarSlotInactive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
+                    <button id = "${i}" class="CalendarSlot calendarSlotInactive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
                         ${modulesHTML}
                     </button>
                 `
@@ -129,27 +132,30 @@ function drawSlots(){
     }
 }
 
-function makeSlotLogic(){
+function makeSlots(){
     let slots = document.getElementsByClassName("CalendarSlot");
-    const selectedSlotID = 0;
     for (let i = 0; i < slots.length ; i++ ){
         slots[i].addEventListener("click",event => {
             adminModulePanel.style.display = "flex";
             darkenedSite.style.display = "block";
-            adminModulePanel.innerHTML =``;
-            //render innerHTML if adminModulePanel
+            adminModulePanel.innerHTML =`<button class="closeModulesWindow"></button>`;
+            const selectedSlotID = slots[i].id;
+            //render innerHTML of adminModulePanel
             let modulesHTML ="";
-            for(let j = 0; j < userData[0].events[0].slots[selectedSlotID].modules.length; j++){
-                modulesHTML +=`
-                    <div class="adminModulePanelSlot">
-                        <textarea class="moduleName inputStyle2" type="text" placeholder="Module name">${userData[0].events[0].slots[selectedSlotID].modules[j].name}</textarea>
-                        <textarea class="moduleInfo inputStyle2" type="text" placeholder="General info">${userData[0].events[0].slots[selectedSlotID].modules[j].additionalInfo}</textarea>
-                        <textarea class="moduleLocationShort inputStyle2" type="text" placeholder="Short location info">${userData[0].events[0].slots[selectedSlotID].modules[j].locationInfoShort}</textarea>
-                    </div>
-                `
+            if (userData[0].events[0].slots[selectedSlotID]){
+                if (userData[0].events[0].slots[selectedSlotID].modules.length){
+                    for(let j = 0; j < userData[0].events[0].slots[selectedSlotID].modules.length; j++){
+                        modulesHTML +=`
+                            <div class="adminModulePanelSlot">
+                                <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${userData[0].events[0].slots[selectedSlotID].modules[j].name}</textarea>
+                                <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${userData[0].events[0].slots[selectedSlotID].modules[j].additionalInfo}</textarea>
+                                <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${userData[0].events[0].slots[selectedSlotID].modules[j].locationInfoShort}</textarea>
+                            </div>
+                        `
+                    }
+                }
             }
             adminModulePanel.innerHTML +=`
-                <button class="closeWindow"></button>
                 ${modulesHTML}
             `
             //add button logic to panel
@@ -160,14 +166,14 @@ function makeSlotLogic(){
                     textAreas1[j].style.height = textAreas1[j].scrollHeight + "px";
                 });
             }
-            const textAreas2 = document.getElementsByClassName("moduleName")
+            const textAreas2 = document.getElementsByClassName("moduleName");
             for(let j = 0; j < textAreas2.length;j++){   
                 textAreas2[i].addEventListener("input", () => {
                     textAreas2[j].style.height = "auto";
                     textAreas2[j].style.height = textAreas2[j].scrollHeight + "px";
                 });
             }
-            const closeWindowButtons = document.getElementsByClassName("closeWindow");
+            const closeWindowButtons = document.getElementsByClassName("closeModulesWindow");
             for(let j = 0; j < closeWindowButtons.length;j++){
                 closeWindowButtons[j].addEventListener("click",event => {
                     adminModulePanel.style.display = "none";
@@ -179,23 +185,22 @@ function makeSlotLogic(){
     }
 }
 
-
 function addSlotEditingPanelLogic(){
-    const textAreas1 = document.querySelectorAll(".moduleLocationShort, .moduleInfo");
+    const textAreas1 = document.querySelectorAll(".moduleLocationShortPanel");
     for(let i = 0; i < textAreas1.length;i++){   
         textAreas1[i].addEventListener("input", () => {
             textAreas1[i].style.height = "auto";
             textAreas1[i].style.height = textAreas1[i].scrollHeight + "px";
         });
     }
-    const textAreas2 = document.getElementsByClassName("moduleName")
+    const textAreas2 = document.getElementsByClassName("moduleNamePanel")
     for(let i = 0; i < textAreas2.length;i++){   
         textAreas2[i].addEventListener("input", () => {
             textAreas2[i].style.height = "auto";
             textAreas2[i].style.height = textAreas2[i].scrollHeight + "px";
         });
     }
-    const closeWindowButtons = document.getElementsByClassName("closeWindow");
+    const closeWindowButtons = document.getElementsByClassName("closeWindowPanel");
     for(let i = 0; i < closeWindowButtons.length;i++){
         closeWindowButtons[i].addEventListener("click",event => {
             adminModulePanel.style.display = "none";
@@ -205,6 +210,7 @@ function addSlotEditingPanelLogic(){
     }
 
 }
+
 function drawDateRow(){
     const StartDate = new Date(userData[0].events[0].startDate);
     const EndDate = new Date(userData[0].events[0].endDate);
@@ -217,19 +223,18 @@ function drawDateRow(){
             <div class="calendarDayNumber">${outputDate.getDate()}</div>
         `;
         if (i === 0) {
-            calendarMonth.innerHTML = `${monthsOfTheYear[outputDate.getMonth()]} ${outputDate.getFullYear()}`
+            calendarMonth.innerHTML = `
+            <div>${monthsOfTheYear[outputDate.getMonth()]}</div>
+            <div>${outputDate.getFullYear()}</div>
+            `
         }
     }
 }
-
-
-
 
 newSlotButton.addEventListener("click", event => {
     adminSlotCreationPanel.style.display = "grid";
     darkenedSite.style.display = "block";
 })
-
 
 submitSlotCreationButton.addEventListener("click", event => {
     if (false){
@@ -241,7 +246,13 @@ submitSlotCreationButton.addEventListener("click", event => {
         const slotDay = dayOfSlot.value;
         const slotStartTime = startTimeSlot.value;
         const slotEndTime = endTimeSlot.value;
-        const slotLocation = locationInfoSlot.value;
-        const slotAdditionalInfo = slotInfo.value;
+        userData[0].events[0].slots.push({
+            "start": slotDay + "T" + slotStartTime,
+            "end": slotDay + "T" + slotEndTime,
+            "slotWeekIndex": 0,
+            "slotID":userData[0].events[0].slots.length,
+            "modules": []
+        })
     }
+    updateCalendar()
 })

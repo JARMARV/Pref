@@ -8,42 +8,47 @@
             {
                 "startDate": "2026-07-05T07:30",
                 "endDate": "2026-07-11T15:30",
+                "eventID":0,
                 "slots": [
                     {
                         "start": "2026-07-08T09:00",
                         "end": "2026-07-08T10:00",
+                        "slotID":0,
                         "slotWeekIndex": 0,
                         "modules": [
                             {
                                 "locationInfoShort": "101",
                                 "additionalInfo": "no additional information",
-                                "name": "test1"
+                                "name": "test1",
+                                "moduleID": 0
                             },
                             {
                                 "locationInfoShort": "102",
                                 "additionalInfo": "no additional information",
-                                "name": "test2"
+                                "name": "test2",
+                                "moduleID": 1
                             },
                             {
                                 "locationInfoShort": "103",
                                 "additionalInfo": "no additional information",
-                                "name": "test3"
+                                "name": "test3",
+                                "moduleID": 2
                             }
                         ]
                     },
                     {
                         "start":"2026-07-11T11:00",
                         "end":"2026-07-11T12:30",
-                        "location": "101",
-                        "additionalInfo": "no additional information",
-                        "slotWeekIndex": 0
+                        "slotID":1,
+                        "slotWeekIndex": 0,
+                        "modules": []
                     },
                     {
                         "start":"2026-07-11T13:00",
                         "end":"2026-07-11T14:00",
-                        "location": "101",
-                        "additionalInfo": "no additional information",
-                        "slotWeekIndex": 0
+                        "slotID":2,
+                        "slotWeekIndex": 0,
+                        "modules": []
                     }
                 ]
             }
