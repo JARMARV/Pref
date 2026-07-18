@@ -43,15 +43,15 @@ body{
 #loginTitle h3{
     justify-self: center;
 } 
-#adminCalendarSettingsPanel, #adminSlotCreationPanel, #adminModulePanel, #loginPanel{
+#adminCalendarSettingsPanel, #adminSlotCreationPanel, #SlotAndModuleEditPanel, #loginPanel{
     background-color:#1e2447 ;
     justify-content: center;
     display:none;
     border-radius: 10px;
-    position: absolute;
+    position: fixed;
     z-index: 11;
     justify-self: center;
-    top:200px;
+    top:140px;
 }
 #adminCalendarSettingsPanel, #adminSlotCreationPanel, #loginPanel{
     width:200px;
@@ -84,20 +84,15 @@ body{
     gap:10px;
     padding:10px;
 }
-.adminModulePanelSlot{
-    min-width:100px;
-    width:1fr;
-    min-height: 300px;
-}
 #darkenedSite{
-    position: absolute;
+    position: fixed;
     top: 0px;
     left: 0px;
     background-color: rgba(0,0,0,0.5);
     z-index: 10;
     display:none;
     width: 100%;
-    height: 100000px;
+    height: 100%
 }
 #submitCalendarSettingsButton{
     justify-self: center;
@@ -254,6 +249,9 @@ body{
     color:aqua
 }
 .adminModulePanelSlot{
+    min-width:100px;
+    width:1fr;
+    min-height: 300px;
     display:flex;
     flex-direction: column;
     padding:5px;
@@ -294,4 +292,40 @@ body{
     border:0px;
     z-index: 12;
     cursor: pointer;
+}
+#SlotAndModuleEditPanel{
+    justify-self: center;
+    display:none;
+    grid-template-rows: auto auto;
+    max-width: 90vw;
+    z-index: 11;
+}
+#adminSlotPanel{
+    min-width: 300px ;
+    width:auto;
+    min-height: 50px;
+    z-index: 11;
+    background-color:#1e2447;
+    border-radius: 10px;
+    padding:10px;
+    display:flex;
+    gap:10px;
+    justify-content: center;
+}
+#adminModulePanel{
+    overflow-x: auto;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+::-webkit-scrollbar-button {
+    display: none;
 }

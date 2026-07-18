@@ -1,6 +1,8 @@
+//unsorted html objects
 const adminCalendarSettingsPanel = document.getElementById("adminCalendarSettingsPanel")
-const darkenedSite =document.getElementById("darkenedSite")
-const newTableButton =document.getElementById("newTableButton")
+const adminSlotCreationPanel = document.getElementById("adminSlotCreationPanel")
+const darkenedSite = document.getElementById("darkenedSite")
+const newTableButton = document.getElementById("newTableButton")
 const submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton")
 const calendarTimeColumn = document.getElementById("calendarTimeColumn")
 const newSlotButton = document.getElementById("newSlotButton")
@@ -10,6 +12,10 @@ const calendarColumns = document.getElementById("calendarColumns")
 const calendarDateRow = document.getElementById("calendarDateRow")
 const calendarMonth = document.getElementById("calendarMonth")
 const adminModulePanel = document.getElementById("adminModulePanel")
+const SlotAndModuleEditPanel = document.getElementById("SlotAndModuleEditPanel")
+const addModuleButton = document.getElementById("addModuleButton")
+
+
 
 //data for the calendar creation
 const startTime = document.getElementById("startTime")
@@ -33,195 +39,296 @@ const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 const currentWeekIndex = 0
 
 
-let userData =[];
+//fetch the userdata.json (will later be replaced by an actual database)
+let userData = [];
 fetch("userData.json")
-    .then(response => response.json())
-    .then(data => userData = data)
-
-
-// horizontal lines dynamic sizing  
-function updateCalendarColumnsWidth() {
-    const width = calendarColumns.offsetWidth;
-    document.documentElement.style.setProperty('--calendarColumnsWidth', width + 'px');
-}
-window.addEventListener('load', updateCalendarColumnsWidth);
-window.addEventListener('resize', updateCalendarColumnsWidth);
-
-
-newTableButton.addEventListener("click", event => {
-    adminCalendarSettingsPanel.style.display = "grid";
-    darkenedSite.style.display = "block";
-    endDate.value = "2024-12-31";
-    startDate.value = "2024-01-01";
-    startTime.value = "05:30";
-    endTime.value = "10:20";
-})
-
-
-submitCalendarSettingsButton.addEventListener("click", event => {
-    if (!endDate.value || !startDate.value || !startTime.value || !endTime.value){
-        alert("please fill out all information")
-    }
-    else{
-        adminCalendarSettingsPanel.style.display ="none";
-        darkenedSite.style.display = "none";
-        userData[0].events[0].startDate = startDate.value + "T" + startTime.value
-        userData[0].events[0].endDate = endDate.value + "T" + endTime.value
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to load user data")
+        }
+        return response.json()
+    })
+    .then(data => {
+        userData = data
         updateCalendar()
-    }
-})
+    })
+    .catch(error => {
+        console.error("Could not load user data:", error)
+    })
+//currently not fully implemented just gives the first event
+function getCurrentEvent() {
+    return userData?.[0]?.events?.[0]
+}
+//scales the width of the horizontal line sin the calendar
+function updateCalendarColumnsWidth() {
+    if (!calendarColumns) return
+        const width = calendarColumns.offsetWidth
+        document.documentElement.style.setProperty('--calendarColumnsWidth', width + 'px')
+}
+window.addEventListener('load', updateCalendarColumnsWidth)
+window.addEventListener('resize', updateCalendarColumnsWidth)
 
+if (newTableButton) {
+    newTableButton.addEventListener("click", event => {
+        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid"
+        if (darkenedSite) darkenedSite.style.display = "block"
+        if (endDate) endDate.value = "2024-12-31"
+        if (startDate) startDate.value = "2024-01-01"
+        if (startTime) startTime.value = "05:30"
+        if (endTime) endTime.value = "10:20"
+    })
+}
+else{
+    console.log("error could not find newTableButton")
+}
+if (submitCalendarSettingsButton) {
+    submitCalendarSettingsButton.addEventListener("click", event => {
+        if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value) {
+            alert("please fill out all information")
+            return
+        }
 
-function drawCalendar(){
+        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
+        if (darkenedSite) darkenedSite.style.display = "none"
 
+        const eventData = getCurrentEvent()
+        if (eventData) {
+            eventData.startDate = startDate.value + "T" + startTime.value
+            eventData.endDate = endDate.value + "T" + endTime.value
+        }
+
+        updateCalendar()
+    })
+}
+else{
+    console.log("error could not find submitCalendarSettingsButton")
+}
+if (newSlotButton) {
+    newSlotButton.addEventListener("click", () => {
+        if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "grid"
+        if (darkenedSite) darkenedSite.style.display = "block"
+    })
+}
+else{
+    console.log("error could not find newSlotButton")
+}
+if (submitSlotCreationButton) {
+    submitSlotCreationButton.addEventListener("click", () => {
+        const slotDay = dayOfSlot?.value
+        const slotStartTime = startTimeSlot?.value
+        const slotEndTime = endTimeSlot?.value
+
+        if (!slotDay || !slotStartTime || !slotEndTime) {
+            alert("please fill out all information")
+            return
+        }
+
+        if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "none"
+        if (darkenedSite) darkenedSite.style.display = "none"
+
+        const eventData = getCurrentEvent()
+        if (eventData) {
+            eventData.slots.push({
+                start: slotDay + "T" + slotStartTime,
+                end: slotDay + "T" + slotEndTime,
+                slotWeekIndex: 0,
+                slotID: eventData.slots.length,
+                modules: []
+            })
+        }
+
+        updateCalendar()
+    })
+}
+else{
+    console.log("error could not find submitSlotCreationButton")
+}
+function updateCalendar() {
+    const eventData = getCurrentEvent()
+    if (!eventData) return
+
+    drawCalendarTimeColumn()
+    drawDateRow()
+    drawSlots()
+    makeSlotLogic()
 }
 
-function updateCalendar(){
-    drawCalendarTimeColumn();
-    drawDateRow();
-    drawSlots();
-    makeSlots();
-}
+function drawCalendarTimeColumn() {
+    if (!calendarTimeColumn || !mainCalendar) return
 
-function drawCalendarTimeColumn(){
-    calendarTimeColumn.innerHTML = ``;
-    const startTimeValue = userData[0].events[0].startDate.split("T")[1].split(":");
-    const endTimeValue = userData[0].events[0].endDate.split("T")[1].split(":");
-    const maxTimeSpan = (parseInt(endTimeValue[0])+ 1) - (parseInt(startTimeValue[0])-1);
-    mainCalendar.style.height = `${(maxTimeSpan * hourIncrement)+100}px`;
-    for (let i = 0; i < maxTimeSpan; i++){
+    calendarTimeColumn.innerHTML = ""
+    const eventData = getCurrentEvent()
+    if (!eventData) return
+
+    const startTimeValue = eventData.startDate.split("T")[1].split(":")
+    const endTimeValue = eventData.endDate.split("T")[1].split(":")
+    const maxTimeSpan = (parseInt(endTimeValue[0]) + 1) - (parseInt(startTimeValue[0]) - 1)
+    mainCalendar.style.height = `${(maxTimeSpan * hourIncrement) + 100}px`
+
+    for (let i = 0; i < maxTimeSpan; i++) {
         calendarTimeColumn.innerHTML += `
         <div class="calendarTimeSlot">${parseInt(startTimeValue[0]) + i}:00 </div>
-        `;
+        `
     }
-    calendarTimeColumn.style.gridTemplateRows = `repeat(${maxTimeSpan}, 1fr)`;
-}   
 
-function drawSlots(){
-    for (let i = 0; i < calendarColumns.children.length; i++){
-        calendarColumns.children[i].innerHTML = ``;
+    calendarTimeColumn.style.gridTemplateRows = `repeat(${maxTimeSpan}, 1fr)`
+}
+
+function drawSlots() {
+    if (!calendarColumns) return
+
+    const eventData = getCurrentEvent()
+    if (!eventData) return
+
+    for (let i = 0; i < calendarColumns.children.length; i++) {
+        calendarColumns.children[i].innerHTML = ""
     }
-    for (let i = 0; i < userData[0].events[0].slots.length; i++){
-        if (userData[0].events[0].slots[i].slotWeekIndex === currentWeekIndex ){
-            const slotStartDate = new Date(userData[0].events[0].slots[i].start)
-            if (!userData[0].events[0].slots[i].modules.length){
-                calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
-                    <button class="CalendarSlot calendarSlotActive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
-                        <div>Click to set Modules</div>
-                    </button>
+
+    for (let i = 0; i < eventData.slots.length; i++) {
+        if (eventData.slots[i].slotWeekIndex !== currentWeekIndex) continue
+
+        const slotStartDate = new Date(eventData.slots[i].start)
+        const columnIndex = (slotStartDate.getDay() + 6) % 7
+        const targetColumn = calendarColumns.children[columnIndex]
+        if (!targetColumn) continue
+
+        const slotStartHours = slotStartDate.getHours() + 0.5 + (slotStartDate.getMinutes() / 60)
+        const eventStartHours = new Date(eventData.startDate).getHours()
+        const topPosition = (slotStartHours - eventStartHours) * hourIncrement
+        const slotDurationHours = ((new Date(eventData.slots[i].end).getTime() - new Date(eventData.slots[i].start).getTime()) / 3600000) % 24
+        const slotHeight = slotDurationHours * hourIncrement
+
+        if (!eventData.slots[i].modules.length) {
+            targetColumn.innerHTML += `
+                <button id="${i}" class="CalendarSlot calendarSlotActive" style="top:${topPosition}px; height:${slotHeight}px">
+                    <div>Click to set Modules</div>
+                </button>
+            `
+        }
+        else {
+            let modulesHTML = ""
+            for (let j = 0; j < eventData.slots[i].modules.length; j++) {
+                modulesHTML += `
+                    <div class="calendarModule">
+                        <div class="moduleName" style="font-size: 1rem;">${eventData.slots[i].modules[j].name}</div>
+                        <div class="moduleGeneralInfo">${eventData.slots[i].modules[j].additionalInfo}</div>
+                        <div class="moduleLocationShort">${eventData.slots[i].modules[j].locationInfoShort}</div>
+                    </div>
                 `
             }
-            else{
-                let modulesHTML ="";
-                for(let j = 0; j < userData[0].events[0].slots[i].modules.length; j++){
-                    modulesHTML +=`
-                        <div class="calendarModule">
-                            <div class="moduleName" style="font-size: 1rem;">${userData[0].events[0].slots[i].modules[j].name}</div>
-                            <div class="moduleGeneralInfo">${userData[0].events[0].slots[i].modules[j].additionalInfo}</div>
-                            <div class="moduleLocationShort">${userData[0].events[0].slots[i].modules[j].locationInfoShort}</div>
-                        </div>
-                    `
-                }
-                calendarColumns.children[slotStartDate.getDay()-1].innerHTML +=`
-                    <button id = "${i}" class="CalendarSlot calendarSlotInactive" style="top:${((slotStartDate.getHours()+0.5+(slotStartDate.getMinutes()/60))-new Date(userData[0].events[0].startDate).getHours())*hourIncrement}px ; height:${((new Date(userData[0].events[0].slots[i].end).getTime()-new Date(userData[0].events[0].slots[i].start).getTime())/3600000)%24*hourIncrement}px">
-                        ${modulesHTML}
-                    </button>
-                `
-            }
-        }       
+            targetColumn.innerHTML += `
+                <button id="${i}" class="CalendarSlot calendarSlotInactive" style="top:${topPosition}px; height:${slotHeight}px">
+                    ${modulesHTML}
+                </button>
+            `
+        }
     }
 }
 
-function makeSlots(){
-    let slots = document.getElementsByClassName("CalendarSlot");
-    for (let i = 0; i < slots.length ; i++ ){
-        slots[i].addEventListener("click",event => {
-            adminModulePanel.style.display = "flex";
-            darkenedSite.style.display = "block";
-            adminModulePanel.innerHTML =`<button class="closeModulesWindow"></button>`;
-            const selectedSlotID = slots[i].id;
-            //render innerHTML of adminModulePanel
-            let modulesHTML ="";
-            if (userData[0].events[0].slots[selectedSlotID]){
-                if (userData[0].events[0].slots[selectedSlotID].modules.length){
-                    for(let j = 0; j < userData[0].events[0].slots[selectedSlotID].modules.length; j++){
-                        modulesHTML +=`
+function makeSlotLogic() {
+    const slots = document.getElementsByClassName("CalendarSlot")
+    for (let i = 0; i < slots.length; i++) {
+        slots[i].addEventListener("click", () => {
+            const eventData = getCurrentEvent()
+            if (!eventData) return
+
+            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid"
+            if (adminModulePanel) adminModulePanel.style.display = "flex"
+            if (darkenedSite) darkenedSite.style.display = "block"
+
+            const selectedSlotID = slots[i].id
+            const selectedSlot = eventData.slots[selectedSlotID]
+
+            if (adminModulePanel) {
+                adminModulePanel.innerHTML = `<button class="closeModulesWindow"></button>`
+                let modulesHTML = ""
+
+                if (selectedSlot && selectedSlot.modules.length) {
+                    for (let j = 0; j < selectedSlot.modules.length; j++) {
+                        modulesHTML += `
                             <div class="adminModulePanelSlot">
-                                <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${userData[0].events[0].slots[selectedSlotID].modules[j].name}</textarea>
-                                <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${userData[0].events[0].slots[selectedSlotID].modules[j].additionalInfo}</textarea>
-                                <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${userData[0].events[0].slots[selectedSlotID].modules[j].locationInfoShort}</textarea>
+                                <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${selectedSlot.modules[j].name}</textarea>
+                                <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${selectedSlot.modules[j].additionalInfo}</textarea>
+                                <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${selectedSlot.modules[j].locationInfoShort}</textarea>
                             </div>
                         `
                     }
                 }
-            }
-            adminModulePanel.innerHTML +=`
-                ${modulesHTML}
-            `
-            //add button logic to panel
-            const textAreas1 = document.querySelectorAll(".moduleLocationShort, .moduleInfo");
-            for(let j = 0; j < textAreas1.length;j++){   
-                textAreas1[j].addEventListener("input", () => {
-                    textAreas1[j].style.height = "auto";
-                    textAreas1[j].style.height = textAreas1[j].scrollHeight + "px";
-                });
-            }
-            const textAreas2 = document.getElementsByClassName("moduleName");
-            for(let j = 0; j < textAreas2.length;j++){   
-                textAreas2[i].addEventListener("input", () => {
-                    textAreas2[j].style.height = "auto";
-                    textAreas2[j].style.height = textAreas2[j].scrollHeight + "px";
-                });
-            }
-            const closeWindowButtons = document.getElementsByClassName("closeModulesWindow");
-            for(let j = 0; j < closeWindowButtons.length;j++){
-                closeWindowButtons[j].addEventListener("click",event => {
-                    adminModulePanel.style.display = "none";
-                    darkenedSite.style.display = "none";
-                    updateCalendar()
-                })
-            }
-        })            
-    }
-}
 
-function addSlotEditingPanelLogic(){
-    const textAreas1 = document.querySelectorAll(".moduleLocationShortPanel");
-    for(let i = 0; i < textAreas1.length;i++){   
-        textAreas1[i].addEventListener("input", () => {
-            textAreas1[i].style.height = "auto";
-            textAreas1[i].style.height = textAreas1[i].scrollHeight + "px";
-        });
-    }
-    const textAreas2 = document.getElementsByClassName("moduleNamePanel")
-    for(let i = 0; i < textAreas2.length;i++){   
-        textAreas2[i].addEventListener("input", () => {
-            textAreas2[i].style.height = "auto";
-            textAreas2[i].style.height = textAreas2[i].scrollHeight + "px";
-        });
-    }
-    const closeWindowButtons = document.getElementsByClassName("closeWindowPanel");
-    for(let i = 0; i < closeWindowButtons.length;i++){
-        closeWindowButtons[i].addEventListener("click",event => {
-            adminModulePanel.style.display = "none";
-            darkenedSite.style.display = "none";
-            updateCalendar()
+                adminModulePanel.innerHTML += modulesHTML
+            }
+
+            const dayOfSlotPanel = document.getElementById("dayOfSlotPanel")
+            const startTimeSlotPanel = document.getElementById("startTimeSlotPanel")
+            const endTimeSlotPanel = document.getElementById("endTimeSlotPanel")
+
+            if (selectedSlot) {
+                if (dayOfSlotPanel) dayOfSlotPanel.value = selectedSlot.start.split("T")[0]
+                if (startTimeSlotPanel) startTimeSlotPanel.value = selectedSlot.start.split("T")[1]
+                if (endTimeSlotPanel) endTimeSlotPanel.value = selectedSlot.end.split("T")[1]
+            }
+
+            addSlotEditingPanelLogic()
         })
     }
-
 }
 
-function drawDateRow(){
-    const StartDate = new Date(userData[0].events[0].startDate);
-    const EndDate = new Date(userData[0].events[0].endDate);
-    for (let i = 0; i < (calendarDateRow.children.length); i++){
+function bindModulePanelInteractions() {
+    const textAreas = document.querySelectorAll(".moduleLocationShortPanel, .moduleInfoPanel, .moduleNamePanel")
+    for (let i = 0; i < textAreas.length; i++) {
+        textAreas[i].oninput = () => {
+            textAreas[i].style.height = "auto"
+            textAreas[i].style.height = textAreas[i].scrollHeight + "px"
+        }
+    }
 
-        const outputDate = new Date(StartDate);
-        outputDate.setDate(StartDate.getDate() + (i - StartDate.getDay() + 1) + currentWeekIndex* 7);
+    const closeWindowButtons = document.getElementsByClassName("closeModulesWindow")
+    for (let i = 0; i < closeWindowButtons.length; i++) {
+        closeWindowButtons[i].onclick = () => {
+            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+            if (adminModulePanel) adminModulePanel.style.display = "none"
+            if (darkenedSite) darkenedSite.style.display = "none"
+            updateCalendar()
+        }
+    }
+}
+
+function addSlotEditingPanelLogic() {
+    bindModulePanelInteractions()
+
+    if (addModuleButton && adminModulePanel) {
+        addModuleButton.onclick = () => {
+            adminModulePanel.innerHTML += `
+                <div class="adminModulePanelSlot">
+                    <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
+                    <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info"></textarea>
+                    <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info"></textarea>
+                </div>
+            `
+            bindModulePanelInteractions()
+        }
+    }
+    else {
+        console.log("error could not find addModuleButton")
+    }
+}
+
+function drawDateRow() {
+    const eventData = getCurrentEvent()
+    if (!eventData || !calendarDateRow || !calendarMonth) return
+
+    const startDateValue = new Date(eventData.startDate)
+    const weekStart = new Date(startDateValue)
+    weekStart.setDate(startDateValue.getDate() - ((startDateValue.getDay() + 6) % 7))
+
+    for (let i = 0; i < calendarDateRow.children.length; i++) {
+        const outputDate = new Date(weekStart)
+        outputDate.setDate(weekStart.getDate() + i)
         calendarDateRow.children[i].innerHTML = `
             <div class="calendarDayName">${daysOfTheWeek[i]}</div>
             <div class="calendarDayNumber">${outputDate.getDate()}</div>
-        `;
+        `
+
         if (i === 0) {
             calendarMonth.innerHTML = `
             <div>${monthsOfTheYear[outputDate.getMonth()]}</div>
@@ -230,29 +337,3 @@ function drawDateRow(){
         }
     }
 }
-
-newSlotButton.addEventListener("click", event => {
-    adminSlotCreationPanel.style.display = "grid";
-    darkenedSite.style.display = "block";
-})
-
-submitSlotCreationButton.addEventListener("click", event => {
-    if (false){
-        alert("please fill out all information")
-    }
-    else{
-        adminSlotCreationPanel.style.display ="none";
-        darkenedSite.style.display = "none";
-        const slotDay = dayOfSlot.value;
-        const slotStartTime = startTimeSlot.value;
-        const slotEndTime = endTimeSlot.value;
-        userData[0].events[0].slots.push({
-            "start": slotDay + "T" + slotStartTime,
-            "end": slotDay + "T" + slotEndTime,
-            "slotWeekIndex": 0,
-            "slotID":userData[0].events[0].slots.length,
-            "modules": []
-        })
-    }
-    updateCalendar()
-})
