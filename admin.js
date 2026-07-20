@@ -72,8 +72,8 @@ if (newTableButton) {
     newTableButton.addEventListener("click", event => {
         if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid"
         if (darkenedSite) darkenedSite.style.display = "block"
-        if (endDate) endDate.value = "2024-12-31"
-        if (startDate) startDate.value = "2024-01-01"
+        if (endDate) endDate.value = "2026-7-31"
+        if (startDate) startDate.value = "2026-06-29"
         if (startTime) startTime.value = "05:30"
         if (endTime) endTime.value = "10:20"
     })
@@ -117,7 +117,16 @@ if (submitSlotCreationButton) {
         const slotDay = dayOfSlot?.value
         const slotStartTime = startTimeSlot?.value
         const slotEndTime = endTimeSlot?.value
-
+        for (let i = 0; i < getCurrentEvent().slots.length; i++) {
+            if (!(new Date(getCurrentEvent().slots[i].start) > new Date(slotDay +"T"+ slotEndTime) || new Date(getCurrentEvent().slots[i].end) < new Date(slotDay +"T"+ slotStartTime))){
+                alert("The slot you are trying to create seems to overlap with an already existing slot")
+                return
+            }
+        }
+        if (!slotStartTime < slotEndTime ) {
+            alert("It seems the slot should start after it ends with the current specifications")
+            return
+        }
         if (!slotDay || !slotStartTime || !slotEndTime) {
             alert("please fill out all information")
             return
@@ -146,7 +155,6 @@ else{
 function updateCalendar() {
     const eventData = getCurrentEvent()
     if (!eventData) return
-
     drawCalendarTimeColumn()
     drawDateRow()
     drawSlots()
