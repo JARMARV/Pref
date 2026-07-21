@@ -14,8 +14,10 @@ const calendarMonth = document.getElementById("calendarMonth")
 const adminModulePanel = document.getElementById("adminModulePanel")
 const SlotAndModuleEditPanel = document.getElementById("SlotAndModuleEditPanel")
 const addModuleButton = document.getElementById("addModuleButton")
-
-
+const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings")
+const dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
+const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
+const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
 
 //data for the calendar creation
 const startTime = document.getElementById("startTime")
@@ -152,6 +154,31 @@ if (submitSlotCreationButton) {
 else{
     console.log("error could not find submitSlotCreationButton")
 }
+if (saveSlotAndModuleSettings){
+    saveSlotAndModuleSettings.addEventListener("click", () => {
+        const event = getCurrentEvent();
+        const selectedSlotID = Number(SlotAndModuleEditPanel.dataset.idOfSelectedSlot)
+        event.slots[selectedSlotID].start = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value)
+        event.slots[selectedSlotID].end = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
+        for (let i = 0; i < adminModulePanel.children.length; i++){
+            event.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
+            event.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
+            event.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+        }
+        if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+        if (adminModulePanel) adminModulePanel.style.display = "none"
+        if (darkenedSite) darkenedSite.style.display = "none"
+        adminModulePanel.dataset.idOfSelectedSlot = "null";
+        updateCalendar()
+    })
+}
+else{
+    console.log("could not find saveSlotAndModuleSettings button")
+}
+
+
+
+
 function updateCalendar() {
     const eventData = getCurrentEvent()
     if (!eventData) return
@@ -248,7 +275,7 @@ function makeSlotLogic() {
             const selectedSlot = eventData.slots[selectedSlotID]
 
             if (adminModulePanel) {
-                adminModulePanel.innerHTML = `<button class="closeModulesWindow"></button>`
+                adminModulePanel.innerHTML = ``
                 let modulesHTML = ""
 
                 if (selectedSlot && selectedSlot.modules.length) {
@@ -264,6 +291,7 @@ function makeSlotLogic() {
                 }
 
                 adminModulePanel.innerHTML += modulesHTML
+                SlotAndModuleEditPanel.dataset.idOfSelectedSlot = String(selectedSlotID);
             }
 
             const dayOfSlotPanel = document.getElementById("dayOfSlotPanel")

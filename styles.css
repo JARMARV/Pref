@@ -260,7 +260,7 @@ body{
 }
 .moduleName,.moduleNamePanel{
     font-size: 20px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     color:aqua;
     overflow:auto;
     -ms-overflow-style: none;
