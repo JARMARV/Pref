@@ -1,0 +1,58 @@
+/*
+    black
+    #060a1c
+    #121936
+    #1e2447
+    #0c217c
+    #334399
+
+    #a3a5ab
+    #dedee3
+    white
+*/
+body{
+    background-color: #121936;
+    color:#dedee3;
+}
+#loginPanel{
+    background-color:#1e2447 ;
+    justify-content: center;
+    border-radius: 10px;
+    position: fixed;
+    z-index: 11;
+    justify-self: center;
+    top:140px;
+    width:200px;
+    height:500px;
+    padding:10px;
+    justify-items: center;
+    
+    
+}
+#mainGrid{
+    display:grid;
+    width:100%;
+    justify-content: center;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+#header{
+    width:100%;
+    justify-self: center;
+    background-color: #1e2447;
+}
+#headerTitle{
+    justify-self: center;
+}
+.inputStyle1{
+    justify-self: center;
+    align-self: center;
+    width: 90%;
+    height: 40px;
+    background-color: #334399;
+    border: 2px solid #0c217c;
+    border-radius: 8px;
+    color: white;
+    padding: 0px 10px;
+    font-size: 16px;
+}

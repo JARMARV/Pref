@@ -160,10 +160,20 @@ if (saveSlotAndModuleSettings){
         const selectedSlotID = Number(SlotAndModuleEditPanel.dataset.idOfSelectedSlot)
         event.slots[selectedSlotID].start = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value)
         event.slots[selectedSlotID].end = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
+        for (let i = 0; i < adminModulePanel.children.length - event.slots[selectedSlotID].modules.length; i++){
+            event.slots[selectedSlotID].modules.push({
+                "locationInfoShort": "",
+                "additionalInfo": "",
+                "name": "",
+                "moduleID": NaN,
+            })
+
+        }
         for (let i = 0; i < adminModulePanel.children.length; i++){
             event.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
             event.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
             event.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+            event.slots[selectedSlotID].modules[i].moduleID = i
         }
         if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
         if (adminModulePanel) adminModulePanel.style.display = "none"

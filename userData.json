@@ -3,7 +3,7 @@
         "userName": "admin",
         "password": "admin",
         "authorizationLevel": "localAdmin",
-        "Organization": "EkgAdenau",
+        "organization": "EkgAdenau",
         "events": [
             {
                 "startDate": "2026-07-05T07:30",

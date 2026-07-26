@@ -10,6 +10,9 @@
     #dedee3
     white
 */
+h2{
+    margin:0px;
+}
 p{
     margin:0px;
 }
@@ -21,12 +24,38 @@ body{
 
 #header{
     width:100%;
-    padding:20px;
+    padding:5px;
     background-color: #1e2447;
     border-radius: 10px;
     display: grid;
     box-sizing: border-box;
+    grid-template-rows: 40px auto;
+    grid-template-columns: 1fr 1fr 40px;
+    grid-template-areas: 
+        "title title accountButton"
+        "button1 button2 null"
+    ;
 }
+#headerTitle{
+    align-self: center;
+    justify-self: center;
+    grid-area: 1/1/2/4;
+}
+#newTableButton{
+    grid-area: button1;
+    max-width: 100px;
+}
+#newSlotButton{
+    grid-area: button2;
+    max-width: 100px;
+}
+#accountButton{
+    grid-area: accountButton;
+}
+
+
+
+
 #main{
     padding:10px;
 }
@@ -37,13 +66,14 @@ body{
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
 }
+
 #loginButton{
     justify-self: center;
 }
 #loginTitle h3{
     justify-self: center;
 } 
-#adminCalendarSettingsPanel, #adminSlotCreationPanel, #SlotAndModuleEditPanel, #loginPanel{
+#adminCalendarSettingsPanel, #adminSlotCreationPanel, #SlotAndModuleEditPanel{
     background-color:#1e2447 ;
     justify-content: center;
     display:none;
@@ -53,7 +83,7 @@ body{
     justify-self: center;
     top:140px;
 }
-#adminCalendarSettingsPanel, #adminSlotCreationPanel, #loginPanel{
+#adminCalendarSettingsPanel, #adminSlotCreationPanel{
     width:200px;
     height:500px;
     padding:10px;

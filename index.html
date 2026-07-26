@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Pref Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="login.css">
     <link rel="icon" href="" type="image/x-icon">
 </head>
 <body>
     <div id="header">
-        <h2>this is the header</h2>
-        <button id="openLoginPanelButton">Login</button>
+        <h2 id="headerTitle">this is the header</h2>
     </div>
     <div id="darkenedSite"></div>
     <div id="mainGrid">
@@ -19,17 +18,17 @@
             <div id="loginTitle">
                 <h3>Login</h3>
             </div>
-            <div id="userName">
+            <div>
                 Username
-                <input type="text" >
+                <input id="userName" class="inputStyle1" type="text" >
             </div>
-            <div id="school">
+            <div>
                 School ID
-                <input type="text" >
+                <input id="establishmentID" class="inputStyle1" type="text" >
             </div>
-            <div id="password">
+            <div>
                 Password
-                <input type="password" >
+                <input id="password" class="inputStyle1" type="password" >
             </div>
             <div id="loginButton">
                 <button id="loginButton!">
@@ -38,7 +37,7 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="login.js"></script>
 </body>
 </html>
 
