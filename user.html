@@ -6,11 +6,68 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>My Website</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="user.css">
     <link rel="icon" href="" type="image/x-icon">
 </head>
 <body>
+    <div id="darkenedSite"></div>
 
+    <div id="header">
+        <h2 id="headerTitle">This is the header</h2>
+        <button id="userButton"></button>
+    </div>
 
-    <script src="script.js"></script>
+    <div id="userPanel"></div>
+
+    <div id="SlotAndModuleEditPanel">
+        <button class="closeModulesWindow"></button>
+        <div id="userSlotPanel">
+            <div>
+                day
+                <input class="inputStyle1" id="dayOfSlotPanel" type="date" value="2026-06-29">
+            </div>
+            <div>
+                start time
+                <input class="inputStyle1" id="startTimeSlotPanel" type="time" value="09:30">
+            </div>
+            <div>
+                end time
+                <input class="inputStyle1" id="endTimeSlotPanel" type="time" value="10:20" >
+            </div>
+            <button id ="saveUserPreference">Save</button>
+        </div>
+        <div id="userModulePanel"></div>
+    </div>
+
+    <div id="mainGrid">
+        <div id="mainCalendar">
+            <div id="calendarMonth">
+                <div></div>
+            </div>
+            <div id="calendarDateRow">
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+                <div class="calendarDaySlot"></div>
+            </div>
+            <div id="calendarTimeColumn">
+
+            </div>
+            <div id="calendarColumns">
+                <div class="calendarColumn"></div>  
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+                <div class="calendarColumn"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="user.js"></script>
 </body>
 </html>

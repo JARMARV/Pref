@@ -11,9 +11,9 @@ let userData = [];
 fetch("userData.json")
     .then(response => {
         if (!response.ok) {
-            throw new Error("Failed to load user data")
+            throw new Error("Failed to load user data");
         }
-        return response.json()
+        return response.json();
     })
     .then(data => {
         userData = data
@@ -59,7 +59,14 @@ loginButton.addEventListener("click", event => {
         alert("Database error : multiple users with the same user information please contact your administrator");
         return;
     }
-
-    
-    window.location.href = "admin.html"
+    //sending user to the right html page according to their authorization level
+    if (fullyMatchingUsers[0].authorizationLevel === "localAdmin"){
+        window.location.href = "admin.html";
+        return;
+    }
+    if (fullyMatchingUsers[0].authorizationLevel === "standartUser"){
+        window.location.href = "user.html";
+        return;
+    }
+    alert("error could not load new page");
 })

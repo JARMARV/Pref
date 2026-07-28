@@ -10,6 +10,10 @@
     #dedee3
     white
 */
+button{
+    cursor:pointer;
+}
+
 body{
     background-color: #121936;
     color:#dedee3;

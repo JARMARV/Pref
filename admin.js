@@ -31,11 +31,6 @@ const dayOfSlot = document.getElementById("dayOfSlot")
 const startTimeSlot = document.getElementById("startTimeSlot")
 const endTimeSlot = document.getElementById("endTimeSlot")
 
-//user data
-let userName = "testUser"
-let userID = "testID"
-let userAuthrization = "localAdmin"
-
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 const currentWeekIndex = 0
@@ -61,7 +56,7 @@ fetch("userData.json")
 function getCurrentEvent() {
     return userData?.[0]?.events?.[0]
 }
-//scales the width of the horizontal line sin the calendar
+//scales the width of the horizontal lines in the calendar
 function updateCalendarColumnsWidth() {
     if (!calendarColumns) return
         const width = calendarColumns.offsetWidth
