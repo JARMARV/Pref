@@ -6,22 +6,71 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>My Website</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="user.css">
     <link rel="icon" href="" type="image/x-icon">
 </head>
 <body>
+
     <div id="darkenedSite"></div>
 
     <div id="header">
         <h2 id="headerTitle">This is the header</h2>
+        <button id="newTableButton">New Table</button>
+        <button id="newSlotButton">New Slot</button>
         <button id="userButton"></button>
     </div>
 
-    <div id="userPanel"></div>
+    <div id="userPanel">
+        <button id="logoutButton">Log out</button>
+    </div>
 
+    <div id="adminCalendarSettingsPanel">
+        <div>
+            <h3>Test</h3>
+        </div>
+        <div>
+            start date
+            <input class="inputStyle1" id="startDate" type="date" value="2024-01-01">
+        </div>
+        <div>   
+            end date
+            <input class="inputStyle1" id="endDate" type="date" value="2024-12-31">
+        </div>
+        <div>
+            earliest start time
+            <input class="inputStyle1" id="startTime" type="time" value="05:30">
+        </div>
+        <div>
+            latest end time
+            <input class="inputStyle1" id="endTime" type="time" value="10:20" >
+        </div>
+
+        <button id="submitCalendarSettingsButton">
+            submit
+        </button>
+    </div>
+    <div id="adminSlotCreationPanel">
+        <div>
+            <h3>Test</h3>
+        </div>
+        <div>
+            day
+            <input class="inputStyle1" id="dayOfSlot" type="date" value="2026-06-29">
+        </div>
+        <div>
+            start time
+            <input class="inputStyle1" id="startTimeSlot" type="time" value="09:30">
+        </div>
+        <div>
+            end time
+            <input class="inputStyle1" id="endTimeSlot" type="time" value="10:20" >
+        </div>
+        <button id="submitSlotCreationButton">
+            submit
+        </button>
+    </div>
     <div id="SlotAndModuleEditPanel">
         <button class="closeModulesWindow"></button>
-        <div id="userSlotPanel">
+        <div id="adminSlotPanel">
             <div>
                 day
                 <input class="inputStyle1" id="dayOfSlotPanel" type="date" value="2026-06-29">
@@ -34,11 +83,12 @@
                 end time
                 <input class="inputStyle1" id="endTimeSlotPanel" type="time" value="10:20" >
             </div>
-            <button id ="saveUserPreference">Save</button>
+            <button id="addModuleButton">Add Module</button>
+            <button id ="saveSlotAndModuleSettings">Save</button>
         </div>
-        <div id="userModulePanel"></div>
+        <div id="adminModulePanel"></div>
     </div>
-
+    
     <div id="mainGrid">
         <div id="mainCalendar">
             <div id="calendarMonth">
@@ -67,7 +117,6 @@
             </div>
         </div>
     </div>
-
-    <script src="user.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>

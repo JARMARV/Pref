@@ -20,6 +20,7 @@ const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
 const userButton = document.getElementById("userButton");
 const userPanel = document.getElementById("userPanel");
 const saveUserPreference = document.getElementById("saveUserPreference");
+const logoutButton = document.getElementById("logoutButton");
 const hourIncrement = 90;
 
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -169,7 +170,7 @@ function makeSlotLogic() {
                                     <div>5</div>
                                     </div>
                                     <div class="sliderContainer">
-                                        <input type="range" class="silderInput" min="1" max="5">
+                                        <input type="range" class="silderInput" min="1" max="5" value="${userData[1].events[0].slots[selectedSlotID].modules[j].userPreference}">
                                     </div>
                                 </div>
                             </div>
@@ -273,8 +274,18 @@ if (saveUserPreference) {
         for (let i = 0; i < event.slots[selectedSlotID].modules.length;i++){
             event.slots[selectedSlotID].modules[i].userPreference = userModulePanel.children[i].querySelector(".silderInput").value;
         }
+        if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+        if (userModulePanel) userModulePanel.style.display = "none"
+        if (darkenedSite) darkenedSite.style.display = "none"
+        updateCalendar()
     })
 }
 else{
     console.log("error could not find save button")
+}
+if (logoutButton){
+    logoutButton.addEventListener("click", () => {
+        window.location.href = "index.html";
+        //delete(session key)
+    })
 }

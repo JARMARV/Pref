@@ -18,6 +18,9 @@ const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSett
 const dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
 const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
 const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
+const userButton = document.getElementById("userButton");
+const userPanel = document.getElementById("userPanel");
+const logoutButton = document.getElementById("logoutButton");
 
 //data for the calendar creation
 const startTime = document.getElementById("startTime")
@@ -180,7 +183,36 @@ if (saveSlotAndModuleSettings){
 else{
     console.log("could not find saveSlotAndModuleSettings button")
 }
+if (userButton) {
+    userButton.addEventListener("click", () => {
 
+        if (userPanel.style.display === "grid") {
+            userPanel.style.display = "none";
+            document.removeEventListener("click", closeUserPanel);
+            return;
+        }
+
+        userPanel.style.display = "grid";
+
+        closeUserPanel = (event) => {
+            if (!userPanel.contains(event.target) && event.target !== userButton) {
+                userPanel.style.display = "none";
+                document.removeEventListener("click", closeUserPanel);
+            }
+        };
+
+        document.addEventListener("click", closeUserPanel);
+    });
+}
+else{
+    console.log("error could not find user Button")
+}
+if (logoutButton){
+    logoutButton.addEventListener("click", () => {
+        window.location.href = "index.html";
+        //delete(session key)
+    })
+}
 
 
 

@@ -36,7 +36,7 @@ body{
     grid-template-rows: 40px auto;
     grid-template-columns: 1fr 1fr 40px;
     grid-template-areas: 
-        "title title accountButton"
+        "title title userButton"
         "button1 button2 null"
     ;
 }
@@ -53,12 +53,9 @@ body{
     grid-area: button2;
     max-width: 100px;
 }
-#accountButton{
-    grid-area: accountButton;
+#userButton{
+    grid-area: userButton;
 }
-
-
-
 
 #main{
     padding:10px;
@@ -362,4 +359,17 @@ body{
 }
 ::-webkit-scrollbar-button {
     display: none;
+}
+#userPanel{
+    display:none;
+    position:absolute;
+    right:57px;
+    top:10px;
+    width:100px;
+    height:200px;
+    background-color: #0c217c;
+    z-index: 9;
+}
+#logoutButton{
+    height:20px;
 }

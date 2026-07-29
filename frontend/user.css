@@ -420,3 +420,6 @@ input[type="range"]::-webkit-slider-thumb {
     background-color: #0c217c;
     z-index: 9;
 }
+#logoutButton{
+    height:20px;
+}
