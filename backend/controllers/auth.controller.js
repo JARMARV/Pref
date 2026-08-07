@@ -30,6 +30,7 @@ export const signIn=async (req,res) => {
                 const passwordMatches = await bcrypt.compare(password, user.password_hash)
                 if (passwordMatches){
                     const token = jwt.sign({
+                        userName: name,
                         userId: user.user_id,
                         authorizationLevel: user.authorization_level,
                         organization: user.organization_name},
@@ -61,8 +62,9 @@ export const signIn=async (req,res) => {
             const passwordMatches = await bcrypt.compare(password, user.password_hash)
 
             if (passwordMatches){
-                const token = jwt.sign({userId:
-                    user.user_id,
+                const token = jwt.sign({
+                    userName: name,
+                    userId:user.user_id,
                     authorizationLevel: user.authorization_level,
                     organization: user.organization_name},
                     JWT_SECRET,
