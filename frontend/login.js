@@ -2,9 +2,11 @@ const loginButton = document.getElementById("loginButton!");
 const loginPanel = document.getElementById("loginPanel");
 const darkenedSite = document.getElementById("darkenedSite");
 const userNameInput = document.getElementById("userName");
-const establishmentIDInput = document.getElementById("establishmentID");
+const organizationInput = document.getElementById("establishmentID");
 const passwordInput = document.getElementById("password");
-
+const title = document.getElementById("title");
+const apiURL = "http://localhost:5600";
+const authSites = ["tempToUser.html", "user.html", "admin.html" , "superUser.html"];
 
 //fetch the userdata.json (will later be replaced by an actual database)
 let userData = [];
@@ -25,40 +27,33 @@ fetch("userData.json")
 
 
 //defining the behaviour of the login button
-loginButton.addEventListener("click", event => {
+loginButton.addEventListener("click", async event => {
     //checking if we find the needed inputs are even there
-    if (!(passwordInput && establishmentIDInput && userNameInput)){
+    if (!(passwordInput && organizationInput && userNameInput)){
         console.log("could not find html objects");
         return;
     }
     //checking if the user has assigned information to each input
-    if (!(passwordInput.value && establishmentIDInput.value && userNameInput.value)){
+    if (!(passwordInput.value && organizationInput.value && userNameInput.value)){
         alert("Please fill out all information");
         return;
     }
-    //checking if the user exists
-    const matchingUsers = userData.filter(user => user.userName === userNameInput.value);
-    if (!matchingUsers.length){
-        alert("could not find user");
-        return;
-    }
-    //checking if password and organisation id match any user of the given username
-    let fullyMatchingUsers = [];
-    for (let i = 0; i < matchingUsers.length; i++) {
-        if (matchingUsers[i].password ==  passwordInput.value && matchingUsers[i].organization == establishmentIDInput.value){
-            fullyMatchingUsers.push(matchingUsers[i])
-        }
-    }
-    //checking if the for loop found any matching users
-    if (fullyMatchingUsers.length == 0){
-        alert("could not find user");
-        return;
-    }
-    //checking if there are more than one user with exactly the same user information
-    if (!fullyMatchingUsers.length == 1){
-        alert("Database error : multiple users with the same user information please contact your administrator");
-        return;
-    }
+
+    const response = await fetch(apiURL + "/api/v1/auth/sign-in", {
+        method: "POST",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: userNameInput.value,
+            password: passwordInput.value,
+            organization: organizationInput.value
+        })
+    })
+    const responseJson = await response.json();
+    console.log(responseJson.success);
+    console.log(responseJson.userAuth);
+    window.location.href = authSites[responseJson.userAuth];
+    /*
     //sending user to the right html page according to their authorization level
     if (fullyMatchingUsers[0].authorizationLevel === "localAdmin"){
         window.location.href = "admin.html";
@@ -69,4 +64,18 @@ loginButton.addEventListener("click", event => {
         return;
     }
     alert("error could not load new page");
+    */
+    
 })
+
+async function test(response){
+    const test = await fetch(apiURL + "/api/v1/users/temp", {method: "POST"});
+    const test2 = await test.json();
+    return test2;
+};
+async function loadTitle(){
+    const users = await test();
+    console.log(users);
+}
+
+loadTitle();

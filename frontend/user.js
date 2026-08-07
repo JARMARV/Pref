@@ -22,6 +22,8 @@ const userPanel = document.getElementById("userPanel");
 const saveUserPreference = document.getElementById("saveUserPreference");
 const logoutButton = document.getElementById("logoutButton");
 const hourIncrement = 90;
+const apiURL = "http://localhost:5600"
+
 
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
