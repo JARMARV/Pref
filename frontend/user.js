@@ -29,22 +29,6 @@ const monthsOfTheYear = ["January", "February", "March", "April", "May", "June",
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const currentWeekIndex = 0;
 
-//fetch the userdata.json (will later be replaced by an actual database)
-let userData = [];
-fetch("userData.json")
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Failed to load user data");
-        }
-        return response.json();
-    })
-    .then(data => {
-        userData = data
-        updateCalendar();
-    })
-    .catch(error => {
-        console.error("Could not load user data:", error);
-    })
 
 
 //currently not fully implemented just gives the first event
@@ -286,8 +270,13 @@ else{
     console.log("error could not find save button")
 }
 if (logoutButton){
-    logoutButton.addEventListener("click", () => {
+    logoutButton.addEventListener("click", async () => {
+        const response = await fetch(apiURL + "/api/v1/auth/sign-out", {
+            method:"POST",
+            credentials:"include"
+        });
+        console.log(await response.json())
         window.location.href = "index.html";
-        //delete(session key)
+
     })
 }

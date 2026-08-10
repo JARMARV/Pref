@@ -8,24 +8,6 @@ const title = document.getElementById("title");
 const apiURL = "http://localhost:5600";
 const authSites = ["tempToUser.html", "user.html", "admin.html" , "superUser.html"];
 
-//fetch the userdata.json (will later be replaced by an actual database)
-let userData = [];
-fetch("userData.json")
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Failed to load user data");
-        }
-        return response.json();
-    })
-    .then(data => {
-        userData = data
-        //updateCalendar()
-    })
-    .catch(error => {
-        console.error("Could not load user data:", error);
-    })
-
-
 //defining the behaviour of the login button
 loginButton.addEventListener("click", async event => {
     //checking if we find the needed inputs are even there

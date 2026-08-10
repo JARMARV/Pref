@@ -39,6 +39,7 @@ export const signIn=async (req,res) => {
                     );
                     res.cookie("token",token,{
                         httpOnly: true, 
+                        path: "/",
                         secure: false, // Set to true in production
                         sameSite: "lax", // Set to "strict" in production
                         maxAge: 1000 * 60 * 60 * 24
@@ -72,6 +73,7 @@ export const signIn=async (req,res) => {
                 );
                 res.cookie("token",token,{
                     httpOnly: true,
+                    path: "/",
                     secure: false, // Set to true in production
                     sameSite: "lax", // Set to "strict" in production
                     maxAge: 1000 * 60 * 60 * 24
@@ -95,12 +97,15 @@ export const signIn=async (req,res) => {
 }
 
 export const signOut=async (req,res) => {
-    const client = await pool.connect();
-    try{
-
-    }catch(error){
-        throw error;
-    }finally{
-        client.release();
-    } 
+    res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    path: "/",
+    sameSite: "lax"
+    });
+    console.log(req.header.cookies)
+    return res.status(200).json({
+        success: true,
+        message: "Successfully signed out"
+    });
 }

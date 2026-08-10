@@ -2,6 +2,8 @@ const createAccountButton = document.getElementById("createAccountButton");
 const userNameInput = document.getElementById("userName");
 const passwordInput = document.getElementById("password");
 const apiURL = "http://localhost:5600";
+const authSites = ["tempToUser.html", "user.html", "admin.html" , "superUser.html"];
+
 createAccountButton.addEventListener("click", async event => {
     if (!(passwordInput && userNameInput)){
         console.log("could not find html objects");
@@ -22,7 +24,10 @@ createAccountButton.addEventListener("click", async event => {
             password: passwordInput.value
         })
     })
-    const res = await response.json();
-    console.log(res);
+    const resJson = await response.json();
+    console.log(resJson);
+    if (resJson.success === true){
+        window.location.href = authSites[resJson.userAuth];
+    }
 
 });

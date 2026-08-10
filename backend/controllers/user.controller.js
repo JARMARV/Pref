@@ -138,6 +138,7 @@ export const newUser = async (req, res) => {
         );
         res.cookie("token",token,{
             httpOnly: true, 
+            path: "/",
             secure: false, // Set to true in production
             sameSite: "lax", // Set to "strict" in production
             maxAge: 1000 * 60 * 60 * 24
