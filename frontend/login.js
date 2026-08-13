@@ -28,36 +28,28 @@ loginButton.addEventListener("click", async event => {
         body: JSON.stringify({
             name: userNameInput.value,
             password: passwordInput.value,
-            organization: organizationInput.value
+            organizationName: organizationInput.value
         })
     })
     const responseJson = await response.json();
+    if (responseJson.success !== true){
+        alert("could not find user with the given information")
+        return;
+    }
     console.log(responseJson.success);
     console.log(responseJson.userAuth);
-    window.location.href = authSites[responseJson.userAuth];
-    /*
-    //sending user to the right html page according to their authorization level
-    if (fullyMatchingUsers[0].authorizationLevel === "localAdmin"){
-        window.location.href = "admin.html";
-        return;
-    }
-    if (fullyMatchingUsers[0].authorizationLevel === "standartUser"){
-        window.location.href = "user.html";
-        return;
-    }
-    alert("error could not load new page");
-    */
-    
+
+    window.location.href = authSites[responseJson.userAuth];  
+
 })
 
-async function test(response){
-    const test = await fetch(apiURL + "/api/v1/users/temp", {method: "POST"});
-    const test2 = await test.json();
-    return test2;
+async function createTempUser(){
+    const response = await fetch(apiURL + "/api/v1/users/temp", {
+        method: "POST",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+    });
+    const responseJson = await response.json();
+    console.log(responseJson);
 };
-async function loadTitle(){
-    const users = await test();
-    console.log(users);
-}
-
-loadTitle();
+createTempUser()

@@ -29,7 +29,22 @@ const monthsOfTheYear = ["January", "February", "March", "April", "May", "June",
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const currentWeekIndex = 0;
 
-
+//fetch the userdata.json (will later be replaced by an actual database)
+let userData = [];
+fetch("userData.json")
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to load user data")
+        }
+        return response.json()
+    })
+    .then(data => {
+        userData = data
+        updateCalendar()
+    })
+    .catch(error => {
+        console.error("Could not load user data:", error)
+    })
 
 //currently not fully implemented just gives the first event
 function getCurrentEvent() {

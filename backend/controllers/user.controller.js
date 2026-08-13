@@ -23,41 +23,58 @@ export const newTempUser = async (req, res) => {
     const client = await pool.connect();
 
     try {
+        //checking if user admin authorization
+        const reqtoken = req.cookies.token;
+        if (!reqtoken) {
+            return res.status(401).json({ message: "No token provided" });
+        };
+        const decoded = jwt.verify(reqtoken, JWT_SECRET);
+        if (!decoded) {
+            return res.status(401).json({ message: "Invalid token" });
+        };
+        const userID = decoded.userId;
+        const authorizationLevel = decoded.authorizationLevel;
+        const organizationID = decoded.organizationID;
+        if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+            return res.status(400).json({ message: "Invalid token data" });
+        };
+        if (authorizationLevel !== 2){
+            return res.status(403).json({message: "Authorization failed"});
+        };
         let userName;
         while (true) {
             userName = generateRandomString(8);
             const password = generateRandomString(12);
-            const organizationName = "test_organization";
-            const authorizationLevel = 0;
-
+            const newAuthorizationLevel = 0;
+            if(!organizationID){
+                return res.status(400).json({success:false , message:"no organization id"})
+            };
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(password, salt);
-
             try {
                 await client.query(
                     `
                     INSERT INTO temp_users 
-                    (name, password_hash, organization_name, authorization_level)
+                    (name, password_hash, organization_id, authorization_level)
                     VALUES ($1, $2, $3, $4);
                     `,
                     [
                         userName,
                         passwordHash,
-                        organizationName,
-                        authorizationLevel
+                        organizationID,
+                        newAuthorizationLevel
                     ]
                 );
-                //const token = jwt.sign({userName},JWT_SECRET,{ expiresIn: JWT_EXPIRES_IN });
                 res.status(201).json({
                     success: true,
                     message: "Temporary user created successfully",
+                    userName: userName,
+                    password: password
                 });
-                console.log(userName,password,organizationName);
                 break;
 
             } catch (error) {
                 if (error.code === "23505") {
-                    res.status(400).json({ message: "Username collision, trying another one" });
                     continue;
                 }
 
@@ -67,7 +84,7 @@ export const newTempUser = async (req, res) => {
 
     } catch(error) {
         console.error(error);
-        res.status(500).send("Database error");
+        return res.status(500).json({message:"Database error"});
 
     } finally {
         client.release();
@@ -89,8 +106,8 @@ export const newUser = async (req, res) => {
         };
         const userID = decoded.userId;
         const authorizationLevel = decoded.authorizationLevel;
-        const organization = decoded.organization;
-        if (userID === undefined || authorizationLevel === undefined || organization === undefined) {
+        const organizationID = decoded.organizationID;
+        if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
             return res.status(400).json({ message: "Invalid token data" });
         };
         if (authorizationLevel !== 0){
@@ -106,8 +123,8 @@ export const newUser = async (req, res) => {
 
         const salt = await bcrypt.genSalt(10);
         const newHashedPassword = await bcrypt.hash(newUserPassword, salt);
-        const existing = await client.query(`SELECT 1 FROM users WHERE name = $1 AND organization_name = $2`,
-            [newUserName, organization]
+        const existing = await client.query(`SELECT * FROM users WHERE name = $1 AND organization_id = $2`,
+            [newUserName, organizationID]
         );
 
         if (existing.rows.length > 0) {
@@ -122,9 +139,9 @@ export const newUser = async (req, res) => {
         if (result.rowCount !== 1) {
             throw new Error("Temporary user not found");
         };
-        await client.query(`INSERT INTO users (user_id, name, password_hash, organization_name, authorization_level ) 
+        await client.query(`INSERT INTO users (user_id, name, password_hash, organization_id, authorization_level ) 
             VALUES($1,$2,$3,$4,$5)`,
-            [userID,newUserName,newHashedPassword,organization,newAuthLevel]
+            [userID,newUserName,newHashedPassword,organizationID,newAuthLevel]
         );
         await client.query("COMMIT");
         transactionStarted = false;
@@ -132,7 +149,7 @@ export const newUser = async (req, res) => {
             userName: newUserName,
             userId: userID,
             authorizationLevel: newAuthLevel,
-            organization: organization},
+            organizationID: organizationID},
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
         );
@@ -151,6 +168,7 @@ export const newUser = async (req, res) => {
     }catch(error){
         if (transactionStarted) {
             await client.query("ROLLBACK");
+            return;
         }
         if (error.code === "23505") {
             return res.status(409).json({
@@ -175,3 +193,4 @@ function generateRandomString(length) {
 
     return password;
 }
+

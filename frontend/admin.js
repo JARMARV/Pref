@@ -21,6 +21,7 @@ const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
 const userButton = document.getElementById("userButton");
 const userPanel = document.getElementById("userPanel");
 const logoutButton = document.getElementById("logoutButton");
+const apiURL = "http://localhost:5600";
 
 //data for the calendar creation
 const startTime = document.getElementById("startTime")
@@ -70,24 +71,34 @@ window.addEventListener('resize', updateCalendarColumnsWidth)
 
 if (newTableButton) {
     newTableButton.addEventListener("click", event => {
-        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid"
-        if (darkenedSite) darkenedSite.style.display = "block"
-        if (endDate) endDate.value = "2026-7-31"
-        if (startDate) startDate.value = "2026-06-29"
-        if (startTime) startTime.value = "05:30"
-        if (endTime) endTime.value = "10:20"
+        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid";
+        if (darkenedSite) darkenedSite.style.display = "block";
+        if (endDate) endDate.value = "2026-07-31";
+        if (startDate) startDate.value = "2026-07-31";
+        if (startTime) startTime.value = "00:00";
+        if (endTime) endTime.value = "23:59";
     })
 }
 else{
     console.log("error could not find newTableButton")
 }
 if (submitCalendarSettingsButton) {
-    submitCalendarSettingsButton.addEventListener("click", event => {
+    submitCalendarSettingsButton.addEventListener("click",async event => {
         if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value) {
             alert("please fill out all information")
             return
         }
-
+        const response = await fetch(apiURL + "/api/v1/events/event", {
+            method: "POST",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({
+                endDate: endDate.value + "T" + endTime.value,
+                startDate: startDate.value + "T" + startTime.value,
+                eventName: "testEvent"
+            })
+        });
+        console.log(await response.json())
         if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
 
@@ -98,11 +109,12 @@ if (submitCalendarSettingsButton) {
         }
 
         updateCalendar()
-    })
+    });
 }
 else{
     console.log("error could not find submitCalendarSettingsButton")
 }
+
 if (newSlotButton) {
     newSlotButton.addEventListener("click", () => {
         if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "grid"
@@ -410,3 +422,15 @@ function drawDateRow() {
         }
     }
 }
+
+const eventID = "daae6ebd-e5f5-48f8-81b2-8312beabdd89";
+async function getEventData(){
+    const response = await fetch(apiURL + "/api/v1/events/" + eventID, {
+        method: "GET",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+    });
+    const responseJson = await response.json();
+    console.log(responseJson);
+};
+getEventData()

@@ -10,17 +10,34 @@ export const signIn=async (req,res) => {
     try{
         const name = req.body.name;
         const password = req.body.password;
-        const organizationName = req.body.organization;
-        let users = await client.query("SELECT * FROM users WHERE name=$1 AND organization_name=$2",
-        [name,organizationName]);
+        const organizationName = req.body.organizationName;
+
+        const organization = await client.query(
+            `
+            SELECT organization_id
+            FROM organizations
+            WHERE organization_name = $1
+            `,
+            [organizationName]
+        );
+        if (organization.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Organization not found"
+            });
+        }
+        const organizationID = organization.rows[0].organization_id;
+
+        let users = await client.query("SELECT * FROM users WHERE name=$1 AND organization_id=$2",
+        [name,organizationID]);
         //if there are no matching users in the users table check in temp_users
         if (users.rows.length === 0) {
             
-            const temp_users = await client.query("SELECT * FROM temp_users WHERE name=$1 AND organization_name=$2",
-            [name,organizationName]);
+            const temp_users = await client.query("SELECT * FROM temp_users WHERE name=$1 AND organization_id=$2",
+            [name,organizationID]);
             
             if (temp_users.rows.length === 0) {
-                return res.status(400).json({ message: "User not found" });
+                return res.status(404).json({ message: "User not found" });
 
             }else if (users.rows.length > 1) {
              return res.status(400).json({ message: "Multiple users found with the same credentials" });
@@ -33,7 +50,7 @@ export const signIn=async (req,res) => {
                         userName: name,
                         userId: user.user_id,
                         authorizationLevel: user.authorization_level,
-                        organization: user.organization_name},
+                        organizationID: user.organization_id},
                         JWT_SECRET,
                         { expiresIn: JWT_EXPIRES_IN }
                     );
@@ -67,7 +84,7 @@ export const signIn=async (req,res) => {
                     userName: name,
                     userId:user.user_id,
                     authorizationLevel: user.authorization_level,
-                    organization: user.organization_name},
+                    organizationID: user.organization_id},
                     JWT_SECRET,
                     { expiresIn: JWT_EXPIRES_IN }
                 );
