@@ -6,9 +6,9 @@ const authRouter = Router();
 
 
 // Path: /api/v1/events/...(POST)
-authRouter.post('/:eventID',newEvent);
-authRouter.post('/:eventID/:slotID',newSlot);
-authRouter.post('/:eventID/:slotID/:moduleID',newModule);
+authRouter.post('/event',newEvent);
+authRouter.post('/:eventID/slot',newSlot);
+authRouter.post('/:eventID/:slotID/module',newModule);
 
 authRouter.get('/:eventID',getEventJson);
 //authRouter.patch('/:eventID',updateEvent);

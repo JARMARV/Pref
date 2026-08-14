@@ -30,7 +30,7 @@ const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const currentWeekIndex = 0;
 
 //fetch the userdata.json (will later be replaced by an actual database)
-let userData = [];
+let eventData = [];
 fetch("userData.json")
     .then(response => {
         if (!response.ok) {
@@ -39,17 +39,14 @@ fetch("userData.json")
         return response.json()
     })
     .then(data => {
-        userData = data
-        updateCalendar()
+        eventData = data
+        renderCalendar()
     })
     .catch(error => {
         console.error("Could not load user data:", error)
     })
 
 //currently not fully implemented just gives the first event
-function getCurrentEvent() {
-    return userData?.[0]?.events?.[0];
-}
 //scales the width of the horizontal lines in the calendar
 function updateCalendarColumnsWidth() {
     if (!calendarColumns) return
@@ -59,8 +56,7 @@ function updateCalendarColumnsWidth() {
 window.addEventListener('load', updateCalendarColumnsWidth)
 window.addEventListener('resize', updateCalendarColumnsWidth)
 
-function updateCalendar() {
-    const eventData = getCurrentEvent()
+function renderCalendar() {
     if (!eventData) return
     drawCalendarTimeColumn()
     drawDateRow()
@@ -71,7 +67,6 @@ function updateCalendar() {
 function drawCalendarTimeColumn() {
     if (!calendarTimeColumn || !mainCalendar) return
     calendarTimeColumn.innerHTML = ""
-    const eventData = getCurrentEvent()
     if (!eventData) return
 
     const startTimeValue = eventData.startDate.split("T")[1].split(":")
@@ -91,7 +86,6 @@ function drawCalendarTimeColumn() {
 function drawSlots() {
     if (!calendarColumns) return
 
-    const eventData = getCurrentEvent()
     if (!eventData) return
 
     for (let i = 0; i < calendarColumns.children.length; i++) {
@@ -123,7 +117,7 @@ function drawSlots() {
             let modulesHTML = ""
             for (let j = 0; j < eventData.slots[i].modules.length; j++) {
                 modulesHTML += `
-                    <div class="calendarModule preferenceLevel${userData[1].events[0].slots[i].modules[j].userPreference}">
+                    <div class="calendarModule preferenceLevel${eventData[1].events[0].slots[i].modules[j].userPreference}">
                         <div class="moduleName" style="font-size: 1rem;">${eventData.slots[i].modules[j].name}</div>
                         <div class="moduleGeneralInfo">${eventData.slots[i].modules[j].additionalInfo}</div>
                         <div class="moduleLocationShort">${eventData.slots[i].modules[j].locationInfoShort}</div>
@@ -143,7 +137,6 @@ function makeSlotLogic() {
     const slots = document.getElementsByClassName("CalendarSlot")
     for (let i = 0; i < slots.length; i++) {
         slots[i].addEventListener("click", () => {
-            const eventData = getCurrentEvent()
             if (!eventData) return
 
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid"
@@ -171,7 +164,7 @@ function makeSlotLogic() {
                                     <div>5</div>
                                     </div>
                                     <div class="sliderContainer">
-                                        <input type="range" class="silderInput" min="1" max="5" value="${userData[1].events[0].slots[selectedSlotID].modules[j].userPreference}">
+                                        <input type="range" class="silderInput" min="1" max="5" value="${eventData[1].events[0].slots[selectedSlotID].modules[j].userPreference}">
                                     </div>
                                 </div>
                             </div>
@@ -213,13 +206,12 @@ function bindModulePanelInteractions() {
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
             if (userModulePanel) userModulePanel.style.display = "none"
             if (darkenedSite) darkenedSite.style.display = "none"
-            updateCalendar()
+            renderCalendar()
         }
     }
 }
 
 function drawDateRow() {
-    const eventData = getCurrentEvent()
     if (!eventData || !calendarDateRow || !calendarMonth) return
 
     const startDateValue = new Date(eventData.startDate)
@@ -270,7 +262,7 @@ else{
 }
 if (saveUserPreference) {
     saveUserPreference.addEventListener("click", () => {
-        const event = userData[1].events[0];
+        const event = eventData[1].events[0];
         const selectedSlotID = Number(SlotAndModuleEditPanel.dataset.idOfSelectedSlot);
         for (let i = 0; i < event.slots[selectedSlotID].modules.length;i++){
             event.slots[selectedSlotID].modules[i].userPreference = userModulePanel.children[i].querySelector(".silderInput").value;
@@ -278,7 +270,7 @@ if (saveUserPreference) {
         if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
         if (userModulePanel) userModulePanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
-        updateCalendar()
+        renderCalendar()
     })
 }
 else{

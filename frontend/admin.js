@@ -40,26 +40,41 @@ const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 const currentWeekIndex = 0
 
 
-//fetch the userdata.json (will later be replaced by an actual database)
-let userData = [];
-fetch("userData.json")
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Failed to load user data")
-        }
-        return response.json()
-    })
-    .then(data => {
-        userData = data
-        updateCalendar()
-    })
-    .catch(error => {
-        console.error("Could not load user data:", error)
-    })
-//currently not fully implemented just gives the first event
-function getCurrentEvent() {
-    return userData?.[0]?.events?.[0]
+//get event data
+let eventData = null;
+initialize();
+
+async function initialize() {
+    const result = await getEventData();
+    if (!result.success) {
+        console.error(result.message);
+        return;
+    }
+    eventData = result.event;
+    console.log(eventData);
+    renderCalendar();
 }
+async function getEventData(){
+    const eventID = "d1b45280-755d-498e-95f7-47bbdecd43fc";
+    const response = await fetch(apiURL + "/api/v1/events/" + eventID, {
+        method: "GET",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+    });
+    const responseJson = await response.json();
+    return responseJson;
+};
+
+
+function renderCalendar() {
+    if (!eventData) return
+    drawCalendarTimeColumn()
+    drawDateRow()
+    drawSlots()
+    makeSlotLogic()
+}
+
+
 //scales the width of the horizontal lines in the calendar
 function updateCalendarColumnsWidth() {
     if (!calendarColumns) return
@@ -102,13 +117,12 @@ if (submitCalendarSettingsButton) {
         if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
 
-        const eventData = getCurrentEvent()
         if (eventData) {
             eventData.startDate = startDate.value + "T" + startTime.value
             eventData.endDate = endDate.value + "T" + endTime.value
         }
 
-        updateCalendar()
+        renderCalendar()
     });
 }
 else{
@@ -125,12 +139,12 @@ else{
     console.log("error could not find newSlotButton")
 }
 if (submitSlotCreationButton) {
-    submitSlotCreationButton.addEventListener("click", () => {
+    submitSlotCreationButton.addEventListener("click",async () => {
         const slotDay = dayOfSlot?.value
         const slotStartTime = startTimeSlot?.value
         const slotEndTime = endTimeSlot?.value
-        for (let i = 0; i < getCurrentEvent().slots.length; i++) {
-            if (!(new Date(getCurrentEvent().slots[i].start) > new Date(slotDay +"T"+ slotEndTime) || new Date(getCurrentEvent().slots[i].end) < new Date(slotDay +"T"+ slotStartTime))){
+        for (let i = 0; i < eventData?.slots?.length; i++) {
+            if (!(new Date(eventData.slots[i].start) > new Date(slotDay +"T"+ slotEndTime) || new Date(eventData.slots[i].end) < new Date(slotDay +"T"+ slotStartTime))){
                 alert("The slot you are trying to create seems to overlap with an already existing slot")
                 return
             }
@@ -143,11 +157,19 @@ if (submitSlotCreationButton) {
             alert("please fill out all information")
             return
         }
-
+        const response = await fetch(apiURL + "/api/v1/events/event/slot", {
+            method: "POST",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({
+                endDate: slotDay + "T" + slotEndTime,
+                startDate: slotDay + "T" + slotStartTime,
+                eventID: "daae6ebd-e5f5-48f8-81b2-8312beabdd89"
+            })
+        });
         if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
 
-        const eventData = getCurrentEvent()
         if (eventData) {
             eventData.slots.push({
                 start: slotDay + "T" + slotStartTime,
@@ -158,7 +180,7 @@ if (submitSlotCreationButton) {
             })
         }
 
-        updateCalendar()
+        renderCalendar()
     })
 }
 else{
@@ -166,7 +188,7 @@ else{
 }
 if (saveSlotAndModuleSettings){
     saveSlotAndModuleSettings.addEventListener("click", () => {
-        const event = getCurrentEvent();
+        const event = eventData;
         const selectedSlotID = Number(SlotAndModuleEditPanel.dataset.idOfSelectedSlot)
         event.slots[selectedSlotID].start = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value)
         event.slots[selectedSlotID].end = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
@@ -189,7 +211,7 @@ if (saveSlotAndModuleSettings){
         if (adminModulePanel) adminModulePanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
         adminModulePanel.dataset.idOfSelectedSlot = "null";
-        updateCalendar()
+        renderCalendar()
     })
 }
 else{
@@ -220,33 +242,29 @@ else{
     console.log("error could not find user Button")
 }
 if (logoutButton){
-    logoutButton.addEventListener("click", () => {
+    logoutButton.addEventListener("click", async () => {
+        const response = await fetch(apiURL + "/api/v1/auth/sign-out", {
+            method:"POST",
+            credentials:"include"
+        });
+        console.log(await response.json())
         window.location.href = "index.html";
-        //delete(session key)
+
     })
-}
+};
 
-
-
-function updateCalendar() {
-    const eventData = getCurrentEvent()
-    if (!eventData) return
-    drawCalendarTimeColumn()
-    drawDateRow()
-    drawSlots()
-    makeSlotLogic()
-}
 
 function drawCalendarTimeColumn() {
     if (!calendarTimeColumn || !mainCalendar) return
 
     calendarTimeColumn.innerHTML = ""
-    const eventData = getCurrentEvent()
-    if (!eventData) return
-
-    const startTimeValue = eventData.startDate.split("T")[1].split(":")
-    const endTimeValue = eventData.endDate.split("T")[1].split(":")
-    const maxTimeSpan = (parseInt(endTimeValue[0]) + 1) - (parseInt(startTimeValue[0]) - 1)
+    if (!eventData){
+        console.log("eventData not found")
+        return
+    };
+    const startTimeValue = eventData.startDate.split("T")[1].split(":");
+    const endTimeValue = eventData.endDate.split("T")[1].split(":");
+    const maxTimeSpan = (parseInt(endTimeValue[0]) + 1) - (parseInt(startTimeValue[0]) - 1);
     mainCalendar.style.height = `${(maxTimeSpan * hourIncrement) + 100}px`
 
     for (let i = 0; i < maxTimeSpan; i++) {
@@ -261,7 +279,6 @@ function drawCalendarTimeColumn() {
 function drawSlots() {
     if (!calendarColumns) return
 
-    const eventData = getCurrentEvent()
     if (!eventData) return
 
     for (let i = 0; i < calendarColumns.children.length; i++) {
@@ -313,7 +330,6 @@ function makeSlotLogic() {
     const slots = document.getElementsByClassName("CalendarSlot")
     for (let i = 0; i < slots.length; i++) {
         slots[i].addEventListener("click", () => {
-            const eventData = getCurrentEvent()
             if (!eventData) return
 
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid"
@@ -373,7 +389,7 @@ function bindModulePanelInteractions() {
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
             if (adminModulePanel) adminModulePanel.style.display = "none"
             if (darkenedSite) darkenedSite.style.display = "none"
-            updateCalendar()
+            renderCalendar()
         }
     }
 }
@@ -399,7 +415,6 @@ function addSlotEditingPanelLogic() {
 }
 
 function drawDateRow() {
-    const eventData = getCurrentEvent()
     if (!eventData || !calendarDateRow || !calendarMonth) return
 
     const startDateValue = new Date(eventData.startDate)
@@ -423,14 +438,4 @@ function drawDateRow() {
     }
 }
 
-const eventID = "daae6ebd-e5f5-48f8-81b2-8312beabdd89";
-async function getEventData(){
-    const response = await fetch(apiURL + "/api/v1/events/" + eventID, {
-        method: "GET",
-        credentials: "include",
-        headers:{"Content-Type": "application/json"},
-    });
-    const responseJson = await response.json();
-    console.log(responseJson);
-};
-getEventData()
+
