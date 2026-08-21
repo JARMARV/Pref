@@ -129,7 +129,8 @@ body{
     justify-self: center;
 }
 #mainCalendar{
-    margin:40px;
+    margin-left:40px;
+    margin-right:40px;
     justify-self: center;
     box-sizing: border-box;
     display:grid;
@@ -372,4 +373,21 @@ body{
 }
 #logoutButton{
     height:20px;
+}
+#weekSelectionContainer{
+    justify-self: center;
+    width:95%;
+    height:50px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+#weekButtonLeft{
+    height:100%;
+    width:50px;
+}
+#weekButtonRight{
+    height:100%;
+    width:50px;
 }

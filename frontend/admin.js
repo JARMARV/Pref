@@ -39,6 +39,8 @@ const monthsOfTheYear = ["January", "February", "March", "April", "May", "June",
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 const currentWeekIndex = 0
 
+const eventID = "d1b45280-755d-498e-95f7-47bbdecd43fc";
+
 
 //get event data
 let eventData = null;
@@ -55,7 +57,6 @@ async function initialize() {
     renderCalendar();
 }
 async function getEventData(){
-    const eventID = "d1b45280-755d-498e-95f7-47bbdecd43fc";
     const response = await fetch(apiURL + "/api/v1/events/" + eventID, {
         method: "GET",
         credentials: "include",
@@ -164,22 +165,21 @@ if (submitSlotCreationButton) {
             body: JSON.stringify({
                 endDate: slotDay + "T" + slotEndTime,
                 startDate: slotDay + "T" + slotStartTime,
-                eventID: "daae6ebd-e5f5-48f8-81b2-8312beabdd89"
+                eventID: eventID
             })
         });
+        const responseJson = await response.json()
+        const slotID = responseJson.slotID;
         if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
-
         if (eventData) {
             eventData.slots.push({
                 start: slotDay + "T" + slotStartTime,
                 end: slotDay + "T" + slotEndTime,
-                slotWeekIndex: 0,
-                slotID: eventData.slots.length,
+                slotID: slotID,
                 modules: []
             })
         }
-
         renderCalendar()
     })
 }
@@ -187,30 +187,52 @@ else{
     console.log("error could not find submitSlotCreationButton")
 }
 if (saveSlotAndModuleSettings){
-    saveSlotAndModuleSettings.addEventListener("click", () => {
-        const event = eventData;
-        const selectedSlotID = Number(SlotAndModuleEditPanel.dataset.idOfSelectedSlot)
-        event.slots[selectedSlotID].start = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value)
-        event.slots[selectedSlotID].end = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
-        for (let i = 0; i < adminModulePanel.children.length - event.slots[selectedSlotID].modules.length; i++){
-            event.slots[selectedSlotID].modules.push({
+    saveSlotAndModuleSettings.addEventListener("click",async () => {
+        const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
+        const selectedSlotID = eventData.slots.findIndex(slot => slot.slotID === selectedSlotUUID);
+        eventData.slots[selectedSlotID].start = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value)
+        eventData.slots[selectedSlotID].end = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
+        const moduleCount = eventData.slots[selectedSlotID].modules.length;
+        //adding new modules to the event object
+        for (let i = 0; i < adminModulePanel.children.length - moduleCount; i++){
+
+            eventData.slots[selectedSlotID].modules.push({
                 "locationInfoShort": "",
                 "additionalInfo": "",
                 "name": "",
                 "moduleID": NaN,
             })
-
+            continue;
         }
+        //write information to all modules of the selected slot
         for (let i = 0; i < adminModulePanel.children.length; i++){
-            event.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
-            event.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
-            event.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
-            event.slots[selectedSlotID].modules[i].moduleID = i
+            
+            const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
+                method: "PATCH",
+                credentials: "include",
+                headers:{"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    slotID: selectedSlotUUID,
+                    locationInfo: adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value,
+                    generalInfo: adminModulePanel.children[i].querySelector(".moduleInfoPanel").value,
+                    moduleName: adminModulePanel.children[i].querySelector(".moduleNamePanel").value,
+                    moduleID: adminModulePanel.children[i].id
+                })
+            });
+            const responseJson = await response.json();
+            
+            console.log(eventData.slots[selectedSlotID].modules[i])
+            eventData.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
+            eventData.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
+            eventData.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+            eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
         }
         if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
         if (adminModulePanel) adminModulePanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
         adminModulePanel.dataset.idOfSelectedSlot = "null";
+
+        console.log(selectedSlotID)
         renderCalendar()
     })
 }
@@ -286,31 +308,35 @@ function drawSlots() {
     }
 
     for (let i = 0; i < eventData.slots.length; i++) {
-        if (eventData.slots[i].slotWeekIndex !== currentWeekIndex) continue
+        
+        const slotStartDate = new Date(eventData.slots[i].start);
+        const columnIndex = (slotStartDate.getDay() + 6) % 7;
+        const targetColumn = calendarColumns.children[columnIndex];
+        if (!targetColumn) continue;
 
-        const slotStartDate = new Date(eventData.slots[i].start)
-        const columnIndex = (slotStartDate.getDay() + 6) % 7
-        const targetColumn = calendarColumns.children[columnIndex]
-        if (!targetColumn) continue
+        const slotStartHours = slotStartDate.getHours() + 0.5 + (slotStartDate.getMinutes() / 60);
+        const eventStartHours = new Date(eventData.startDate).getHours();
+        const topPosition = (slotStartHours - eventStartHours) * hourIncrement;
+        const slotDurationHours = ((new Date(eventData.slots[i].end).getTime() - new Date(eventData.slots[i].start).getTime()) / 3600000) % 24;
+        const slotHeight = slotDurationHours * hourIncrement;
 
-        const slotStartHours = slotStartDate.getHours() + 0.5 + (slotStartDate.getMinutes() / 60)
-        const eventStartHours = new Date(eventData.startDate).getHours()
-        const topPosition = (slotStartHours - eventStartHours) * hourIncrement
-        const slotDurationHours = ((new Date(eventData.slots[i].end).getTime() - new Date(eventData.slots[i].start).getTime()) / 3600000) % 24
-        const slotHeight = slotDurationHours * hourIncrement
-
+        const eventStartDate = new Date(eventData.startDate);
+        const slotWeekIndex = Math.trunc(((slotStartDate - eventStartDate)/604800000));
+        if (slotWeekIndex !== currentWeekIndex) continue;
+        //create special empty slot if there are no modules in the slot
         if (!eventData.slots[i].modules.length) {
             targetColumn.innerHTML += `
-                <button id="${i}" class="CalendarSlot calendarSlotActive" style="top:${topPosition}px; height:${slotHeight}px">
+                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotActive" style="top:${topPosition}px; height:${slotHeight}px">
                     <div>Click to set Modules</div>
                 </button>
             `
         }
+        //render normal slots with their modules
         else {
             let modulesHTML = ""
             for (let j = 0; j < eventData.slots[i].modules.length; j++) {
                 modulesHTML += `
-                    <div class="calendarModule">
+                    <div class="calendarModule" id="${eventData.slots[i].modules[j].moduleID}">
                         <div class="moduleName" style="font-size: 1rem;">${eventData.slots[i].modules[j].name}</div>
                         <div class="moduleGeneralInfo">${eventData.slots[i].modules[j].additionalInfo}</div>
                         <div class="moduleLocationShort">${eventData.slots[i].modules[j].locationInfoShort}</div>
@@ -318,7 +344,7 @@ function drawSlots() {
                 `
             }
             targetColumn.innerHTML += `
-                <button id="${i}" class="CalendarSlot calendarSlotInactive" style="top:${topPosition}px; height:${slotHeight}px">
+                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotInactive" style="top:${topPosition}px; height:${slotHeight}px">
                     ${modulesHTML}
                 </button>
             `
@@ -337,7 +363,7 @@ function makeSlotLogic() {
             if (darkenedSite) darkenedSite.style.display = "block"
 
             const selectedSlotID = slots[i].id
-            const selectedSlot = eventData.slots[selectedSlotID]
+            const selectedSlot = eventData.slots.find(slot => slot.slotID === selectedSlotID)
 
             if (adminModulePanel) {
                 adminModulePanel.innerHTML = ``
@@ -398,14 +424,34 @@ function addSlotEditingPanelLogic() {
     bindModulePanelInteractions()
 
     if (addModuleButton && adminModulePanel) {
-        addModuleButton.onclick = () => {
-            adminModulePanel.innerHTML += `
-                <div class="adminModulePanelSlot">
-                    <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
-                    <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info"></textarea>
-                    <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info"></textarea>
-                </div>
-            `
+        addModuleButton.onclick = async () => {
+
+            const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
+
+            const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
+                method: "POST",
+                credentials: "include",
+                headers:{"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    slotID: selectedSlotUUID,
+                    locationInfo: "",
+                    generalInfo: "",
+                    moduleName: ""
+                })
+            }); 
+            responseJson = await response.json();
+            console.log(responseJson);
+            
+            if (responseJson.success === true){
+                adminModulePanel.innerHTML += `
+                    <div class="adminModulePanelSlot">
+                        <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
+                        <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info"></textarea>
+                        <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info"></textarea>
+                    </div>
+                `
+            };
+            
             bindModulePanelInteractions()
         }
     }
