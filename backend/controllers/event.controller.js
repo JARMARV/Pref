@@ -156,6 +156,10 @@ export const updateModule = async (req,res) =>{
         const generalInfo = req.body.generalInfo;
         const moduleName = req.body.moduleName;
         const moduleID = req.body.moduleID;
+        console.log(slotID,locationInfo,generalInfo,moduleName,moduleID);
+        if (!slotID || !moduleID){
+            return res.status(404).json({ success:false, message:"missing information"})
+        }
         const result = await client.query(`UPDATE modules SET 
             slot_id = $1,
             location_info = $2,
@@ -267,14 +271,14 @@ export const getEventJson = async (req, res)=>{
             // Add module
             if (row.module_id !== null) {
                 slot.modules.push({
-                    locationInfoShort: row.location_info_short,
-                    additionalInfo: row.additional_info,
+                    slotID:row.slot_id,
+                    locationInfoShort: row.location_info,
+                    additionalInfo: row.general_info,
                     name: row.module_name,
                     moduleID: row.module_id
                 });
             }
         }
-        console.log(event)
         //return if successful
         return res.status(200).json({
             success: true,

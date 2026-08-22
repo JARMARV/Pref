@@ -206,22 +206,25 @@ if (saveSlotAndModuleSettings){
         }
         //write information to all modules of the selected slot
         for (let i = 0; i < adminModulePanel.children.length; i++){
-            
+            const locationInfo = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
+            const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
+            const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+            const moduleID = adminModulePanel.children[i].id;
+
             const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
                 method: "PATCH",
                 credentials: "include",
                 headers:{"Content-Type": "application/json"},
                 body: JSON.stringify({
                     slotID: selectedSlotUUID,
-                    locationInfo: adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value,
-                    generalInfo: adminModulePanel.children[i].querySelector(".moduleInfoPanel").value,
-                    moduleName: adminModulePanel.children[i].querySelector(".moduleNamePanel").value,
-                    moduleID: adminModulePanel.children[i].id
+                    locationInfo: locationInfo,
+                    generalInfo: moduleInfo,
+                    moduleName: moduleName,
+                    moduleID: moduleID
                 })
             });
             const responseJson = await response.json();
             
-            console.log(eventData.slots[selectedSlotID].modules[i])
             eventData.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
             eventData.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
             eventData.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
@@ -232,7 +235,6 @@ if (saveSlotAndModuleSettings){
         if (darkenedSite) darkenedSite.style.display = "none"
         adminModulePanel.dataset.idOfSelectedSlot = "null";
 
-        console.log(selectedSlotID)
         renderCalendar()
     })
 }
@@ -274,7 +276,6 @@ if (logoutButton){
 
     })
 };
-
 
 function drawCalendarTimeColumn() {
     if (!calendarTimeColumn || !mainCalendar) return
@@ -368,11 +369,10 @@ function makeSlotLogic() {
             if (adminModulePanel) {
                 adminModulePanel.innerHTML = ``
                 let modulesHTML = ""
-
                 if (selectedSlot && selectedSlot.modules.length) {
                     for (let j = 0; j < selectedSlot.modules.length; j++) {
                         modulesHTML += `
-                            <div class="adminModulePanelSlot">
+                            <div class="adminModulePanelSlot" id="${selectedSlot.modules[j].moduleID}">
                                 <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${selectedSlot.modules[j].name}</textarea>
                                 <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${selectedSlot.modules[j].additionalInfo}</textarea>
                                 <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${selectedSlot.modules[j].locationInfoShort}</textarea>
@@ -426,7 +426,7 @@ function addSlotEditingPanelLogic() {
     if (addModuleButton && adminModulePanel) {
         addModuleButton.onclick = async () => {
 
-            const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
+            const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
 
             const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
                 method: "POST",
@@ -434,23 +434,25 @@ function addSlotEditingPanelLogic() {
                 headers:{"Content-Type": "application/json"},
                 body: JSON.stringify({
                     slotID: selectedSlotUUID,
-                    locationInfo: "",
-                    generalInfo: "",
-                    moduleName: ""
+                    locationInfo: "Location info",
+                    generalInfo: "General information",
+                    moduleName: "Module name"
                 })
             }); 
             responseJson = await response.json();
-            console.log(responseJson);
-            
+
             if (responseJson.success === true){
                 adminModulePanel.innerHTML += `
-                    <div class="adminModulePanelSlot">
+                    <div class="adminModulePanelSlot" id="${responseJson.moduleID}">
                         <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
-                        <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info"></textarea>
-                        <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info"></textarea>
+                        <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General information"></textarea>
+                        <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Location info"></textarea>
                     </div>
                 `
-            };
+            }
+            else{
+                console.log("could not add module");
+            }
             
             bindModulePanelInteractions()
         }
