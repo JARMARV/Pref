@@ -186,14 +186,38 @@ if (submitSlotCreationButton) {
 else{
     console.log("error could not find submitSlotCreationButton")
 }
+
+//logic for saving user input for modules and slots
 if (saveSlotAndModuleSettings){
     saveSlotAndModuleSettings.addEventListener("click",async () => {
         const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
         const selectedSlotID = eventData.slots.findIndex(slot => slot.slotID === selectedSlotUUID);
-        eventData.slots[selectedSlotID].start = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value)
-        eventData.slots[selectedSlotID].end = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
+        const startTime = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value);
+        const endTime = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
+
+        //saving the slot settings
+
+        const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
+            method: "PATCH",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({
+                slotID: selectedSlotUUID,
+                eventId: eventID,
+                startTime: startTime,
+                endTime: endTime
+            })
+        });
+
+
+
+        eventData.slots[selectedSlotID].start = startTime;
+        eventData.slots[selectedSlotID].end = endTime;
+
+
+
         const moduleCount = eventData.slots[selectedSlotID].modules.length;
-        //adding new modules to the event object
+        //adding new modules to the selected slot
         for (let i = 0; i < adminModulePanel.children.length - moduleCount; i++){
 
             eventData.slots[selectedSlotID].modules.push({
@@ -204,13 +228,14 @@ if (saveSlotAndModuleSettings){
             })
             continue;
         }
-        //write information to all modules of the selected slot
+        //write information to all modules of the selected slot 
         for (let i = 0; i < adminModulePanel.children.length; i++){
             const locationInfo = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
             const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
             const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
             const moduleID = adminModulePanel.children[i].id;
 
+            //write to database
             const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
                 method: "PATCH",
                 credentials: "include",
@@ -224,7 +249,7 @@ if (saveSlotAndModuleSettings){
                 })
             });
             const responseJson = await response.json();
-            
+            //write to locally saved json object
             eventData.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
             eventData.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
             eventData.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;

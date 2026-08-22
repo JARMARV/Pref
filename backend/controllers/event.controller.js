@@ -67,7 +67,9 @@ export const newSlot = async (req, res) => {
         const startDate = req.body.startDate;
         const endDate = req.body.endDate;
         const eventID = req.body.eventID;
-        const result = await client.query(`INSERT INTO slots (event_id, start_time, end_time) 
+
+        const result = await client.query(`INSERT INTO 
+            slots (event_id, start_time, end_time) 
             VALUES($1,$2::timestamp AT TIME ZONE 'Europe/Berlin',$3::timestamp AT TIME ZONE 'Europe/Berlin')
             RETURNING slot_id
             `,
@@ -166,11 +168,67 @@ export const updateModule = async (req,res) =>{
             general_info = $3,
             module_name= $4
             WHERE module_id = $5
-            RETURNING module_id
             `,
             [slotID,locationInfo,generalInfo,moduleName,moduleID]
         );
         return res.status(200).json({success:true,message:"Updated module" ,moduleID: moduleID})
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
+
+export const updateSlot = async (req,res) => {
+     const client = await pool.connect();
+    //Getting user data from cookie and making sure user has admin authorization
+    const reqtoken = req.cookies.token;
+    if (!reqtoken) {
+        return res.status(401).json({ message: "No token provided" });
+    };
+    const decoded = jwt.verify(reqtoken, JWT_SECRET);
+    if (!decoded) {
+        return res.status(401).json({ message: "Invalid token" });
+    };
+    const userID = decoded.userId;
+    const authorizationLevel = decoded.authorizationLevel;
+    const organizationID = decoded.organizationID;
+    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+        return res.status(400).json({ message: "Invalid token data" });
+    };
+    if (authorizationLevel !== 2){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+    try{
+        if (! req.params.slotID || ! req.params.eventID){
+            return res.status(400).json({success:false,message:"false parameters for this request"})
+        };
+        const slotID = req.params.slotID;
+        const eventID = req.params.eventID;
+        const startTime = req.body.startTime;
+        const endTime = req.body.endTime;
+
+
+        if (!slotID || !eventID){
+            return res.status(400).json({ success:false, message:"missing information"})
+        }
+        const result = await client.query(`UPDATE slots SET 
+            start_time = $1::timestamp AT TIME ZONE 'Europe/Berlin',
+            end_time = $2::timestamp AT TIME ZONE 'Europe/Berlin'
+            WHERE slot_id = $3 AND event_id = $4
+            RETURNING slot_id
+            `,
+            [startTime,endTime,slotID,eventID]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Slot not found"
+            });
+        }
+        return res.status(200).json({success:true,message:"Updated slot" ,slotID: result.rows[0].slot_id})
 
     }catch(error){
         console.error(error);

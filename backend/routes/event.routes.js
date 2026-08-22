@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { newEvent, newSlot ,newModule,getEventJson,updateModule} from '../controllers/event.controller.js';
+import { newEvent, newSlot ,newModule,getEventJson,updateModule,updateSlot} from '../controllers/event.controller.js';
 
 const authRouter = Router();
 
@@ -13,6 +13,6 @@ authRouter.post('/:eventID/:slotID/module',newModule);
 authRouter.get('/:eventID',getEventJson);
 
 //authRouter.patch('/:eventID',updateEvent);
-//authRouter.patch('/:eventID/:slotID',updateSlot);
+authRouter.patch('/:eventID/:slotID',updateSlot);
 authRouter.patch('/:eventID/:slotID/:moduleID',updateModule);
 export default authRouter;
