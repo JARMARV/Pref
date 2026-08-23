@@ -37,10 +37,12 @@ const endTimeSlot = document.getElementById("endTimeSlot")
 
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
-const currentWeekIndex = 0
+let currentWeekIndex = 0
 
 const eventID = "d1b45280-755d-498e-95f7-47bbdecd43fc";
 
+const weekButtonLeft = document.getElementById("weekButtonLeft");
+const weekButtonRight = document.getElementById("weekButtonRight");
 
 //get event data
 let eventData = null;
@@ -73,6 +75,7 @@ function renderCalendar() {
     drawDateRow()
     drawSlots()
     makeSlotLogic()
+    renderWeekChangeButtons()
 }
 
 
@@ -82,6 +85,7 @@ function updateCalendarColumnsWidth() {
         const width = calendarColumns.offsetWidth
         document.documentElement.style.setProperty('--calendarColumnsWidth', width + 'px')
 }
+
 window.addEventListener('load', updateCalendarColumnsWidth)
 window.addEventListener('resize', updateCalendarColumnsWidth)
 
@@ -97,7 +101,7 @@ if (newTableButton) {
 }
 else{
     console.log("error could not find newTableButton")
-}
+};
 if (submitCalendarSettingsButton) {
     submitCalendarSettingsButton.addEventListener("click",async event => {
         if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value) {
@@ -128,8 +132,7 @@ if (submitCalendarSettingsButton) {
 }
 else{
     console.log("error could not find submitCalendarSettingsButton")
-}
-
+};
 if (newSlotButton) {
     newSlotButton.addEventListener("click", () => {
         if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "grid"
@@ -138,7 +141,7 @@ if (newSlotButton) {
 }
 else{
     console.log("error could not find newSlotButton")
-}
+};
 if (submitSlotCreationButton) {
     submitSlotCreationButton.addEventListener("click",async () => {
         const slotDay = dayOfSlot?.value
@@ -185,8 +188,7 @@ if (submitSlotCreationButton) {
 }
 else{
     console.log("error could not find submitSlotCreationButton")
-}
-
+};
 //logic for saving user input for modules and slots
 if (saveSlotAndModuleSettings){
     saveSlotAndModuleSettings.addEventListener("click",async () => {
@@ -265,7 +267,7 @@ if (saveSlotAndModuleSettings){
 }
 else{
     console.log("could not find saveSlotAndModuleSettings button")
-}
+};
 if (userButton) {
     userButton.addEventListener("click", () => {
 
@@ -289,7 +291,7 @@ if (userButton) {
 }
 else{
     console.log("error could not find user Button")
-}
+};
 if (logoutButton){
     logoutButton.addEventListener("click", async () => {
         const response = await fetch(apiURL + "/api/v1/auth/sign-out", {
@@ -300,6 +302,23 @@ if (logoutButton){
         window.location.href = "index.html";
 
     })
+}
+else{
+    console.log("error could not find logout button")
+};
+if (weekButtonLeft && weekButtonRight){
+    weekButtonLeft.addEventListener("click", () => {
+        currentWeekIndex -= 1;
+        renderCalendar();     
+    });
+    weekButtonRight.addEventListener("click", () => {
+        currentWeekIndex += 1;
+        renderCalendar();
+    });
+    
+}
+else{
+    console.log("error could not find week change buttons")
 };
 
 function drawCalendarTimeColumn() {
@@ -322,7 +341,7 @@ function drawCalendarTimeColumn() {
     }
 
     calendarTimeColumn.style.gridTemplateRows = `repeat(${maxTimeSpan}, 1fr)`
-}
+};
 
 function drawSlots() {
     if (!calendarColumns) return
@@ -376,7 +395,7 @@ function drawSlots() {
             `
         }
     }
-}
+};
 
 function makeSlotLogic() {
     const slots = document.getElementsByClassName("CalendarSlot")
@@ -423,7 +442,7 @@ function makeSlotLogic() {
             addSlotEditingPanelLogic()
         })
     }
-}
+};
 
 function bindModulePanelInteractions() {
     const textAreas = document.querySelectorAll(".moduleLocationShortPanel, .moduleInfoPanel, .moduleNamePanel")
@@ -443,7 +462,7 @@ function bindModulePanelInteractions() {
             renderCalendar()
         }
     }
-}
+};
 
 function addSlotEditingPanelLogic() {
     bindModulePanelInteractions()
@@ -485,14 +504,21 @@ function addSlotEditingPanelLogic() {
     else {
         console.log("error could not find addModuleButton")
     }
-}
+};
 
 function drawDateRow() {
-    if (!eventData || !calendarDateRow || !calendarMonth) return
+    if (!eventData || !calendarDateRow || !calendarMonth){
+        console.log("error data needed to draw the calendar is missing")
+        return
+    } 
 
-    const startDateValue = new Date(eventData.startDate)
-    const weekStart = new Date(startDateValue)
-    weekStart.setDate(startDateValue.getDate() - ((startDateValue.getDay() + 6) % 7))
+    const eventStart = new Date(eventData.startDate)
+    const weekStart = new Date(eventStart)
+
+    //set weekStart to monday of eventStart week
+    weekStart.setDate(eventStart.getDate() - ((eventStart.getDay() + 6) % 7));
+    //adjust weekStart to the currentWeek selected using currentWeekIndex
+    weekStart.setDate(weekStart.getDate() + (currentWeekIndex * 7))
 
     for (let i = 0; i < calendarDateRow.children.length; i++) {
         const outputDate = new Date(weekStart)
@@ -509,6 +535,25 @@ function drawDateRow() {
             `
         }
     }
-}
+};
 
-
+function renderWeekChangeButtons() {
+    const maxWeekIndex = (Math.ceil((new Date(eventData.endDate)-new Date(eventData.startDate))/604800000))-1 ;
+    
+    if (maxWeekIndex === 0){
+        weekButtonLeft.style.display = "none";
+        weekButtonRight.style.display = "none";
+    }  
+    else if (currentWeekIndex === 0){
+        weekButtonLeft.style.display = "none";
+        weekButtonRight.style.display = "block";
+    }
+    else if (currentWeekIndex === maxWeekIndex){
+        weekButtonLeft.style.display = "block";
+        weekButtonRight.style.display = "none";
+    }
+    else{
+        weekButtonLeft.style.display = "block";
+        weekButtonRight.style.display = "block";
+    }      
+};
