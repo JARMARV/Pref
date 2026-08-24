@@ -84,7 +84,7 @@ body{
     justify-self: center;
     top:140px;
 }
-#adminCalendarSettingsPanel, #adminSlotCreationPanel{
+#adminCalendarSettingsPanel, #adminSlotCreationPanel,#eventSelectorPanel{
     width:200px;
     height:500px;
     padding:10px;
@@ -390,4 +390,40 @@ body{
 #weekButtonRight{
     height:100%;
     width:50px;
+}
+.eventButtonContainer{
+    width:100%;
+    min-height:60px;
+}
+.eventButton{
+    width:100%;
+    height:100%
+}
+#eventSelectorPanel{
+    background-color:#1e2447 ;
+    display:none;
+    border-radius: 10px;
+    position: fixed;
+    z-index: 11;
+    justify-self: center;
+    top:140px;
+    flex-direction: column;
+    align-items: center;
+    justify-items: baseline;
+}
+#eventsheaderContainer{
+    min-height:60px;
+    font-size: 20px;
+    padding-bottom: 10px ;
+    align-content: center;
+}
+#eventButtonsContainer{
+    width:100%;
+    height:auto;
+    display:flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-left: 8px;
+    flex: 1;
+    scrollbar-gutter: stable;
 }

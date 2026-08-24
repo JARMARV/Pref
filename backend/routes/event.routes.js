@@ -1,18 +1,19 @@
 import { Router } from 'express';
 
-import { newEvent, newSlot ,newModule,getEventJson,updateModule,updateSlot} from '../controllers/event.controller.js';
+import { newEvent, newSlot ,newModule,getEventJson,updateModule,updateSlot,getOrganizationEvents} from '../controllers/event.controller.js';
 
-const authRouter = Router();
+const eventRouter = Router();
 
 
 // Path: /api/v1/events/...(POST)
-authRouter.post('/event',newEvent);
-authRouter.post('/:eventID/slot',newSlot);
-authRouter.post('/:eventID/:slotID/module',newModule);
+eventRouter.post('/event',newEvent);
+eventRouter.post('/:eventID/slot',newSlot);
+eventRouter.post('/:eventID/:slotID/module',newModule);
 
-authRouter.get('/:eventID',getEventJson);
+eventRouter.get('/:eventID',getEventJson);
+eventRouter.get('/',getOrganizationEvents);
 
 //authRouter.patch('/:eventID',updateEvent);
-authRouter.patch('/:eventID/:slotID',updateSlot);
-authRouter.patch('/:eventID/:slotID/:moduleID',updateModule);
-export default authRouter;
+eventRouter.patch('/:eventID/:slotID',updateSlot);
+eventRouter.patch('/:eventID/:slotID/:moduleID',updateModule);
+export default eventRouter;

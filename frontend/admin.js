@@ -6,8 +6,13 @@ const apiURL = "http://localhost:5600";
 // ---- Calendar Display Configuration ----
 const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 
+// ---- Event selector panel ----
+const eventSelectorpanel = document.getElementById("eventSelectorPanel");
+const eventButtonsContainer = document.getElementById("eventButtonsContainer");
+const mainGrid = document.getElementById("mainGrid");
+
 // ---- Data & State Variables ----
-let eventID = "d1b45280-755d-498e-95f7-47bbdecd43fc"; // Current event UUID
+let eventID = ""; // Current event UUID
 let eventData = null; // Stores the fetched event data (contains slots, modules, dates)
 let currentWeekIndex = 0; // Tracks which week is currently being displayed
 let closeUserPanel; // Function reference for closing user panel when clicking outside
@@ -70,15 +75,45 @@ initialize();
 /**
  * Fetches event data from the server and renders the calendar
  */
-async function initialize() {
-    const result = await getEventData();
-    if (!result.success) {
-        console.error(result.message);
-        return;
+function initialize() {
+    renderEventSelector()
+} 
+//fetches all events of the organization of the admin and renders them in the event selection panel
+async function renderEventSelector(){
+    const response = await fetch(apiURL + "/api/v1/events/", {
+        method: "GET",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+    });
+    const responseJson = await response.json()
+    const events = responseJson.events
+    for (const event of events){
+        eventButtonsContainer.innerHTML += `
+        <div class="eventButtonContainer" id="${event.eventID}">
+            <button class="eventButton">${event.eventName}</button>
+        </div>
+
+        `
     }
-    eventData = result.event;
-    console.log(eventData);
-    renderCalendar();
+    eventSelectorpanel.style.display = "flex";
+    darkenedSite.style.display = "block"
+    mainGrid.style.display = "none";
+    for (const child of eventButtonsContainer.children){
+        child.children[0].addEventListener("click",async () => {
+            eventID = child.id;
+            const result = await getEventData();
+            if (!result.success) {
+                console.error(result.message);
+                return;
+            }
+            eventData = result.event;
+            console.log(eventData);
+            eventSelectorpanel.style.display = "none";
+            darkenedSite.style.display = "none";
+            mainGrid.style.display = "grid";
+            renderCalendar();
+        })
+    }
 }
 /**
  * Fetches event data from the server API
@@ -118,8 +153,6 @@ function updateCalendarColumnsWidth() {
     const width = calendarColumns.offsetWidth;
     document.documentElement.style.setProperty('--calendarColumnsWidth', width + 'px');
 }
-
-// Update calendar width on load and resize
 window.addEventListener('load', updateCalendarColumnsWidth);
 window.addEventListener('resize', updateCalendarColumnsWidth);
 
@@ -129,6 +162,7 @@ window.addEventListener('resize', updateCalendarColumnsWidth);
 /**
  * Opens the calendar settings panel and sets default date/time values
  */
+
 if (newTableButton) {
     newTableButton.addEventListener("click", event => {
         if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid";

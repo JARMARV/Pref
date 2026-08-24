@@ -350,6 +350,50 @@ export const getEventJson = async (req, res)=>{
     }
 };
 
+export const getOrganizationEvents = async (req,res)=>{
+    const client = await pool.connect();
+
+    //Getting user data from cookie and making sure user has user or above authorization
+    const reqtoken = req.cookies.token;
+    if (!reqtoken) {
+        return res.status(401).json({ message: "No token provided" });
+    };
+    const decoded = jwt.verify(reqtoken, JWT_SECRET);
+    if (!decoded) {
+        return res.status(401).json({ message: "Invalid token" });
+    };
+    const userID = decoded.userId;
+    const authorizationLevel = decoded.authorizationLevel;
+    const organizationID = decoded.organizationID;
+    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+        return res.status(400).json({ message: "Invalid token data" });
+    };
+    if (authorizationLevel === 0){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+
+    try{
+        const result = await client.query(`
+            SELECT * FROM events
+            WHERE $1 = organization_id
+            `,
+            [organizationID]
+        )
+        let response = [];
+        for (const row of result.rows){
+            response.push({
+                eventName: row.event_name,
+                eventID:row.event_id
+            })
+        }
+        return res.status(200).json({success:true,message:"sucessfully gethered all events of the given organization",events:response})
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+}
 function berlinDateTime(utcString) {
     const date = new Date(utcString);
 
