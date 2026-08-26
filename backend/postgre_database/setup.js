@@ -58,7 +58,7 @@ try {
     // Connect to application DB
     // -------------------------
 
-    client = new Client(databaseConfig);
+    client = new Client(dbConfig);
 
     await client.connect();
 
@@ -77,7 +77,7 @@ try {
     await client.query(schema);
 
     console.log("Database setup completed successfully!");
-    
+
 } catch (error) {
 
     console.error("Database setup failed:");
