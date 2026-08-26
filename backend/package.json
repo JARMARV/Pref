@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "setup":"node postgre_database/setup.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
