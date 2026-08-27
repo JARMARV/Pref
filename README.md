@@ -9,3 +9,18 @@ This is originally intended for use in company internal or school events but cou
 
 Note: the project is still work in progress and currently far away from a working prototype 
 
+
+Pref installation instructions:
+
+-postgres installation
+
+-winget install OpenJS.NodeJS.LTS(installing node.js)
+
+-npm install (installing node dependencies)
+
+create .env file and give it the needed parameters like ports and data for logging into postgresql (so the program knows what port to use and has read and write access to postgres database)
+
+npm run setup (to create database and tables)
+
+npm run dev (to start the backend and database servers)
+
