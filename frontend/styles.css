@@ -427,3 +427,16 @@ body{
     flex: 1;
     scrollbar-gutter: stable;
 }
+#createEventButton{
+    display:block;
+    position:absolute;
+    top: 0;
+    right: 0;
+    transform: translate(90% ,-90%);
+    width:30px;
+    height:30px;
+    padding:0px;
+    border:0px;
+    z-index: 12;
+    cursor: pointer;
+}

@@ -9,6 +9,7 @@ const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 // ---- Event selector panel ----
 const eventSelectorpanel = document.getElementById("eventSelectorPanel");
 const eventButtonsContainer = document.getElementById("eventButtonsContainer");
+const creatEventButton = document.getElementById("createEventButton")
 const mainGrid = document.getElementById("mainGrid");
 
 // ---- Data & State Variables ----
@@ -21,7 +22,7 @@ let closeUserPanel; // Function reference for closing user panel when clicking o
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 
-// ---- Calendar & Display DOM Elements ----
+// ---- Calendar & Display Elements----
 const mainCalendar = document.getElementById("mainCalendar");
 const calendarColumns = document.getElementById("calendarColumns"); // Container for day columns
 const calendarDateRow = document.getElementById("calendarDateRow"); // Displays day names and dates
@@ -36,6 +37,7 @@ const startTime = document.getElementById("startTime"); // Input for event start
 const endTime = document.getElementById("endTime"); // Input for event end time
 const startDate = document.getElementById("startDate"); // Input for event start date
 const endDate = document.getElementById("endDate"); // Input for event end date
+const eventNameInput = document.getElementById("eventNameInput") // Input for the name of the event when creating it
 
 // ---- Slot Creation Panel Elements ----
 const adminSlotCreationPanel = document.getElementById("adminSlotCreationPanel"); // Modal for creating slots
@@ -175,42 +177,6 @@ if (newTableButton) {
 }
 else{
     console.log("error could not find newTableButton")
-};
-
-/**
- * Submits the calendar settings and creates a new event on the server
- * Updates local eventData with new dates and re-renders calendar
- */
-if (submitCalendarSettingsButton) {
-    submitCalendarSettingsButton.addEventListener("click",async event => {
-        if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value) {
-            alert("please fill out all information")
-            return
-        }
-        const response = await fetch(apiURL + "/api/v1/events/event", {
-            method: "POST",
-            credentials: "include",
-            headers:{"Content-Type": "application/json"},
-            body: JSON.stringify({
-                endDate: endDate.value + "T" + endTime.value,
-                startDate: startDate.value + "T" + startTime.value,
-                eventName: "testEvent"
-            })
-        });
-        console.log(await response.json())
-        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
-        if (darkenedSite) darkenedSite.style.display = "none"
-
-        if (eventData) {
-            eventData.startDate = startDate.value + "T" + startTime.value
-            eventData.endDate = endDate.value + "T" + endTime.value
-        }
-
-        renderCalendar()
-    });
-}
-else{
-    console.log("error could not find submitCalendarSettingsButton")
 };
 
 // ---- Slot Creation ----
@@ -437,6 +403,64 @@ else{
     console.log("error could not find week change buttons")
 };
 
+
+//Handles creating a new event when the button is clicked
+if(creatEventButton){
+    creatEventButton.addEventListener("click", () => {
+        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid";
+        if (darkenedSite) darkenedSite.style.display = "block";
+        if (endDate) endDate.value = "2026-07-31";
+        if (startDate) startDate.value = "2026-07-31";
+        if (startTime) startTime.value = "00:00";
+        if (endTime) endTime.value = "23:59";
+    })
+}
+else{
+    console.log("error could not find new Event button")
+};
+
+/**
+ * Submits the calendar settings and creates a new event on the server
+ * Updates local eventData with new dates and re-renders calendar
+ */
+if (submitCalendarSettingsButton) {
+    submitCalendarSettingsButton.addEventListener("click",async event => {
+        if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value || !eventNameInput?.value) {
+            alert("please fill out all information")
+            return
+        }
+
+        const response = await fetch(apiURL + "/api/v1/events/event", {
+            method: "POST",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({
+                endDate: endDate.value + "T" + endTime.value,
+                startDate: startDate.value + "T" + startTime.value,
+                eventName: eventNameInput.value
+            })
+        });
+        responseJson = await response.json()
+        eventID = responseJson.eventID
+        
+        const result = await getEventData();
+            if (!result.success) {
+                console.error(result.message);
+                return;
+            }
+        eventData = result.event;
+        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
+        if (darkenedSite) darkenedSite.style.display = "none"
+        if (eventSelectorpanel) eventSelectorpanel.style.display ="none"
+        mainGrid.style.display = "grid";
+        renderCalendar()
+    });
+}
+else{
+    console.log("error could not find submitCalendarSettingsButton")
+};
+
+
 // ==================== CALENDAR DRAWING FUNCTIONS ==================== 
 
 /**
@@ -452,7 +476,7 @@ function drawCalendarTimeColumn() {
         console.log("eventData not found");
         return;
     }
-    
+    console.log(eventData)
     // Extract hours from event start/end times
     const startTimeValue = eventData.startDate.split("T")[1].split(":");
     const endTimeValue = eventData.endDate.split("T")[1].split(":");

@@ -29,11 +29,15 @@ export const newEvent = async (req, res) => {
         const startDate = req.body.startDate;
         const endDate = req.body.endDate;
         const eventName = req.body.eventName;
-        await client.query(`INSERT INTO events (organization_id, event_name, start_date, end_date) 
-            VALUES($1,$2,$3::timestamp AT TIME ZONE 'Europe/Berlin',$4::timestamp AT TIME ZONE 'Europe/Berlin')`,
+        const response = await client.query(`INSERT INTO events (organization_id, event_name, start_date, end_date) 
+            VALUES($1,$2,$3::timestamp AT TIME ZONE 'Europe/Berlin',$4::timestamp AT TIME ZONE 'Europe/Berlin')
+            RETURNING event_id
+            `,
             [organizationID,eventName,startDate,endDate]
+            
         );
-        return res.status(200).json({success:true,message:"Created new event"})
+
+        return res.status(200).json({success:true,message:"Created new event",eventID:response.rows[0].event_id})
     }catch(error){
         console.error(error);
         res.status(500).json({success:false,message:'Database error'});
