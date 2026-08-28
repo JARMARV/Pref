@@ -56,6 +56,7 @@ const endTimeSlotPanel = document.getElementById("endTimeSlotPanel"); // Display
 const adminModulePanel = document.getElementById("adminModulePanel"); // Container for module input fields
 const addModuleButton = document.getElementById("addModuleButton"); // Button to add module to slot
 const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings"); // Button to save slot/module changes
+const deleteSlotAndModules = document.getElementById("deleteSlotAndModules"); //button to delete a slot and its modules
 
 // ---- Week Navigation Elements ----
 const weekButtonLeft = document.getElementById("weekButtonLeft"); // Button to go to previous week
@@ -80,7 +81,6 @@ initialize();
 async function initialize()  {
     if (!localStorage.selectedEventID) renderEventSelector();
     else {
-        console.log("test")
         eventID = localStorage.selectedEventID;
         const result = await getEventData();
             if (!result.success) {
@@ -180,8 +180,8 @@ window.addEventListener('resize', updateCalendarColumnsWidth);
 
 // ---- Calendar Creation ----
 /**
- * Opens the calendar settings panel and sets default date/time values
- */
+ * Opens the calendar settings panel and sets default date/time values 
+*/
 
 if (newEventButton) {
     newEventButton.addEventListener("click", () => {
@@ -473,6 +473,36 @@ else{
     console.log("error could not find submitCalendarSettingsButton")
 };
 
+if (deleteSlotAndModules){
+    deleteSlotAndModules.addEventListener("click",async event => {
+        const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
+
+        const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
+                method: "DELETE",
+                credentials: "include",
+                headers:{"Content-Type": "application/json"}
+        })
+        const responseJson = await response.json();
+        console.log(responseJson)
+        if (responseJson.success === true){
+
+            eventData.slots = eventData.slots.filter(
+                slot => slot.slotID !== selectedSlotUUID
+            );
+
+            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+            if (adminModulePanel) adminModulePanel.style.display = "none"
+            if (darkenedSite) darkenedSite.style.display = "none"
+            adminModulePanel.dataset.idOfSelectedSlot = "null";
+            renderCalendar()
+        }
+    })
+}
+else{
+    console.log("error could not find delete slot button")
+}
+
+
 
 // ==================== CALENDAR DRAWING FUNCTIONS ==================== 
 function drawCalendarHeader(){
@@ -685,7 +715,7 @@ function addSlotEditingPanelLogic() {
             }); 
             const responseJson = await response.json();
 
-            // Add the new module to the panel if creation was successful
+            // Add the new module to the panel and eventData if creation was successful
             if (responseJson.success === true){
                 adminModulePanel.innerHTML += `
                     <div class="adminModulePanelSlot" id="${responseJson.moduleID}">
@@ -694,6 +724,16 @@ function addSlotEditingPanelLogic() {
                         <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Location info"></textarea>
                     </div>
                 `;
+
+                const emptyModule = {
+                    additionalInfo:"",
+                    locationInfoShort:"",
+                    moduleID: responseJson.moduleID,
+                    name:"",
+                    slotID:selectedSlotUUID
+                }
+
+               eventData.slots.find(slot => slot.slotID === selectedSlotUUID).modules.push(emptyModule)
             }
             else{
                 console.log("could not add module");

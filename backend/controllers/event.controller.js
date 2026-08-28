@@ -307,7 +307,7 @@ export const deleteEvent = async (req,res) => {
 };
 
 export const deleteSlot = async (req,res) => {
-     const client = await pool.connect();
+    const client = await pool.connect();
     //Getting user data from cookie and making sure user has admin authorization
     const reqtoken = req.cookies.token;
     if (!reqtoken) {
@@ -327,9 +327,36 @@ export const deleteSlot = async (req,res) => {
         return res.status(403).json({message: "Authorization failed"});
     };
     try{
-       
+        const slotID = req.params.slotID
+        console.log(slotID)
+        await client.query("BEGIN");
+
+        await client.query("DELETE FROM modules WHERE slot_id = $1",
+        [slotID]
+        )
+
+        const result = await client.query("DELETE FROM slots WHERE slot_id = $1",
+        [slotID]
+        )
+        
+        if (result.rowCount === 0) {
+            await client.query("ROLLBACK");
+
+            return res.status(404).json({
+                success: false,
+                message: "Slot not found"
+            });
+        }
+
+        await client.query("COMMIT");
+
+        return res.status(200).json({
+            success:true,
+            message:"slot deleted successfully"
+        })
 
     }catch(error){
+        await client.query("ROLLBACK");
         console.error(error);
         res.status(500).json({success:false,message:'Database error'});
     }finally{
