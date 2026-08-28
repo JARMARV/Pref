@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
 import cookieParser from "cookie-parser";
-
+//creation
 export const newEvent = async (req, res) => {
     const client = await pool.connect();
     try{
@@ -136,8 +136,9 @@ export const newModule = async (req, res) => {
 
 };
 
-export const updateModule = async (req,res) =>{
-    const client = await pool.connect();
+//updation
+export const updateEvent = async (req,res) => {
+     const client = await pool.connect();
     //Getting user data from cookie and making sure user has admin authorization
     const reqtoken = req.cookies.token;
     if (!reqtoken) {
@@ -157,25 +158,7 @@ export const updateModule = async (req,res) =>{
         return res.status(403).json({message: "Authorization failed"});
     };
     try{
-        const slotID = req.body.slotID;
-        const locationInfo = req.body.locationInfo;
-        const generalInfo = req.body.generalInfo;
-        const moduleName = req.body.moduleName;
-        const moduleID = req.body.moduleID;
-        console.log(slotID,locationInfo,generalInfo,moduleName,moduleID);
-        if (!slotID || !moduleID){
-            return res.status(404).json({ success:false, message:"missing information"})
-        }
-        const result = await client.query(`UPDATE modules SET 
-            slot_id = $1,
-            location_info = $2,
-            general_info = $3,
-            module_name= $4
-            WHERE module_id = $5
-            `,
-            [slotID,locationInfo,generalInfo,moduleName,moduleID]
-        );
-        return res.status(200).json({success:true,message:"Updated module" ,moduleID: moduleID})
+       
 
     }catch(error){
         console.error(error);
@@ -242,6 +225,150 @@ export const updateSlot = async (req,res) => {
     }
 };
 
+export const updateModule = async (req,res) =>{
+    const client = await pool.connect();
+    //Getting user data from cookie and making sure user has admin authorization
+    const reqtoken = req.cookies.token;
+    if (!reqtoken) {
+        return res.status(401).json({ message: "No token provided" });
+    };
+    const decoded = jwt.verify(reqtoken, JWT_SECRET);
+    if (!decoded) {
+        return res.status(401).json({ message: "Invalid token" });
+    };
+    const userID = decoded.userId;
+    const authorizationLevel = decoded.authorizationLevel;
+    const organizationID = decoded.organizationID;
+    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+        return res.status(400).json({ message: "Invalid token data" });
+    };
+    if (authorizationLevel !== 2){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+    try{
+        const slotID = req.body.slotID;
+        const locationInfo = req.body.locationInfo;
+        const generalInfo = req.body.generalInfo;
+        const moduleName = req.body.moduleName;
+        const moduleID = req.body.moduleID;
+        console.log(slotID,locationInfo,generalInfo,moduleName,moduleID);
+        if (!slotID || !moduleID){
+            return res.status(404).json({ success:false, message:"missing information"})
+        }
+        const result = await client.query(`UPDATE modules SET 
+            slot_id = $1,
+            location_info = $2,
+            general_info = $3,
+            module_name= $4
+            WHERE module_id = $5
+            `,
+            [slotID,locationInfo,generalInfo,moduleName,moduleID]
+        );
+        return res.status(200).json({success:true,message:"Updated module" ,moduleID: moduleID})
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
+
+//deletion
+export const deleteEvent = async (req,res) => {
+     const client = await pool.connect();
+    //Getting user data from cookie and making sure user has admin authorization
+    const reqtoken = req.cookies.token;
+    if (!reqtoken) {
+        return res.status(401).json({ message: "No token provided" });
+    };
+    const decoded = jwt.verify(reqtoken, JWT_SECRET);
+    if (!decoded) {
+        return res.status(401).json({ message: "Invalid token" });
+    };
+    const userID = decoded.userId;
+    const authorizationLevel = decoded.authorizationLevel;
+    const organizationID = decoded.organizationID;
+    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+        return res.status(400).json({ message: "Invalid token data" });
+    };
+    if (authorizationLevel !== 2){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+    try{
+       
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
+
+export const deleteSlot = async (req,res) => {
+     const client = await pool.connect();
+    //Getting user data from cookie and making sure user has admin authorization
+    const reqtoken = req.cookies.token;
+    if (!reqtoken) {
+        return res.status(401).json({ message: "No token provided" });
+    };
+    const decoded = jwt.verify(reqtoken, JWT_SECRET);
+    if (!decoded) {
+        return res.status(401).json({ message: "Invalid token" });
+    };
+    const userID = decoded.userId;
+    const authorizationLevel = decoded.authorizationLevel;
+    const organizationID = decoded.organizationID;
+    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+        return res.status(400).json({ message: "Invalid token data" });
+    };
+    if (authorizationLevel !== 2){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+    try{
+       
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
+
+export const deleteModule = async (req,res) => {
+     const client = await pool.connect();
+    //Getting user data from cookie and making sure user has admin authorization
+    const reqtoken = req.cookies.token;
+    if (!reqtoken) {
+        return res.status(401).json({ message: "No token provided" });
+    };
+    const decoded = jwt.verify(reqtoken, JWT_SECRET);
+    if (!decoded) {
+        return res.status(401).json({ message: "Invalid token" });
+    };
+    const userID = decoded.userId;
+    const authorizationLevel = decoded.authorizationLevel;
+    const organizationID = decoded.organizationID;
+    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
+        return res.status(400).json({ message: "Invalid token data" });
+    };
+    if (authorizationLevel !== 2){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+    try{
+       
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
+
+//aquisition
 export const getEventJson = async (req, res)=>{
     const client = await pool.connect();
 
@@ -312,6 +439,7 @@ export const getEventJson = async (req, res)=>{
             startDate: berlinDateTime(result.rows[0].start_date),
             endDate: berlinDateTime(result.rows[0].end_date),
             eventID: result.rows[0].event_id,
+            eventName: result.rows[0].event_name,
             slots: []
         };
         for (const row of result.rows) {
@@ -398,6 +526,8 @@ export const getOrganizationEvents = async (req,res)=>{
         client.release();
     }
 }
+
+//function to do some timezone magic
 function berlinDateTime(utcString) {
     const date = new Date(utcString);
 

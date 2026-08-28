@@ -7,9 +7,9 @@ const apiURL = "http://localhost:5600";
 const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 
 // ---- Event selector panel ----
-const eventSelectorpanel = document.getElementById("eventSelectorPanel");
+const eventSelectorPanel = document.getElementById("eventSelectorPanel");
 const eventButtonsContainer = document.getElementById("eventButtonsContainer");
-const creatEventButton = document.getElementById("createEventButton")
+const createEventButton = document.getElementById("createEventButton")
 const mainGrid = document.getElementById("mainGrid");
 
 // ---- Data & State Variables ----
@@ -23,6 +23,7 @@ const monthsOfTheYear = ["January", "February", "March", "April", "May", "June",
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 
 // ---- Calendar & Display Elements----
+const headerTitle = document.getElementById("headerTitle");
 const mainCalendar = document.getElementById("mainCalendar");
 const calendarColumns = document.getElementById("calendarColumns"); // Container for day columns
 const calendarDateRow = document.getElementById("calendarDateRow"); // Displays day names and dates
@@ -31,7 +32,7 @@ const calendarMonth = document.getElementById("calendarMonth"); // Displays curr
 
 // ---- Calendar Settings Panel Elements ----
 const adminCalendarSettingsPanel = document.getElementById("adminCalendarSettingsPanel"); // Modal for creating new event
-const newTableButton = document.getElementById("newTableButton"); // Button to open calendar creation
+const newEventButton = document.getElementById("newEventButton"); // Button to open event selection
 const submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton"); // Button to submit calendar settings
 const startTime = document.getElementById("startTime"); // Input for event start time
 const endTime = document.getElementById("endTime"); // Input for event end time
@@ -68,7 +69,6 @@ const logoutButton = document.getElementById("logoutButton"); // Button to logou
 // ---- Overlay Element ----
 const darkenedSite = document.getElementById("darkenedSite"); // Dark overlay when modals are open
 
-// ==================== INITIALIZATION ==================== 
 // ==================== INITIALIZATION ====================
 
 // Initialize the app on page load
@@ -77,8 +77,21 @@ initialize();
 /**
  * Fetches event data from the server and renders the calendar
  */
-function initialize() {
-    renderEventSelector()
+async function initialize()  {
+    if (!localStorage.selectedEventID) renderEventSelector();
+    else {
+        console.log("test")
+        eventID = localStorage.selectedEventID;
+        const result = await getEventData();
+            if (!result.success) {
+                console.error(result.message);
+                return;
+            }
+        eventData = result.event;
+        console.log(eventData);
+        renderCalendar();
+    }
+
 } 
 //fetches all events of the organization of the admin and renders them in the event selection panel
 async function renderEventSelector(){
@@ -89,15 +102,15 @@ async function renderEventSelector(){
     });
     const responseJson = await response.json()
     const events = responseJson.events
+    eventButtonsContainer.innerHTML = "";
     for (const event of events){
         eventButtonsContainer.innerHTML += `
         <div class="eventButtonContainer" id="${event.eventID}">
             <button class="eventButton">${event.eventName}</button>
         </div>
-
         `
     }
-    eventSelectorpanel.style.display = "flex";
+    eventSelectorPanel.style.display = "flex";
     darkenedSite.style.display = "block"
     mainGrid.style.display = "none";
     for (const child of eventButtonsContainer.children){
@@ -110,7 +123,8 @@ async function renderEventSelector(){
             }
             eventData = result.event;
             console.log(eventData);
-            eventSelectorpanel.style.display = "none";
+            localStorage.selectedEventID = eventData.eventID;
+            eventSelectorPanel.style.display = "none";
             darkenedSite.style.display = "none";
             mainGrid.style.display = "grid";
             renderCalendar();
@@ -138,7 +152,11 @@ async function getEventData(){
  * Redraws the entire calendar with current event and week data
  */
 function renderCalendar() {
-    if (!eventData) return;
+    if (!eventData){
+        console.log("error event Data not defined")
+        return
+    }
+    drawCalendarHeader()// draw the header
     drawCalendarTimeColumn(); // Draw time labels on left side
     drawDateRow(); // Draw date/day headers
     drawSlots(); // Draw all slots with modules
@@ -165,18 +183,13 @@ window.addEventListener('resize', updateCalendarColumnsWidth);
  * Opens the calendar settings panel and sets default date/time values
  */
 
-if (newTableButton) {
-    newTableButton.addEventListener("click", event => {
-        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid";
-        if (darkenedSite) darkenedSite.style.display = "block";
-        if (endDate) endDate.value = "2026-07-31";
-        if (startDate) startDate.value = "2026-07-31";
-        if (startTime) startTime.value = "00:00";
-        if (endTime) endTime.value = "23:59";
+if (newEventButton) {
+    newEventButton.addEventListener("click", () => {
+        renderEventSelector();
     })
 }
 else{
-    console.log("error could not find newTableButton")
+    console.log("error could not find newEventButton")
 };
 
 // ---- Slot Creation ----
@@ -405,8 +418,8 @@ else{
 
 
 //Handles creating a new event when the button is clicked
-if(creatEventButton){
-    creatEventButton.addEventListener("click", () => {
+if(createEventButton){
+    createEventButton.addEventListener("click", () => {
         if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid";
         if (darkenedSite) darkenedSite.style.display = "block";
         if (endDate) endDate.value = "2026-07-31";
@@ -451,7 +464,7 @@ if (submitCalendarSettingsButton) {
         eventData = result.event;
         if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
-        if (eventSelectorpanel) eventSelectorpanel.style.display ="none"
+        if (eventSelectorPanel) eventSelectorPanel.style.display ="none"
         mainGrid.style.display = "grid";
         renderCalendar()
     });
@@ -462,7 +475,14 @@ else{
 
 
 // ==================== CALENDAR DRAWING FUNCTIONS ==================== 
+function drawCalendarHeader(){
+    if(!headerTitle){ 
+        console.log("error could not find calendar title object") 
+        return
+    }
+    headerTitle.innerHTML = eventData.eventName;
 
+}
 /**
  * Renders the time column on the left side of the calendar
  * Calculates height based on event duration
@@ -476,7 +496,6 @@ function drawCalendarTimeColumn() {
         console.log("eventData not found");
         return;
     }
-    console.log(eventData)
     // Extract hours from event start/end times
     const startTimeValue = eventData.startDate.split("T")[1].split(":");
     const endTimeValue = eventData.endDate.split("T")[1].split(":");
