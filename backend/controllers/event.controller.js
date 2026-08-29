@@ -328,7 +328,6 @@ export const deleteSlot = async (req,res) => {
     };
     try{
         const slotID = req.params.slotID
-        console.log(slotID)
         await client.query("BEGIN");
 
         await client.query("DELETE FROM modules WHERE slot_id = $1",
@@ -385,7 +384,24 @@ export const deleteModule = async (req,res) => {
         return res.status(403).json({message: "Authorization failed"});
     };
     try{
-       
+        const moduleID = req.params.moduleID
+
+        const result = await client.query("DELETE FROM modules WHERE module_id = $1",
+        [moduleID]
+        )
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Slot not found"
+            });
+        }
+
+        return res.status(200).json({
+            success:true,
+            message:"slot deleted successfully"
+        })
+
 
     }catch(error){
         console.error(error);

@@ -42,6 +42,6 @@ eventRouter.patch('/:eventID/:slotID/:moduleID',updateModule);
 
 //eventRouter.delete('/:eventID',deleteEvent);
 eventRouter.delete('/:eventID/:slotID',deleteSlot);
-//eventRouter.delete('/:eventID/:slotID/:moduleID',deleteModule);
+eventRouter.delete('/:eventID/:slotID/:moduleID',deleteModule);
 
 export default eventRouter;

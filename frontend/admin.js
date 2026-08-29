@@ -617,52 +617,56 @@ function makeSlotLogic() {
     const slots = document.getElementsByClassName("CalendarSlot");
     for (let i = 0; i < slots.length; i++) {
         slots[i].addEventListener("click", () => {
-            if (!eventData) return;
-
-            // Show editing panels
-            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid";
-            if (adminModulePanel) adminModulePanel.style.display = "flex";
-            if (darkenedSite) darkenedSite.style.display = "block";
-
+            
             const selectedSlotID = slots[i].id;
             const selectedSlot = eventData.slots.find(slot => slot.slotID === selectedSlotID);
 
-            // Populate module editing panel with existing modules
-            if (adminModulePanel) {
-                adminModulePanel.innerHTML = ``;
-                let modulesHTML = "";
-                if (selectedSlot && selectedSlot.modules.length) {
-                    for (let j = 0; j < selectedSlot.modules.length; j++) {
-                        modulesHTML += `
-                            <div class="adminModulePanelSlot" id="${selectedSlot.modules[j].moduleID}">
-                                <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${selectedSlot.modules[j].name}</textarea>
-                                <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${selectedSlot.modules[j].additionalInfo}</textarea>
-                                <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${selectedSlot.modules[j].locationInfoShort}</textarea>
-                            </div>
-                        `;
-                    }
-                }
-
-                adminModulePanel.innerHTML += modulesHTML;
-                SlotAndModuleEditPanel.dataset.idOfSelectedSlot = String(selectedSlotID);
-            }
-
-            // Populate slot timing fields
-            const dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
-            const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
-            const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
-
-            if (selectedSlot) {
-                if (dayOfSlotPanel) dayOfSlotPanel.value = selectedSlot.start.split("T")[0];
-                if (startTimeSlotPanel) startTimeSlotPanel.value = selectedSlot.start.split("T")[1];
-                if (endTimeSlotPanel) endTimeSlotPanel.value = selectedSlot.end.split("T")[1];
-            }
+            populateSlotEditingPanel(selectedSlot)
+            SlotAndModuleEditPanel.dataset.idOfSelectedSlot = String(selectedSlotID);
 
             addSlotEditingPanelLogic();
+            deleteModuleButtons();
         });
     }
 };
+function populateSlotEditingPanel(selectedSlot){
+    if (!eventData) return;
+    // Show editing panels
+    if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid";
+    if (adminModulePanel) adminModulePanel.style.display = "flex";
+    if (darkenedSite) darkenedSite.style.display = "block";
 
+
+    // Populate module editing panel with existing modules
+    if (adminModulePanel) {
+        adminModulePanel.innerHTML = ``;
+        let modulesHTML = "";
+        if (selectedSlot && selectedSlot.modules.length) {
+            for (let j = 0; j < selectedSlot.modules.length; j++) {
+                modulesHTML += `
+                    <div class="adminModulePanelSlot" id="${selectedSlot.modules[j].moduleID}">
+                        <button class="deleteModuleButton"></button>
+                        <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${selectedSlot.modules[j].name}</textarea>
+                        <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${selectedSlot.modules[j].additionalInfo}</textarea>
+                        <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${selectedSlot.modules[j].locationInfoShort}</textarea>
+                    </div>
+                `;
+            }
+        }
+        adminModulePanel.innerHTML += modulesHTML;
+    }
+
+    // Populate slot timing fields
+    const dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
+    const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
+    const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
+
+    if (selectedSlot) {
+        if (dayOfSlotPanel) dayOfSlotPanel.value = selectedSlot.start.split("T")[0];
+        if (startTimeSlotPanel) startTimeSlotPanel.value = selectedSlot.start.split("T")[1];
+        if (endTimeSlotPanel) endTimeSlotPanel.value = selectedSlot.end.split("T")[1];
+    }
+}
 /**
  * Binds input interactions to module panel elements
  * - Auto-expands textarea height as content grows
@@ -700,7 +704,6 @@ function addSlotEditingPanelLogic() {
     if (addModuleButton && adminModulePanel) {
         addModuleButton.onclick = async () => {
             const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
-
             // Create a new module on the server
             const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
                 method: "POST",
@@ -708,9 +711,9 @@ function addSlotEditingPanelLogic() {
                 headers:{"Content-Type": "application/json"},
                 body: JSON.stringify({
                     slotID: selectedSlotUUID,
-                    locationInfo: "Location info",
-                    generalInfo: "General information",
-                    moduleName: "Module name"
+                    locationInfo: "",
+                    generalInfo: "",
+                    moduleName: ""
                 })
             }); 
             const responseJson = await response.json();
@@ -719,6 +722,7 @@ function addSlotEditingPanelLogic() {
             if (responseJson.success === true){
                 adminModulePanel.innerHTML += `
                     <div class="adminModulePanelSlot" id="${responseJson.moduleID}">
+                        <button class="deleteModuleButton"></button>
                         <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
                         <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General information"></textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Location info"></textarea>
@@ -740,6 +744,7 @@ function addSlotEditingPanelLogic() {
             }
             
             bindModulePanelInteractions();
+            deleteModuleButtons()
         };
     }
     else {
@@ -815,3 +820,35 @@ function renderWeekChangeButtons() {
         weekButtonRight.style.display = "block";
     }      
 };
+
+function deleteModuleButtons(){
+    const deleteModuleButtons = document.getElementsByClassName("deleteModuleButton");
+    for (let i = 0; i < deleteModuleButtons.length; i++){
+        deleteModuleButtons[i].addEventListener("click",async event => {
+            const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
+            const selectedModuleUUID = deleteModuleButtons[i].parentElement.id;
+            const selectedSlot = eventData.slots.find(slot => slot.slotID === selectedSlotUUID);
+
+            const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID+"/"+selectedModuleUUID, {
+                    method: "DELETE",
+                    credentials: "include",
+                    headers:{"Content-Type": "application/json"}
+            })
+            const responseJson = await response.json();
+            console.log(responseJson)
+            if (responseJson.success === true){
+                //deleting the module from the json
+                const slot = eventData.slots.find(
+                    slot => slot.slotID === selectedSlotUUID
+                );
+                if (slot) {
+                    slot.modules = slot.modules.filter(
+                        module => module.moduleID !== selectedModuleUUID
+                    );
+                }
+                populateSlotEditingPanel(selectedSlot)
+                renderCalendar()
+            }
+        })
+    }
+}
