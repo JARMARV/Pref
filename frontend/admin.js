@@ -58,6 +58,18 @@ const addModuleButton = document.getElementById("addModuleButton"); // Button to
 const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings"); // Button to save slot/module changes
 const deleteSlotAndModules = document.getElementById("deleteSlotAndModules"); //button to delete a slot and its modules
 
+// ---- Event editing Elements ----
+const eventEditingPanel = document.getElementById("eventEditingPanel");
+const eventEditingTitle = document.getElementById("eventEditingTitle");
+const editEventName = document.getElementById("editEventName");
+const editStartDate = document.getElementById("editStartDate");
+const editEndDate = document.getElementById("editEndDate");
+const editStartTime = document.getElementById("editStartTime");
+const editEndTime = document.getElementById("editEndTime");
+const editEventSettingsButton = document.getElementById("editEventSettingsButton");
+const closeEventEditor = document.getElementById("closeEventEditor");
+const deleteEventButton = document.getElementById("deleteEventButton");
+
 // ---- Week Navigation Elements ----
 const weekButtonLeft = document.getElementById("weekButtonLeft"); // Button to go to previous week
 const weekButtonRight = document.getElementById("weekButtonRight"); // Button to go to next week
@@ -83,18 +95,22 @@ async function initialize()  {
     else {
         eventID = localStorage.selectedEventID;
         const result = await getEventData();
-            if (!result.success) {
-                console.error(result.message);
-                return;
-            }
+        if (result.success === false) {
+            console.error(result);
+            renderEventSelector()
+            return;
+        }
+
         eventData = result.event;
         console.log(eventData);
         renderCalendar();
     }
 
 } 
+
 //fetches all events of the organization of the admin and renders them in the event selection panel
 async function renderEventSelector(){
+
     const response = await fetch(apiURL + "/api/v1/events/", {
         method: "GET",
         credentials: "include",
@@ -107,9 +123,33 @@ async function renderEventSelector(){
         eventButtonsContainer.innerHTML += `
         <div class="eventButtonContainer" id="${event.eventID}">
             <button class="eventButton">${event.eventName}</button>
+            <button class="openEventEditorButton">x</button>
         </div>
         `
     }
+    const openEventEditorButtons = document.getElementsByClassName("openEventEditorButton");
+    for (const button of openEventEditorButtons){
+        button.addEventListener("click", async () => {
+
+            eventID = button.parentElement.id
+            const res = await getEventData()
+            eventData = res.event
+
+            const start = eventData.startDate.split("T");
+            const end = eventData.endDate.split("T");
+
+            editEventName.value = eventData.eventName;
+            editStartDate.value = start[0];
+            editEndDate.value = end[0];
+            editStartTime.value = start[1];
+            editEndTime.value = end[1];
+            eventEditingPanel.dataset.eventID = eventData.eventID
+
+            eventEditingPanel.style.display = "grid"
+            eventSelectorPanel.style.display ="none"
+        })
+    }
+
     eventSelectorPanel.style.display = "flex";
     darkenedSite.style.display = "block"
     mainGrid.style.display = "none";
@@ -118,7 +158,7 @@ async function renderEventSelector(){
             eventID = child.id;
             const result = await getEventData();
             if (!result.success) {
-                console.error(result.message);
+                console.error(result);
                 return;
             }
             eventData = result.event;
@@ -473,14 +513,16 @@ else{
     console.log("error could not find submitCalendarSettingsButton")
 };
 
+//sends an api request to delete a slot and its modules , deletes it from the  
+//eventData json and closes the panel
 if (deleteSlotAndModules){
     deleteSlotAndModules.addEventListener("click",async event => {
         const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
 
         const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
-                method: "DELETE",
-                credentials: "include",
-                headers:{"Content-Type": "application/json"}
+            method: "DELETE",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"}
         })
         const responseJson = await response.json();
         console.log(responseJson)
@@ -502,7 +544,61 @@ else{
     console.log("error could not find delete slot button")
 }
 
+// sends an api request to update the selected event and then moves teh user back to the event selector panel
+if (editEventSettingsButton){
+    editEventSettingsButton.addEventListener("click",async event => {
+        const eventUUID = eventEditingPanel.dataset.eventID;
 
+        const response = await fetch(apiURL + "/api/v1/events/"+eventUUID, {
+            method: "PATCH",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({
+            eventName: editEventName.value,
+            startDate: (editStartDate.value+"T" + editStartTime.value),
+            endDate: (editEndDate.value+"T" + editEndTime.value)
+            })
+        })
+        const responseJson= await response.json()
+        console.log(responseJson)
+
+        eventEditingPanel.style.display = "none"
+
+        renderEventSelector()
+    })
+}
+else{
+    console.log("error could not find submit event settings button")
+}
+//closes the event editor
+if (closeEventEditor){
+    closeEventEditor.addEventListener("click",async event => {
+        eventEditingPanel.style.display = "none"
+        renderEventSelector()
+    })
+}
+else{
+    console.log("error could not find close event editor button")
+}
+//sends an api request to delete a event,closes the editor panel and renders the event selction panel
+if(deleteEventButton){
+    deleteEventButton.addEventListener("click",async event => {
+        const eventUUID = eventEditingPanel.dataset.eventID;
+
+        const response = await fetch(apiURL + "/api/v1/events/"+eventUUID, {
+            method: "DELETE",
+            credentials: "include"
+        })
+        const responseJson= await response.json()
+        console.log(responseJson)
+        
+        eventEditingPanel.style.display = "none"
+        renderEventSelector()
+    })
+}
+else{
+    console.log("error could not find close event editor button")
+}
 
 // ==================== CALENDAR DRAWING FUNCTIONS ==================== 
 function drawCalendarHeader(){
@@ -629,6 +725,8 @@ function makeSlotLogic() {
         });
     }
 };
+
+
 function populateSlotEditingPanel(selectedSlot){
     if (!eventData) return;
     // Show editing panels
@@ -852,3 +950,4 @@ function deleteModuleButtons(){
         })
     }
 }
+

@@ -158,7 +158,31 @@ export const updateEvent = async (req,res) => {
         return res.status(403).json({message: "Authorization failed"});
     };
     try{
-       
+        const eventID = req.params.eventID;
+        const startDate = req.body.startDate;
+        const endDate = req.body.endDate;
+        const eventName = req.body.eventName;
+
+
+        if (!eventID||!startDate||!endDate||!eventName){
+            return res.status(400).json({ success:false, message:"missing information"})
+        }
+        const result = await client.query(`UPDATE events SET 
+            start_date = $1::timestamp AT TIME ZONE 'Europe/Berlin',
+            end_date = $2::timestamp AT TIME ZONE 'Europe/Berlin',
+            event_name = $3
+            WHERE event_id = $4
+            RETURNING event_id
+            `,
+            [startDate,endDate,eventName,eventID]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found"
+            });
+        }
+        return res.status(200).json({success:true,message:"Updated event" ,eventID: result.rows[0].event_id})
 
     }catch(error){
         console.error(error);
@@ -296,9 +320,45 @@ export const deleteEvent = async (req,res) => {
         return res.status(403).json({message: "Authorization failed"});
     };
     try{
-       
+        const eventID = req.params.eventID
+        await client.query("BEGIN");
+
+        //deletes modules of each slot in the event
+        const slots = await client.query("SELECT * FROM slots WHERE event_id = $1",
+        [eventID]
+        )
+        for(const slot of slots.rows){
+            await client.query("DELETE FROM modules WHERE slot_id = $1",
+            [slot.slot_id]
+            )
+        }
+        // deletes all slots of the event
+        await client.query("DELETE FROM slots WHERE event_id = $1",
+        [eventID]
+        )
+        //deletes the event itself
+        const result = await client.query("DELETE FROM events WHERE event_id = $1",
+        [eventID]
+        )
+        //checks if the event was found and thereby deleted
+        if (result.rowCount === 0) {
+            await client.query("ROLLBACK");
+
+            return res.status(404).json({
+                success: false,
+                message: "Event not found"
+            });
+        }
+
+        await client.query("COMMIT");
+
+        return res.status(200).json({
+            success:true,
+            message:"slot deleted successfully"
+        })
 
     }catch(error){
+        await client.query("ROLLBACK");
         console.error(error);
         res.status(500).json({success:false,message:'Database error'});
     }finally{

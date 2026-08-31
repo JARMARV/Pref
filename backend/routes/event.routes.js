@@ -10,7 +10,8 @@ import {
         getOrganizationEvents,
         deleteSlot,
         deleteEvent,
-        deleteModule
+        deleteModule,
+        updateEvent
         } from '../controllers/event.controller.js';
 
 const eventRouter = Router();
@@ -33,14 +34,14 @@ eventRouter.get('/',getOrganizationEvents);
 
 //--updation--
 
-//eventRouter.patch('/:eventID',updateEvent);
+eventRouter.patch('/:eventID',updateEvent);
 eventRouter.patch('/:eventID/:slotID',updateSlot);
 eventRouter.patch('/:eventID/:slotID/:moduleID',updateModule);
 
 
 //--deletion--
 
-//eventRouter.delete('/:eventID',deleteEvent);
+eventRouter.delete('/:eventID',deleteEvent);
 eventRouter.delete('/:eventID/:slotID',deleteSlot);
 eventRouter.delete('/:eventID/:slotID/:moduleID',deleteModule);
 
