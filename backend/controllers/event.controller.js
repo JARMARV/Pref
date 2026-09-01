@@ -332,10 +332,12 @@ export const getEventJson = async (req, res)=>{
     };
 
     if (authorizationLevel === 0){
+        console.log("Authorization failed. Temp user access required");
         return res.status(403).json({message: "Authorization failed"});
     };
     if (authorizationLevel === 1){
         if (await checkEventAccess(client, userID, req) === false){
+            console.log("Authorization failed. User not connected to event");
             return res.status(403).json({message: "Authorization failed"});
         }
     }

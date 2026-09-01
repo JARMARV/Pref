@@ -15,7 +15,7 @@ export const verifyToken = (req, res, next) => {
         if (!decoded) {
             return res.status(401).json({ message: "Invalid token" });
         }
-
+        
         // Attach decoded token data to request object
         req.user = {
             userId: decoded.userId,
@@ -28,7 +28,6 @@ export const verifyToken = (req, res, next) => {
         if (!req.user.userId || req.user.authorizationLevel === undefined || !req.user.organizationID) {
             return res.status(400).json({ message: "Invalid token data" });
         }
-
         next();
     } catch (error) {
         return res.status(401).json({ message: "Token verification failed" });
@@ -39,6 +38,7 @@ export const verifyToken = (req, res, next) => {
 export const requireAdmin = (req, res, next) => {
     verifyToken(req, res, () => {
         if (req.user.authorizationLevel !== 2) {
+            console.log("Authorization failed. Admin access required");
             return res.status(403).json({ message: "Authorization failed. Admin access required" });
         }
         next();
@@ -49,6 +49,7 @@ export const requireAdmin = (req, res, next) => {
 export const requireTempUser = (req, res, next) => {
     verifyToken(req, res, () => {
         if (req.user.authorizationLevel !== 0) {
+            console.log("Authorization failed. Temp user access required");
             return res.status(403).json({ message: "Authorization failed" });
         }
         next();
