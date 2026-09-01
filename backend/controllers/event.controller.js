@@ -1,30 +1,12 @@
 import pool from "../postgre_database/database.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
-import cookieParser from "cookie-parser";
+
 //creation
 export const newEvent = async (req, res) => {
     const client = await pool.connect();
     try{
-        //Getting user data from cookie and making sure user has admin authorization
-        const reqtoken = req.cookies.token;
-        if (!reqtoken) {
-            return res.status(401).json({ message: "No token provided" });
-        };
-        const decoded = jwt.verify(reqtoken, JWT_SECRET);
-        if (!decoded) {
-            return res.status(401).json({ message: "Invalid token" });
-        };
-        const userID = decoded.userId;
-        const authorizationLevel = decoded.authorizationLevel;
-        const organizationID = decoded.organizationID;
-        if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-            return res.status(400).json({ message: "Invalid token data" });
-        };
-        if (authorizationLevel !== 2){
-            return res.status(403).json({message: "Authorization failed"});
-        };
+        // User data is already validated and attached by middleware
+        const organizationID = req.user.organizationID;
+        
         //adding new event to event table
         const startDate = req.body.startDate;
         const endDate = req.body.endDate;
@@ -48,25 +30,8 @@ export const newEvent = async (req, res) => {
 
 export const newSlot = async (req, res) => {
     const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         //adding new slot to slots table
         const startDate = req.body.startDate;
         const endDate = req.body.endDate;
@@ -94,25 +59,8 @@ export const newSlot = async (req, res) => {
 
 export const newModule = async (req, res) => {
     const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         //adding new module to modules table
         const slotID = req.body.slotID;
         const locationInfo = req.body.locationInfo;
@@ -139,25 +87,8 @@ export const newModule = async (req, res) => {
 //updation
 export const updateEvent = async (req,res) => {
      const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         const eventID = req.params.eventID;
         const startDate = req.body.startDate;
         const endDate = req.body.endDate;
@@ -194,25 +125,8 @@ export const updateEvent = async (req,res) => {
 
 export const updateSlot = async (req,res) => {
      const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         if (! req.params.slotID || ! req.params.eventID){
             return res.status(400).json({success:false,message:"false parameters for this request"})
         };
@@ -251,25 +165,8 @@ export const updateSlot = async (req,res) => {
 
 export const updateModule = async (req,res) =>{
     const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         const slotID = req.body.slotID;
         const locationInfo = req.body.locationInfo;
         const generalInfo = req.body.generalInfo;
@@ -301,25 +198,8 @@ export const updateModule = async (req,res) =>{
 //deletion
 export const deleteEvent = async (req,res) => {
      const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         const eventID = req.params.eventID
         await client.query("BEGIN");
 
@@ -368,25 +248,8 @@ export const deleteEvent = async (req,res) => {
 
 export const deleteSlot = async (req,res) => {
     const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         const slotID = req.params.slotID
         await client.query("BEGIN");
 
@@ -425,25 +288,8 @@ export const deleteSlot = async (req,res) => {
 
 export const deleteModule = async (req,res) => {
      const client = await pool.connect();
-    //Getting user data from cookie and making sure user has admin authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel !== 2){
-        return res.status(403).json({message: "Authorization failed"});
-    };
     try{
+        // User data is already validated and attached by middleware
         const moduleID = req.params.moduleID
 
         const result = await client.query("DELETE FROM modules WHERE module_id = $1",
@@ -475,28 +321,24 @@ export const deleteModule = async (req,res) => {
 export const getEventJson = async (req, res)=>{
     const client = await pool.connect();
 
-    //Getting user data from cookie and making sure user has user or above authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel === 0){
-        return res.status(403).json({message: "Authorization failed"});
-    };
+    // User data is already validated and attached by middleware
+    const userID = req.user.userId;
+    const authorizationLevel = req.user.authorizationLevel;
+    const organizationID = req.user.organizationID;
+
     //checking if there is a event id
     if (!req.params.eventID){
         return res.status(400).json({success:false,message:"wrong api request"})
     };
+
+    if (authorizationLevel === 0){
+        return res.status(403).json({message: "Authorization failed"});
+    };
+    if (authorizationLevel === 1){
+        if (await checkEventAccess(client, userID, req) === false){
+            return res.status(403).json({message: "Authorization failed"});
+        }
+    }
 
     const eventID = req.params.eventID;
 
@@ -588,22 +430,11 @@ export const getEventJson = async (req, res)=>{
 export const getOrganizationEvents = async (req,res)=>{
     const client = await pool.connect();
 
-    //Getting user data from cookie and making sure user has user or above authorization
-    const reqtoken = req.cookies.token;
-    if (!reqtoken) {
-        return res.status(401).json({ message: "No token provided" });
-    };
-    const decoded = jwt.verify(reqtoken, JWT_SECRET);
-    if (!decoded) {
-        return res.status(401).json({ message: "Invalid token" });
-    };
-    const userID = decoded.userId;
-    const authorizationLevel = decoded.authorizationLevel;
-    const organizationID = decoded.organizationID;
-    if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-        return res.status(400).json({ message: "Invalid token data" });
-    };
-    if (authorizationLevel === 0){
+    // User data is already validated and attached by middleware
+    const authorizationLevel = req.user.authorizationLevel;
+    const organizationID = req.user.organizationID;
+    
+    if (authorizationLevel < 2){
         return res.status(403).json({message: "Authorization failed"});
     };
 
@@ -647,4 +478,17 @@ function berlinDateTime(utcString) {
     const get = type => parts.find(p => p.type === type).value;
 
     return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+// checks if the requested event is connected to the user in the users_in_events table and return true or false
+async function checkEventAccess(client, userID, req){
+    const result = await client.query(
+        "SELECT * FROM users_in_events WHERE user_id = $1",
+        [userID]
+    );
+    for (const row of result.rows){
+        if (row.event_id === req.params.eventID){
+            return true;
+        }
+    }
+    return false;
 }

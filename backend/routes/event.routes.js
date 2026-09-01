@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireAdmin, verifyToken } from '../middlewares/auth.middleware.js';
 
 import { 
         newEvent,
@@ -21,28 +22,28 @@ const eventRouter = Router();
 
 //--creation--
 
-eventRouter.post('/event',newEvent);
-eventRouter.post('/:eventID/slot',newSlot);
-eventRouter.post('/:eventID/:slotID/module',newModule);
+eventRouter.post('/event', requireAdmin, newEvent);
+eventRouter.post('/:eventID/slot', requireAdmin, newSlot);
+eventRouter.post('/:eventID/:slotID/module', requireAdmin, newModule);
 
 
 //--aquisition--
 
-eventRouter.get('/:eventID',getEventJson);
-eventRouter.get('/',getOrganizationEvents);
+eventRouter.get('/:eventID', verifyToken, getEventJson);
+eventRouter.get('/', requireAdmin, getOrganizationEvents);
 
 
 //--updation--
 
-eventRouter.patch('/:eventID',updateEvent);
-eventRouter.patch('/:eventID/:slotID',updateSlot);
-eventRouter.patch('/:eventID/:slotID/:moduleID',updateModule);
+eventRouter.patch('/:eventID', requireAdmin, updateEvent);
+eventRouter.patch('/:eventID/:slotID', requireAdmin, updateSlot);
+eventRouter.patch('/:eventID/:slotID/:moduleID', requireAdmin, updateModule);
 
 
 //--deletion--
 
-eventRouter.delete('/:eventID',deleteEvent);
-eventRouter.delete('/:eventID/:slotID',deleteSlot);
-eventRouter.delete('/:eventID/:slotID/:moduleID',deleteModule);
+eventRouter.delete('/:eventID', requireAdmin, deleteEvent);
+eventRouter.delete('/:eventID/:slotID', requireAdmin, deleteSlot);
+eventRouter.delete('/:eventID/:slotID/:moduleID', requireAdmin, deleteModule);
 
 export default eventRouter;

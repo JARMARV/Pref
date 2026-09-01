@@ -2,7 +2,6 @@ import pool from "../postgre_database/database.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
-import cookieParser from "cookie-parser";
 
 export const getAllUsers = async (req, res) => {
     const client = await pool.connect();
@@ -23,24 +22,9 @@ export const newTempUser = async (req, res) => {
     const client = await pool.connect();
 
     try {
-        //checking if user admin authorization
-        const reqtoken = req.cookies.token;
-        if (!reqtoken) {
-            return res.status(401).json({ message: "No token provided" });
-        };
-        const decoded = jwt.verify(reqtoken, JWT_SECRET);
-        if (!decoded) {
-            return res.status(401).json({ message: "Invalid token" });
-        };
-        const userID = decoded.userId;
-        const authorizationLevel = decoded.authorizationLevel;
-        const organizationID = decoded.organizationID;
-        if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-            return res.status(400).json({ message: "Invalid token data" });
-        };
-        if (authorizationLevel !== 2){
-            return res.status(403).json({message: "Authorization failed"});
-        };
+        // User data is already validated and attached by middleware
+        const organizationID = req.user.organizationID;
+        
         let userName;
         while (true) {
             userName = generateRandomString(8);
@@ -96,23 +80,9 @@ export const newUser = async (req, res) => {
     // check for valid token in the request cookies
     let transactionStarted = false;
     try{
-        const reqtoken = req.cookies.token;
-        if (!reqtoken) {
-            return res.status(401).json({ message: "No token provided" });
-        };
-        const decoded = jwt.verify(reqtoken, JWT_SECRET);
-        if (!decoded) {
-            return res.status(401).json({ message: "Invalid token" });
-        };
-        const userID = decoded.userId;
-        const authorizationLevel = decoded.authorizationLevel;
-        const organizationID = decoded.organizationID;
-        if (userID === undefined || authorizationLevel === undefined || organizationID === undefined) {
-            return res.status(400).json({ message: "Invalid token data" });
-        };
-        if (authorizationLevel !== 0){
-            return res.status(403).json({message: "Authorization failed"});
-        };
+        // User data is already validated and attached by middleware
+        const userID = req.user.userId;
+        const organizationID = req.user.organizationID;
 
         const newUserName = req.body.name;
         const newUserPassword = req.body.password;

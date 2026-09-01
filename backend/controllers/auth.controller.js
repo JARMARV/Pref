@@ -2,7 +2,6 @@ import pool from "../postgre_database/database.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
-import cookieParser from "cookie-parser";
 
 //sign in request handler
 export const signIn=async (req,res) => {

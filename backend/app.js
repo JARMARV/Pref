@@ -2,6 +2,7 @@
 import express from 'express';
 
 import { PORT } from './config/env.js';
+import {ORIGIN} from './config/env.js';
 
 import eventRouter from './routes/event.routes.js';
 import userRouter from './routes/user.routes.js';
@@ -14,14 +15,12 @@ import pool from './postgre_database/database.js';
 
 const app = express();
 
-app.use(cookieParser());
-app.use(errorMiddleware);
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-    origin:"http://localhost:5500",
-    credentials:true,
+    origin: ORIGIN,
+    credentials: true,
 }));
 
 app.use('/api/v1/auth', authRouter);
@@ -38,6 +37,9 @@ app.get('/', async (req, res) => {
         res.status(500).send('Database error');
     }
 });
+
+// Error handling middleware (must be last)
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
     console.log (`running on port ${ PORT } ?`);

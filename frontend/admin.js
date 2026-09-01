@@ -32,7 +32,7 @@ const calendarMonth = document.getElementById("calendarMonth"); // Displays curr
 
 // ---- Calendar Settings Panel Elements ----
 const adminCalendarSettingsPanel = document.getElementById("adminCalendarSettingsPanel"); // Modal for creating new event
-const newEventButton = document.getElementById("newEventButton"); // Button to open event selection
+const selectEventButton = document.getElementById("selectEventButton"); // Button to open event selection
 const submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton"); // Button to submit calendar settings
 const startTime = document.getElementById("startTime"); // Input for event start time
 const endTime = document.getElementById("endTime"); // Input for event end time
@@ -223,13 +223,13 @@ window.addEventListener('resize', updateCalendarColumnsWidth);
  * Opens the calendar settings panel and sets default date/time values 
 */
 
-if (newEventButton) {
-    newEventButton.addEventListener("click", () => {
+if (selectEventButton) {
+    selectEventButton.addEventListener("click", () => {
         renderEventSelector();
     })
 }
 else{
-    console.log("error could not find newEventButton")
+    console.log("error could not find selectEventButton")
 };
 
 // ---- Slot Creation ----
@@ -469,7 +469,7 @@ if(createEventButton){
     })
 }
 else{
-    console.log("error could not find new Event button")
+    console.log("error could not find select Event button")
 };
 
 /**

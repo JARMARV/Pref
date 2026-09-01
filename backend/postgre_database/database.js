@@ -12,7 +12,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 const dbConfig = {
     host: PGHOST,
-    port:PGPORT,
+    port: port,
     user: PGUSER ,
     password: PGPASSWORD,
     database: PGDATABASE,

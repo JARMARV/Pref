@@ -17,28 +17,48 @@ const saveUserPreference = document.getElementById("saveUserPreference");
 const logoutButton = document.getElementById("logoutButton");
 const hourIncrement = 90;
 const apiURL = "http://localhost:5600"
+let eventID = "";
+let eventData = null;
 
+// ---- Event selector panel ----
+const eventSelectorPanel = document.getElementById("eventSelectorPanel");
+const eventButtonsContainer = document.getElementById("eventButtonsContainer");
+const createEventButton = document.getElementById("createEventButton")
+const mainGrid = document.getElementById("mainGrid");
 
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const currentWeekIndex = 0;
 
-//fetch the userdata.json (will later be replaced by an actual database)
-let eventData = [];
-fetch("userData.json")
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Failed to load user data")
+initialize();
+
+async function initialize()  {
+    if (!localStorage.selectedEventID) renderEventSelector();
+    else {
+        eventID = localStorage.selectedEventID;
+        const result = await getEventData();
+        if (result.success === false) {
+            console.error(result);
+            renderEventSelector()
+            return;
         }
-        return response.json()
-    })
-    .then(data => {
-        eventData = data
-        renderCalendar()
-    })
-    .catch(error => {
-        console.error("Could not load user data:", error)
-    })
+        eventData = result.event;
+        console.log(eventData);
+        renderCalendar();
+    }
+
+} 
+
+
+async function getEventData(){
+    const response = await fetch(apiURL + "/api/v1/events/" + eventID, {
+        method: "GET",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+    });
+    const responseJson = await response.json();
+    return responseJson;
+};
 
 //currently not fully implemented just gives the first event
 //scales the width of the horizontal lines in the calendar
@@ -230,6 +250,71 @@ function drawDateRow() {
 }
 let closeUserPanel;
 
+async function renderEventSelector(){
+
+    const response = await fetch(apiURL + "/api/v1/events/", {
+        method: "GET",
+        credentials: "include",
+        headers:{"Content-Type": "application/json"},
+    });
+    const responseJson = await response.json()
+    const events = responseJson.events
+    eventButtonsContainer.innerHTML = "";
+    for (const event of events){
+        eventButtonsContainer.innerHTML += `
+        <div class="eventButtonContainer" id="${event.eventID}">
+            <button class="eventButton">${event.eventName}</button>
+            <button class="openEventEditorButton">x</button>
+        </div>
+        `
+    }
+    const openEventEditorButtons = document.getElementsByClassName("openEventEditorButton");
+    for (const button of openEventEditorButtons){
+        button.addEventListener("click", async () => {
+
+            eventID = button.parentElement.id
+            const res = await getEventData()
+            eventData = res.event
+
+            const start = eventData.startDate.split("T");
+            const end = eventData.endDate.split("T");
+
+            editEventName.value = eventData.eventName;
+            editStartDate.value = start[0];
+            editEndDate.value = end[0];
+            editStartTime.value = start[1];
+            editEndTime.value = end[1];
+            eventEditingPanel.dataset.eventID = eventData.eventID
+
+            eventEditingPanel.style.display = "grid"
+            eventSelectorPanel.style.display ="none"
+        })
+    }
+
+    eventSelectorPanel.style.display = "flex";
+    darkenedSite.style.display = "block"
+    mainGrid.style.display = "none";
+    for (const child of eventButtonsContainer.children){
+        child.children[0].addEventListener("click",async () => {
+            eventID = child.id;
+            const result = await getEventData();
+            if (!result.success) {
+                console.error(result);
+                return;
+            }
+            eventData = result.event;
+            console.log(eventData);
+            localStorage.selectedEventID = eventData.eventID;
+            eventSelectorPanel.style.display = "none";
+            darkenedSite.style.display = "none";
+            mainGrid.style.display = "grid";
+            renderCalendar();
+        })
+    }
+}
+
+
+
 if (userButton) {
     userButton.addEventListener("click", () => {
 
@@ -281,3 +366,15 @@ if (logoutButton){
 
     })
 }
+else{
+    console.log("error could not find logout button")
+}
+
+if (selectEventButton) {
+    selectEventButton.addEventListener("click", () => {
+        renderEventSelector();
+    })
+}
+else{
+    console.log("error could not find selectEventButton")
+};
