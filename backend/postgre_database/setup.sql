@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_id UUID PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     password_hash TEXT NOT NULL,
+    authorization_level INTEGER DEFAULT 0,
     organization_id UUID NOT NULL REFERENCES organizations(organization_id),
 
     CONSTRAINT unique_username_per_org
