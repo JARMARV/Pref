@@ -919,35 +919,47 @@ function renderWeekChangeButtons() {
     }      
 };
 
-function deleteModuleButtons(){
-    const deleteModuleButtons = document.getElementsByClassName("deleteModuleButton");
-    for (let i = 0; i < deleteModuleButtons.length; i++){
-        deleteModuleButtons[i].addEventListener("click",async event => {
-            const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
-            const selectedModuleUUID = deleteModuleButtons[i].parentElement.id;
-            const selectedSlot = eventData.slots.find(slot => slot.slotID === selectedSlotUUID);
+function deleteModuleButtons() {
+    const deleteButtons = document.getElementsByClassName("deleteModuleButton");
 
-            const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID+"/"+selectedModuleUUID, {
+    for (const button of deleteButtons) {
+        button.addEventListener("click", async event => {
+            const selectedSlotUUID =
+                SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
+
+            const selectedModuleUUID =
+                event.currentTarget.parentElement.id;
+
+            const selectedSlot = eventData.slots.find(
+                slot => slot.slotID === selectedSlotUUID
+            );
+
+            const response = await fetch(
+                apiURL + "/api/v1/events/" +
+                eventID + "/" +
+                selectedSlotUUID + "/" +
+                selectedModuleUUID,
+                {
                     method: "DELETE",
-                    credentials: "include",
-                    headers:{"Content-Type": "application/json"}
-            })
+                    credentials: "include"
+                }
+            );
+
             const responseJson = await response.json();
-            console.log(responseJson)
-            if (responseJson.success === true){
-                //deleting the module from the json
-                const slot = eventData.slots.find(
-                    slot => slot.slotID === selectedSlotUUID
-                );
-                if (slot) {
-                    slot.modules = slot.modules.filter(
+            console.log(responseJson);
+
+            if (responseJson.success === true) {
+                // Remove module from local eventData
+                if (selectedSlot) {
+                    selectedSlot.modules = selectedSlot.modules.filter(
                         module => module.moduleID !== selectedModuleUUID
                     );
                 }
-                populateSlotEditingPanel(selectedSlot)
-                renderCalendar()
+
+                populateSlotEditingPanel(selectedSlot);
+                renderCalendar();
+                deleteModuleButtons();
             }
-        })
+        });
     }
 }
-
