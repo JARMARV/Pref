@@ -84,6 +84,35 @@ body{
     justify-self: center;
     top:140px;
 }
+#adminPanel{
+    background-color:#1e2447;
+    justify-content:center;
+    display:none;
+    border-radius:10px;
+    position:fixed;
+    z-index:11;
+    justify-self:center;
+    top:140px;
+    width:200px;
+    min-height:500px;
+    padding:10px;
+    box-sizing:border-box;
+}
+#adminPanel[data-panel="eventSelectorTemplate"]{
+    flex-direction:column;
+    align-items:center;
+    justify-items:baseline;
+}
+#adminPanel[data-panel="slotAndModuleEditTemplate"]{
+    grid-template-rows:auto auto;
+    max-width:90vw;
+    width:auto;
+}
+#adminPanel[data-panel="adminCalendarSettingsTemplate"],
+#adminPanel[data-panel="adminSlotCreationTemplate"],
+#adminPanel[data-panel="eventEditingTemplate"]{
+    justify-items:center;
+}
 #adminCalendarSettingsPanel, #adminSlotCreationPanel,#eventSelectorPanel{
     width:200px;
     height:500px;

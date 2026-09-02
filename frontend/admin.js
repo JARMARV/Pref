@@ -7,9 +7,10 @@ const apiURL = "http://localhost:5600";
 const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 
 // ---- Event selector panel ----
-const eventSelectorPanel = document.getElementById("eventSelectorPanel");
-const eventButtonsContainer = document.getElementById("eventButtonsContainer");
-const createEventButton = document.getElementById("createEventButton")
+const adminPanel = document.getElementById("adminPanel");
+let eventSelectorPanel = adminPanel;
+let eventButtonsContainer;
+let createEventButton;
 const mainGrid = document.getElementById("mainGrid");
 
 // ---- Data & State Variables ----
@@ -31,44 +32,94 @@ const calendarTimeColumn = document.getElementById("calendarTimeColumn"); // Dis
 const calendarMonth = document.getElementById("calendarMonth"); // Displays current month and year
 
 // ---- Calendar Settings Panel Elements ----
-const adminCalendarSettingsPanel = document.getElementById("adminCalendarSettingsPanel"); // Modal for creating new event
+let adminCalendarSettingsPanel = adminPanel; // Shared modal host for creating new events
 const selectEventButton = document.getElementById("selectEventButton"); // Button to open event selection
-const submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton"); // Button to submit calendar settings
-const startTime = document.getElementById("startTime"); // Input for event start time
-const endTime = document.getElementById("endTime"); // Input for event end time
-const startDate = document.getElementById("startDate"); // Input for event start date
-const endDate = document.getElementById("endDate"); // Input for event end date
-const eventNameInput = document.getElementById("eventNameInput") // Input for the name of the event when creating it
+let submitCalendarSettingsButton;
+let startTime;
+let endTime;
+let startDate;
+let endDate;
+let eventNameInput;
 
 // ---- Slot Creation Panel Elements ----
-const adminSlotCreationPanel = document.getElementById("adminSlotCreationPanel"); // Modal for creating slots
+let adminSlotCreationPanel = adminPanel; // Shared modal host for creating slots
 const newSlotButton = document.getElementById("newSlotButton"); // Button to open slot creation
-const submitSlotCreationButton = document.getElementById("submitSlotCreationButton"); // Button to submit slot creation
-const dayOfSlot = document.getElementById("dayOfSlot"); // Input for slot day
-const startTimeSlot = document.getElementById("startTimeSlot"); // Input for slot start time
-const endTimeSlot = document.getElementById("endTimeSlot"); // Input for slot end time
+let submitSlotCreationButton;
+let dayOfSlot;
+let startTimeSlot;
+let endTimeSlot;
 
 // ---- Slot & Module Editing Panel Elements ----
-const SlotAndModuleEditPanel = document.getElementById("SlotAndModuleEditPanel"); // Panel for editing slots and modules
-const dayOfSlotPanel = document.getElementById("dayOfSlotPanel"); // Display/edit slot day
-const startTimeSlotPanel = document.getElementById("startTimeSlotPanel"); // Display/edit slot start time
-const endTimeSlotPanel = document.getElementById("endTimeSlotPanel"); // Display/edit slot end time
-const adminModulePanel = document.getElementById("adminModulePanel"); // Container for module input fields
-const addModuleButton = document.getElementById("addModuleButton"); // Button to add module to slot
-const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings"); // Button to save slot/module changes
-const deleteSlotAndModules = document.getElementById("deleteSlotAndModules"); //button to delete a slot and its modules
+let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots and modules
+let dayOfSlotPanel;
+let startTimeSlotPanel;
+let endTimeSlotPanel;
+let adminModulePanel;
+let addModuleButton;
+let saveSlotAndModuleSettings;
+let deleteSlotAndModules;
 
 // ---- Event editing Elements ----
-const eventEditingPanel = document.getElementById("eventEditingPanel");
-const eventEditingTitle = document.getElementById("eventEditingTitle");
-const editEventName = document.getElementById("editEventName");
-const editStartDate = document.getElementById("editStartDate");
-const editEndDate = document.getElementById("editEndDate");
-const editStartTime = document.getElementById("editStartTime");
-const editEndTime = document.getElementById("editEndTime");
-const editEventSettingsButton = document.getElementById("editEventSettingsButton");
-const closeEventEditor = document.getElementById("closeEventEditor");
-const deleteEventButton = document.getElementById("deleteEventButton");
+let eventEditingPanel = adminPanel;
+let eventEditingTitle;
+let editEventName;
+let editStartDate;
+let editEndDate;
+let editStartTime;
+let editEndTime;
+let editEventSettingsButton;
+let closeEventEditor;
+let deleteEventButton;
+
+function showAdminPanel(templateID, display = "grid") {
+    if (!adminPanel) return;
+    const template = document.getElementById(templateID);
+    if (!template) return;
+    adminPanel.innerHTML = template.innerHTML;
+    adminPanel.dataset.panel = templateID;
+    adminPanel.style.display = display;
+    refreshAdminPanelElements();
+    if (templateID === "adminCalendarSettingsTemplate") bindCalendarSettings();
+    if (templateID === "adminSlotCreationTemplate") bindSlotCreation();
+    if (templateID === "slotAndModuleEditTemplate") bindSlotSaving();
+    if (templateID === "slotAndModuleEditTemplate") bindSlotDeleting();
+    if (templateID === "eventEditingTemplate") {
+        bindEventEditing();
+        bindEventEditorClosing();
+        bindEventDeleting();
+    }
+}
+
+function refreshAdminPanelElements() {
+    eventButtonsContainer = document.getElementById("eventButtonsContainer");
+    createEventButton = document.getElementById("createEventButton");
+    submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton");
+    startTime = document.getElementById("startTime");
+    endTime = document.getElementById("endTime");
+    startDate = document.getElementById("startDate");
+    endDate = document.getElementById("endDate");
+    eventNameInput = document.getElementById("eventNameInput");
+    submitSlotCreationButton = document.getElementById("submitSlotCreationButton");
+    dayOfSlot = document.getElementById("dayOfSlot");
+    startTimeSlot = document.getElementById("startTimeSlot");
+    endTimeSlot = document.getElementById("endTimeSlot");
+    dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
+    startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
+    endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
+    adminModulePanel = document.getElementById("adminModulePanel");
+    addModuleButton = document.getElementById("addModuleButton");
+    saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings");
+    deleteSlotAndModules = document.getElementById("deleteSlotAndModules");
+    eventEditingTitle = document.getElementById("eventEditingTitle");
+    editEventName = document.getElementById("editEventName");
+    editStartDate = document.getElementById("editStartDate");
+    editEndDate = document.getElementById("editEndDate");
+    editStartTime = document.getElementById("editStartTime");
+    editEndTime = document.getElementById("editEndTime");
+    editEventSettingsButton = document.getElementById("editEventSettingsButton");
+    closeEventEditor = document.getElementById("closeEventEditor");
+    deleteEventButton = document.getElementById("deleteEventButton");
+}
 
 // ---- Week Navigation Elements ----
 const weekButtonLeft = document.getElementById("weekButtonLeft"); // Button to go to previous week
@@ -111,6 +162,16 @@ async function initialize()  {
 //fetches all events of the organization of the admin and renders them in the event selection panel
 async function renderEventSelector(){
 
+    showAdminPanel("eventSelectorTemplate", "flex");
+    createEventButton.onclick = () => {
+        showAdminPanel("adminCalendarSettingsTemplate", "grid");
+        darkenedSite.style.display = "block";
+        endDate.value = "2026-07-31";
+        startDate.value = "2026-07-31";
+        startTime.value = "00:00";
+        endTime.value = "23:59";
+    };
+
     const response = await fetch(apiURL + "/api/v1/events/", {
         method: "GET",
         credentials: "include",
@@ -138,6 +199,7 @@ async function renderEventSelector(){
             const start = eventData.startDate.split("T");
             const end = eventData.endDate.split("T");
 
+            showAdminPanel("eventEditingTemplate", "grid");
             editEventName.value = eventData.eventName;
             editStartDate.value = start[0];
             editEndDate.value = end[0];
@@ -145,8 +207,7 @@ async function renderEventSelector(){
             editEndTime.value = end[1];
             eventEditingPanel.dataset.eventID = eventData.eventID
 
-            eventEditingPanel.style.display = "grid"
-            eventSelectorPanel.style.display ="none"
+            eventEditingPanel.dataset.eventID = eventData.eventID;
         })
     }
 
@@ -155,6 +216,7 @@ async function renderEventSelector(){
     mainGrid.style.display = "none";
     for (const child of eventButtonsContainer.children){
         child.children[0].addEventListener("click",async () => {
+            currentWeekIndex = 0;
             eventID = child.id;
             const result = await getEventData();
             if (!result.success) {
@@ -238,7 +300,7 @@ else{
  */
 if (newSlotButton) {
     newSlotButton.addEventListener("click", () => {
-        if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "grid"
+        showAdminPanel("adminSlotCreationTemplate", "grid");
         if (darkenedSite) darkenedSite.style.display = "block"
     })
 }
@@ -251,7 +313,8 @@ else{
  * Checks for overlapping slots and invalid time ranges
  * Adds slot to eventData and re-renders calendar
  */
-if (submitSlotCreationButton) {
+function bindSlotCreation() {
+    if (submitSlotCreationButton) {
     submitSlotCreationButton.addEventListener("click",async () => {
         const slotDay = dayOfSlot?.value
         const slotStartTime = startTimeSlot?.value
@@ -287,7 +350,7 @@ if (submitSlotCreationButton) {
         });
         const responseJson = await response.json()
         const slotID = responseJson.slotID;
-        if (adminSlotCreationPanel) adminSlotCreationPanel.style.display = "none"
+        if (adminPanel) adminPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
         
         if (eventData) {
@@ -300,10 +363,8 @@ if (submitSlotCreationButton) {
         }
         renderCalendar()
     })
+    }
 }
-else{
-    console.log("error could not find submitSlotCreationButton")
-};
 
 // ---- Slot & Module Editing ----
 /**
@@ -311,7 +372,8 @@ else{
  * Updates both server database and local eventData
  * Creates new modules if they were added in the panel
  */
-if (saveSlotAndModuleSettings){
+function bindSlotSaving() {
+    if (saveSlotAndModuleSettings){
     saveSlotAndModuleSettings.addEventListener("click",async () => {
         const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
         const selectedSlotID = eventData.slots.findIndex(slot => slot.slotID === selectedSlotUUID);
@@ -384,10 +446,8 @@ if (saveSlotAndModuleSettings){
 
         renderCalendar()
     })
+    }
 }
-else{
-    console.log("could not find saveSlotAndModuleSettings button")
-};
 
 // ---- User Panel & Authentication ----
 /**
@@ -458,25 +518,12 @@ else{
 
 
 //Handles creating a new event when the button is clicked
-if(createEventButton){
-    createEventButton.addEventListener("click", () => {
-        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "grid";
-        if (darkenedSite) darkenedSite.style.display = "block";
-        if (endDate) endDate.value = "2026-07-31";
-        if (startDate) startDate.value = "2026-07-31";
-        if (startTime) startTime.value = "00:00";
-        if (endTime) endTime.value = "23:59";
-    })
-}
-else{
-    console.log("error could not find select Event button")
-};
-
 /**
  * Submits the calendar settings and creates a new event on the server
  * Updates local eventData with new dates and re-renders calendar
  */
-if (submitCalendarSettingsButton) {
+function bindCalendarSettings() {
+    if (submitCalendarSettingsButton) {
     submitCalendarSettingsButton.addEventListener("click",async event => {
         if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value || !eventNameInput?.value) {
             alert("please fill out all information")
@@ -502,20 +549,19 @@ if (submitCalendarSettingsButton) {
                 return;
             }
         eventData = result.event;
-        if (adminCalendarSettingsPanel) adminCalendarSettingsPanel.style.display = "none"
+        if (adminPanel) adminPanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
-        if (eventSelectorPanel) eventSelectorPanel.style.display ="none"
+        if (adminPanel) adminPanel.style.display = "none"
         mainGrid.style.display = "grid";
         renderCalendar()
     });
+    }
 }
-else{
-    console.log("error could not find submitCalendarSettingsButton")
-};
 
 //sends an api request to delete a slot and its modules , deletes it from the  
 //eventData json and closes the panel
-if (deleteSlotAndModules){
+function bindSlotDeleting() {
+    if (deleteSlotAndModules){
     deleteSlotAndModules.addEventListener("click",async event => {
         const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
 
@@ -539,13 +585,12 @@ if (deleteSlotAndModules){
             renderCalendar()
         }
     })
-}
-else{
-    console.log("error could not find delete slot button")
+    }
 }
 
 // sends an api request to update the selected event and then moves teh user back to the event selector panel
-if (editEventSettingsButton){
+function bindEventEditing() {
+    if (editEventSettingsButton){
     editEventSettingsButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
 
@@ -566,22 +611,20 @@ if (editEventSettingsButton){
 
         renderEventSelector()
     })
-}
-else{
-    console.log("error could not find submit event settings button")
+    }
 }
 //closes the event editor
-if (closeEventEditor){
+function bindEventEditorClosing() {
+    if (closeEventEditor){
     closeEventEditor.addEventListener("click",async event => {
         eventEditingPanel.style.display = "none"
         renderEventSelector()
     })
-}
-else{
-    console.log("error could not find close event editor button")
+    }
 }
 //sends an api request to delete a event,closes the editor panel and renders the event selction panel
-if(deleteEventButton){
+function bindEventDeleting(){
+    if(deleteEventButton){
     deleteEventButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
 
@@ -595,9 +638,7 @@ if(deleteEventButton){
         eventEditingPanel.style.display = "none"
         renderEventSelector()
     })
-}
-else{
-    console.log("error could not find close event editor button")
+    }
 }
 
 // ==================== CALENDAR DRAWING FUNCTIONS ==================== 
@@ -730,7 +771,7 @@ function makeSlotLogic() {
 function populateSlotEditingPanel(selectedSlot){
     if (!eventData) return;
     // Show editing panels
-    if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid";
+    showAdminPanel("slotAndModuleEditTemplate", "grid");
     if (adminModulePanel) adminModulePanel.style.display = "flex";
     if (darkenedSite) darkenedSite.style.display = "block";
 

@@ -19,21 +19,21 @@
         <button id="userButton"></button>
     </div>
 
-    <div id ="eventSelectorPanel">
-        <button id="createEventButton">+</button>
+    <div id="adminPanel"></div>
 
+    <template id="eventSelectorTemplate">
+        <button id="createEventButton">+</button>
         <div id="eventsheaderContainer">
             <div id="eventsHeader">Select Event</div>
         </div>
-        <div id="eventButtonsContainer">   
-        </div>
-    </div>
+        <div id="eventButtonsContainer"></div>
+    </template>
 
     <div id="userPanel">
         <button id="logoutButton">Log out</button>
     </div>
 
-    <div id="adminCalendarSettingsPanel">
+    <template id="adminCalendarSettingsTemplate">
         <div>
             <h3>Test</h3>
         </div>
@@ -61,9 +61,10 @@
         <button id="submitCalendarSettingsButton">
             submit
         </button>
-    </div>
+    </template>
 
-    <div id="adminSlotCreationPanel">
+    
+    <template id="adminSlotCreationTemplate">
         <div>
             <h3>Test</h3>
         </div>
@@ -82,9 +83,9 @@
         <button id="submitSlotCreationButton">
             submit
         </button>
-    </div>
+    </template>
 
-    <div id="SlotAndModuleEditPanel">
+    <template id="slotAndModuleEditTemplate">
         <button class="closeModulesWindow">X</button>
         <div id="adminSlotPanel">
             <div>
@@ -104,9 +105,9 @@
             <button id ="deleteSlotAndModules">Delete</button>
         </div>
         <div id="adminModulePanel"></div>
-    </div>
+    </template>
 
-    <div id="eventEditingPanel">
+    <template id="eventEditingTemplate">
 
         <button id="closeEventEditor">x</button>
 
@@ -138,8 +139,18 @@
             <button id="deleteEventButton">delete</button>
         </div>
         
-    </div>
+    </template>
     
+    <template id="userManagementTemplate">
+        <button id="closeUserManagement">x</button>
+
+        <div id="userManagementHeader">
+
+        <div id="userListOfEventContainer">
+        </div>
+    </template>
+
+
     <div id="mainGrid">
         <div id="weekSelectionContainer">
             <div>

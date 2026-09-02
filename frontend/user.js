@@ -4,16 +4,15 @@ const mainCalendar = document.getElementById("mainCalendar")
 const calendarColumns = document.getElementById("calendarColumns")
 const calendarDateRow = document.getElementById("calendarDateRow")
 const calendarMonth = document.getElementById("calendarMonth")
-const userModulePanel = document.getElementById("userModulePanel")
-const SlotAndModuleEditPanel = document.getElementById("SlotAndModuleEditPanel")
-const addModuleButton = document.getElementById("addModuleButton")
-const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings")
-const dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
-const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
-const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
+const userModalPanel = document.getElementById("userModalPanel")
+let userModulePanel
+let SlotAndModuleEditPanel = userModalPanel
+let dayOfSlotPanel
+let startTimeSlotPanel
+let endTimeSlotPanel
 const userButton = document.getElementById("userButton");
 const userPanel = document.getElementById("userPanel");
-const saveUserPreference = document.getElementById("saveUserPreference");
+let saveUserPreference
 const logoutButton = document.getElementById("logoutButton");
 const hourIncrement = 90;
 const apiURL = "http://localhost:5600"
@@ -21,10 +20,24 @@ let eventID = "";
 let eventData = null;
 
 // ---- Event selector panel ----
-const eventSelectorPanel = document.getElementById("eventSelectorPanel");
-const eventButtonsContainer = document.getElementById("eventButtonsContainer");
-const createEventButton = document.getElementById("createEventButton")
+let eventSelectorPanel = userModalPanel;
+let eventButtonsContainer;
+const eventSelectorTemplate = document.getElementById("userEventSelectorTemplate");
 const mainGrid = document.getElementById("mainGrid");
+
+function showUserModal(template, display) {
+    userModalPanel.innerHTML = template.innerHTML;
+    userModalPanel.dataset.panel = template.id;
+    userModalPanel.style.display = display;
+    eventButtonsContainer = document.getElementById("eventButtonsContainer");
+    userModulePanel = document.getElementById("userModulePanel");
+    SlotAndModuleEditPanel = userModalPanel;
+    dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
+    startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
+    endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
+    saveUserPreference = document.getElementById("saveUserPreference");
+    bindUserPreferenceSaving();
+}
 
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const daysOfTheWeek = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
@@ -153,7 +166,7 @@ function makeSlotLogic() {
         slots[i].addEventListener("click", () => {
             if (!eventData) return
 
-            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "grid"
+            showUserModal(document.getElementById("userSlotEditTemplate"), "grid")
             if (userModulePanel) userModulePanel.style.display = "flex"
             if (darkenedSite) darkenedSite.style.display = "block"
 
@@ -190,10 +203,6 @@ function makeSlotLogic() {
                 SlotAndModuleEditPanel.dataset.idOfSelectedSlot = String(selectedSlotID);
             }
 
-            const dayOfSlotPanel = document.getElementById("dayOfSlotPanel")
-            const startTimeSlotPanel = document.getElementById("startTimeSlotPanel")
-            const endTimeSlotPanel = document.getElementById("endTimeSlotPanel")
-
             if (selectedSlot) {
                 if (dayOfSlotPanel) dayOfSlotPanel.value = selectedSlot.start.split("T")[0]
                 if (startTimeSlotPanel) startTimeSlotPanel.value = selectedSlot.start.split("T")[1]
@@ -217,7 +226,7 @@ function bindModulePanelInteractions() {
     const closeWindowButtons = document.getElementsByClassName("closeModulesWindow")
     for (let i = 0; i < closeWindowButtons.length; i++) {
         closeWindowButtons[i].onclick = () => {
-            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+            if (userModalPanel) userModalPanel.style.display = "none"
             if (userModulePanel) userModulePanel.style.display = "none"
             if (darkenedSite) darkenedSite.style.display = "none"
             renderCalendar()
@@ -251,6 +260,8 @@ function drawDateRow() {
 let closeUserPanel;
 
 async function renderEventSelector(){
+
+    showUserModal(eventSelectorTemplate, "flex");
 
     const response = await fetch(apiURL + "/api/v1/events/", {
         method: "GET",
@@ -339,21 +350,20 @@ if (userButton) {
 else{
     console.log("error could not find user Button")
 }
-if (saveUserPreference) {
+function bindUserPreferenceSaving() {
+    if (saveUserPreference) {
     saveUserPreference.addEventListener("click", () => {
         const event = eventData[1].events[0];
         const selectedSlotID = Number(SlotAndModuleEditPanel.dataset.idOfSelectedSlot);
         for (let i = 0; i < event.slots[selectedSlotID].modules.length;i++){
             event.slots[selectedSlotID].modules[i].userPreference = userModulePanel.children[i].querySelector(".silderInput").value;
         }
-        if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+        if (userModalPanel) userModalPanel.style.display = "none"
         if (userModulePanel) userModulePanel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
         renderCalendar()
     })
-}
-else{
-    console.log("error could not find save button")
+    }
 }
 if (logoutButton){
     logoutButton.addEventListener("click", async () => {
