@@ -79,6 +79,11 @@ const userButton = document.getElementById("userButton"); // Button to toggle us
 const userPanel = document.getElementById("userPanel"); // Panel showing user options
 const logoutButton = document.getElementById("logoutButton"); // Button to logout
 
+//---- User Management Elements ----
+const usersOfEventButton = document.getElementById("usersOfEventButton"); // Button to open user management panel
+
+
+
 // ---- Overlay Element ----
 const darkenedSite = document.getElementById("darkenedSite"); // Dark overlay when modals are open
 
@@ -598,6 +603,12 @@ if(deleteEventButton){
 }
 else{
     console.log("error could not find close event editor button")
+}
+
+if(usersOfEventButton){
+    usersOfEventButton.addEventListener("click",async event => {
+        
+    })
 }
 
 // ==================== CALENDAR DRAWING FUNCTIONS ==================== 
