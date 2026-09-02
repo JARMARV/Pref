@@ -251,6 +251,7 @@ export const deleteSlot = async (req,res) => {
     try{
         // User data is already validated and attached by middleware
         const slotID = req.params.slotID
+
         await client.query("BEGIN");
 
         await client.query("DELETE FROM modules WHERE slot_id = $1",

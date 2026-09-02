@@ -30,8 +30,6 @@ body{
     height:500px;
     padding:10px;
     justify-items: center;
-    
-    
 }
 #mainGrid{
     display:grid;

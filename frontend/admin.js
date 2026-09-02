@@ -9,8 +9,6 @@ const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 // ---- Event selector panel ----
 const adminPanel = document.getElementById("adminPanel");
 let eventSelectorPanel = adminPanel;
-let eventButtonsContainer;
-let createEventButton;
 const mainGrid = document.getElementById("mainGrid");
 
 // ---- Data & State Variables ----
@@ -18,6 +16,21 @@ let eventID = ""; // Current event UUID
 let eventData = null; // Stores the fetched event data (contains slots, modules, dates)
 let currentWeekIndex = 0; // Tracks which week is currently being displayed
 let closeUserPanel; // Function reference for closing user panel when clicking outside
+
+// ---- Week Navigation Elements ----
+const weekButtonLeft = document.getElementById("weekButtonLeft"); // Button to go to previous week
+const weekButtonRight = document.getElementById("weekButtonRight"); // Button to go to next week
+
+// ---- User Panel Elements ----
+const userButton = document.getElementById("userButton"); // Button to toggle user panel
+const userPanel = document.getElementById("userPanel"); // Panel showing user options
+const logoutButton = document.getElementById("logoutButton"); // Button to logout
+
+//---- User Management Elements ----
+const usersOfEventButton = document.getElementById("usersOfEventButton"); // Button to open user management panel
+
+// ---- Overlay Element ----
+const darkenedSite = document.getElementById("darkenedSite"); // Dark overlay when modals are open
 
 // ---- Lookup Arrays ----
 const monthsOfTheYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -34,42 +47,15 @@ const calendarMonth = document.getElementById("calendarMonth"); // Displays curr
 // ---- Calendar Settings Panel Elements ----
 let adminCalendarSettingsPanel = adminPanel; // Shared modal host for creating new events
 const selectEventButton = document.getElementById("selectEventButton"); // Button to open event selection
-let submitCalendarSettingsButton;
-let startTime;
-let endTime;
-let startDate;
-let endDate;
-let eventNameInput;
 
 // ---- Slot Creation Panel Elements ----
 let adminSlotCreationPanel = adminPanel; // Shared modal host for creating slots
 const newSlotButton = document.getElementById("newSlotButton"); // Button to open slot creation
-let submitSlotCreationButton;
-let dayOfSlot;
-let startTimeSlot;
-let endTimeSlot;
 
 // ---- Slot & Module Editing Panel Elements ----
 let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots and modules
-let dayOfSlotPanel;
-let startTimeSlotPanel;
-let endTimeSlotPanel;
-let adminModulePanel;
-let addModuleButton;
-let saveSlotAndModuleSettings;
-let deleteSlotAndModules;
 
 // ---- Event editing Elements ----
-let eventEditingPanel = adminPanel;
-let eventEditingTitle;
-let editEventName;
-let editStartDate;
-let editEndDate;
-let editStartTime;
-let editEndTime;
-let editEventSettingsButton;
-let closeEventEditor;
-let deleteEventButton;
 
 function showAdminPanel(templateID, display = "grid") {
     if (!adminPanel) return;
@@ -78,65 +64,35 @@ function showAdminPanel(templateID, display = "grid") {
     adminPanel.innerHTML = template.innerHTML;
     adminPanel.dataset.panel = templateID;
     adminPanel.style.display = display;
-    refreshAdminPanelElements();
-    if (templateID === "adminCalendarSettingsTemplate") bindCalendarSettings();
-    if (templateID === "adminSlotCreationTemplate") bindSlotCreation();
-    if (templateID === "slotAndModuleEditTemplate") bindSlotSaving();
-    if (templateID === "slotAndModuleEditTemplate") bindSlotDeleting();
-    if (templateID === "eventEditingTemplate") {
-        bindEventEditing();
-        bindEventEditorClosing();
-        bindEventDeleting();
+    darkenedSite.style.display = "block";
+    switch (templateID) {
+        case "adminCalendarSettingsTemplate":{
+            bindCalendarSettings();
+            break;
+        }
+        case "adminSlotCreationTemplate":{
+            bindSlotCreation();
+            break;
+        }
+        case "slotAndModuleEditTemplate": {
+            bindSlotSaving();
+            bindSlotDeleting();
+            break;
+        }
+        case "eventEditingTemplate": {
+            bindEventEditing();
+            bindEventEditorClosing();
+            bindEventDeleting();
+            break;
+        }
+        case "userManagementTemplate": {
+            bindUserManagementClosing();
+            break;
+        }
     }
+
 }
 
-function refreshAdminPanelElements() {
-    eventButtonsContainer = document.getElementById("eventButtonsContainer");
-    createEventButton = document.getElementById("createEventButton");
-    submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton");
-    startTime = document.getElementById("startTime");
-    endTime = document.getElementById("endTime");
-    startDate = document.getElementById("startDate");
-    endDate = document.getElementById("endDate");
-    eventNameInput = document.getElementById("eventNameInput");
-    submitSlotCreationButton = document.getElementById("submitSlotCreationButton");
-    dayOfSlot = document.getElementById("dayOfSlot");
-    startTimeSlot = document.getElementById("startTimeSlot");
-    endTimeSlot = document.getElementById("endTimeSlot");
-    dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
-    startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
-    endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
-    adminModulePanel = document.getElementById("adminModulePanel");
-    addModuleButton = document.getElementById("addModuleButton");
-    saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings");
-    deleteSlotAndModules = document.getElementById("deleteSlotAndModules");
-    eventEditingTitle = document.getElementById("eventEditingTitle");
-    editEventName = document.getElementById("editEventName");
-    editStartDate = document.getElementById("editStartDate");
-    editEndDate = document.getElementById("editEndDate");
-    editStartTime = document.getElementById("editStartTime");
-    editEndTime = document.getElementById("editEndTime");
-    editEventSettingsButton = document.getElementById("editEventSettingsButton");
-    closeEventEditor = document.getElementById("closeEventEditor");
-    deleteEventButton = document.getElementById("deleteEventButton");
-}
-
-// ---- Week Navigation Elements ----
-const weekButtonLeft = document.getElementById("weekButtonLeft"); // Button to go to previous week
-const weekButtonRight = document.getElementById("weekButtonRight"); // Button to go to next week
-
-// ---- User Panel Elements ----
-const userButton = document.getElementById("userButton"); // Button to toggle user panel
-const userPanel = document.getElementById("userPanel"); // Panel showing user options
-const logoutButton = document.getElementById("logoutButton"); // Button to logout
-
-//---- User Management Elements ----
-const usersOfEventButton = document.getElementById("usersOfEventButton"); // Button to open user management panel
-
-
-
-// ---- Overlay Element ----
-const darkenedSite = document.getElementById("darkenedSite"); // Dark overlay when modals are open
 
 // ==================== INITIALIZATION ====================
 
@@ -168,8 +124,15 @@ async function initialize()  {
 async function renderEventSelector(){
 
     showAdminPanel("eventSelectorTemplate", "flex");
+    eventButtonsContainer = document.getElementById("eventButtonsContainer");
+    createEventButton = document.getElementById("createEventButton");
+    
     createEventButton.onclick = () => {
         showAdminPanel("adminCalendarSettingsTemplate", "grid");
+        const startDate = document.getElementById("startDate");
+        const endDate = document.getElementById("endDate");
+        const startTime = document.getElementById("startTime");
+        const endTime = document.getElementById("endTime");
         darkenedSite.style.display = "block";
         endDate.value = "2026-07-31";
         startDate.value = "2026-07-31";
@@ -205,6 +168,12 @@ async function renderEventSelector(){
             const end = eventData.endDate.split("T");
 
             showAdminPanel("eventEditingTemplate", "grid");
+            const editEventName = document.getElementById("editEventName");
+            const editStartDate = document.getElementById("editStartDate");
+            const editEndDate = document.getElementById("editEndDate");
+            const editStartTime = document.getElementById("editStartTime");
+            const editEndTime = document.getElementById("editEndTime");
+            const eventEditingPanel = document.getElementById("adminPanel");
             editEventName.value = eventData.eventName;
             editStartDate.value = start[0];
             editEndDate.value = end[0];
@@ -218,7 +187,6 @@ async function renderEventSelector(){
 
     eventSelectorPanel.style.display = "flex";
     darkenedSite.style.display = "block"
-    mainGrid.style.display = "none";
     for (const child of eventButtonsContainer.children){
         child.children[0].addEventListener("click",async () => {
             currentWeekIndex = 0;
@@ -319,6 +287,10 @@ else{
  * Adds slot to eventData and re-renders calendar
  */
 function bindSlotCreation() {
+    const submitSlotCreationButton = document.getElementById("submitSlotCreationButton");
+    const dayOfSlot = document.getElementById("dayOfSlot");
+    const startTimeSlot = document.getElementById("startTimeSlot");
+    const endTimeSlot = document.getElementById("endTimeSlot");
     if (submitSlotCreationButton) {
     submitSlotCreationButton.addEventListener("click",async () => {
         const slotDay = dayOfSlot?.value
@@ -378,80 +350,87 @@ function bindSlotCreation() {
  * Creates new modules if they were added in the panel
  */
 function bindSlotSaving() {
+    const saveSlotAndModuleSettings = document.getElementById("saveSlotAndModuleSettings");
+    const dayOfSlotPanel = document.getElementById("dayOfSlotPanel");
+    const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
+    const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
+    const adminModulePanel = document.getElementById("adminModulePanel");
     if (saveSlotAndModuleSettings){
-    saveSlotAndModuleSettings.addEventListener("click",async () => {
-        const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
-        const selectedSlotID = eventData.slots.findIndex(slot => slot.slotID === selectedSlotUUID);
-        const startTime = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value);
-        const endTime = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
-
-        // Save the slot settings to database
-        const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
-            method: "PATCH",
-            credentials: "include",
-            headers:{"Content-Type": "application/json"},
-            body: JSON.stringify({
-                slotID: selectedSlotUUID,
-                eventId: eventID,
-                startTime: startTime,
-                endTime: endTime
-            })
-        });
-
-        // Update local data with new slot times
-        eventData.slots[selectedSlotID].start = startTime;
-        eventData.slots[selectedSlotID].end = endTime;
-
-        const moduleCount = eventData.slots[selectedSlotID].modules.length;
-        
-        // Add empty module entries for new modules added in the panel
-        for (let i = 0; i < adminModulePanel.children.length - moduleCount; i++){
-            eventData.slots[selectedSlotID].modules.push({
-                "locationInfoShort": "",
-                "additionalInfo": "",
-                "name": "",
-                "moduleID": NaN,
-            })
-            continue;
-        }
-        
-        // Update all module information for the selected slot
-        for (let i = 0; i < adminModulePanel.children.length; i++){
-            const locationInfo = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
-            const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
-            const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
-            const moduleID = adminModulePanel.children[i].id;
-
-            // Save module to database
-            const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
+        saveSlotAndModuleSettings.addEventListener("click",async () => {
+            const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
+            const selectedSlotID = eventData.slots.findIndex(slot => slot.slotID === selectedSlotUUID);
+            const startTime = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value);
+            const endTime = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
+            // Save the slot settings to database
+            const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
                 method: "PATCH",
                 credentials: "include",
                 headers:{"Content-Type": "application/json"},
                 body: JSON.stringify({
                     slotID: selectedSlotUUID,
-                    locationInfo: locationInfo,
-                    generalInfo: moduleInfo,
-                    moduleName: moduleName,
-                    moduleID: moduleID
+                    eventId: eventID,
+                    startTime: startTime,
+                    endTime: endTime
                 })
             });
-            const responseJson = await response.json();
-            
-            // Update local data with module information
-            eventData.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
-            eventData.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
-            eventData.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
-            eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
-        }
-        
-        if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
-        if (adminModulePanel) adminModulePanel.style.display = "none"
-        if (darkenedSite) darkenedSite.style.display = "none"
-        adminModulePanel.dataset.idOfSelectedSlot = "null";
+            responseJson = await response.json()
+            console.log(responseJson)
 
-        renderCalendar()
-    })
+            // Update local data with new slot times
+            eventData.slots[selectedSlotID].start = startTime;
+            eventData.slots[selectedSlotID].end = endTime;
+
+            const moduleCount = eventData.slots[selectedSlotID].modules.length;
+            
+            // Add empty module entries for new modules added in the panel
+            for (let i = 0; i < adminModulePanel.children.length - moduleCount; i++){
+                eventData.slots[selectedSlotID].modules.push({
+                    "locationInfoShort": "",
+                    "additionalInfo": "",
+                    "name": "",
+                    "moduleID": NaN,
+                })
+                continue;
+            }
+            
+            // Update all module information for the selected slot
+            for (let i = 0; i < adminModulePanel.children.length; i++){
+                const locationInfo = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
+                const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
+                const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+                const moduleID = adminModulePanel.children[i].id;
+
+                // Save module to database
+                const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers:{"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        slotID: selectedSlotUUID,
+                        locationInfo: locationInfo,
+                        generalInfo: moduleInfo,
+                        moduleName: moduleName,
+                        moduleID: moduleID
+                    })
+                });
+                const responseJson = await response.json();
+                
+                // Update local data with module information
+                eventData.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
+                eventData.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
+                eventData.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+                eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
+            }
+            
+            if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
+            if (adminModulePanel) adminModulePanel.style.display = "none"
+            if (darkenedSite) darkenedSite.style.display = "none"
+            adminModulePanel.dataset.idOfSelectedSlot = "null";
+
+            renderCalendar()
+        })
     }
+    else{ console.log("error1")}
 }
 
 // ---- User Panel & Authentication ----
@@ -528,6 +507,12 @@ else{
  * Updates local eventData with new dates and re-renders calendar
  */
 function bindCalendarSettings() {
+    const submitCalendarSettingsButton = document.getElementById("submitCalendarSettingsButton");
+    const startTime = document.getElementById("startTime");
+    const endTime = document.getElementById("endTime");
+    const startDate = document.getElementById("startDate");
+    const endDate = document.getElementById("endDate");
+    const eventNameInput = document.getElementById("eventNameInput");
     if (submitCalendarSettingsButton) {
     submitCalendarSettingsButton.addEventListener("click",async event => {
         if (!endDate?.value || !startDate?.value || !startTime?.value || !endTime?.value || !eventNameInput?.value) {
@@ -566,6 +551,7 @@ function bindCalendarSettings() {
 //sends an api request to delete a slot and its modules , deletes it from the  
 //eventData json and closes the panel
 function bindSlotDeleting() {
+    const deleteSlotAndModules = document.getElementById("deleteSlotAndModules");
     if (deleteSlotAndModules){
     deleteSlotAndModules.addEventListener("click",async event => {
         const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
@@ -595,6 +581,13 @@ function bindSlotDeleting() {
 
 // sends an api request to update the selected event and then moves teh user back to the event selector panel
 function bindEventEditing() {
+    const editEventSettingsButton = document.getElementById("editEventSettingsButton");
+    const editEventName = document.getElementById("editEventName");
+    const editStartDate = document.getElementById("editStartDate");
+    const editEndDate = document.getElementById("editEndDate");
+    const editStartTime = document.getElementById("editStartTime");
+    const editEndTime = document.getElementById("editEndTime");
+    const eventEditingPanel = adminPanel;
     if (editEventSettingsButton){
     editEventSettingsButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
@@ -620,6 +613,8 @@ function bindEventEditing() {
 }
 //closes the event editor
 function bindEventEditorClosing() {
+    const closeEventEditor = document.getElementById("closeEventEditor");
+    const eventEditingPanel = adminPanel;
     if (closeEventEditor){
     closeEventEditor.addEventListener("click",async event => {
         eventEditingPanel.style.display = "none"
@@ -629,6 +624,8 @@ function bindEventEditorClosing() {
 }
 //sends an api request to delete a event,closes the editor panel and renders the event selction panel
 function bindEventDeleting(){
+    const deleteEventButton = document.getElementById("deleteEventButton");
+    const eventEditingPanel = adminPanel;
     if(deleteEventButton){
     deleteEventButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
@@ -646,9 +643,21 @@ function bindEventDeleting(){
     }
 }
 
+function bindUserManagementClosing(){
+    const closeUserManagementButton = document.getElementById("closeUserManagementButton");
+    const userManagementPanel = adminPanel;
+    closeUserManagementButton.addEventListener("click", () => {
+        userManagementPanel.style.display = "none";
+        darkenedSite.style.display = "none";
+    });
+}
+function populateUserManagementPanel(){
+
+}
+
 if(usersOfEventButton){
     usersOfEventButton.addEventListener("click",async event => {
-        
+        showAdminPanel("userManagementTemplate","grid")
     })
 }
 
@@ -850,7 +859,8 @@ function bindModulePanelInteractions() {
  */
 function addSlotEditingPanelLogic() {
     bindModulePanelInteractions();
-
+    console.log("test")
+    addModuleButton = document.getElementById("addModuleButton");
     if (addModuleButton && adminModulePanel) {
         addModuleButton.onclick = async () => {
             const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
@@ -1007,8 +1017,8 @@ function deleteModuleButtons() {
                         module => module.moduleID !== selectedModuleUUID
                     );
                 }
-
                 populateSlotEditingPanel(selectedSlot);
+                addSlotEditingPanelLogic()
                 renderCalendar();
                 deleteModuleButtons();
             }
