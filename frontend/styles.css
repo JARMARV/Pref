@@ -336,7 +336,7 @@ body{
 .scrollable::-webkit-scrollbar .moduleInfo ,.moduleInfoPanel, .moduleLocationShort, .moduleLocationShortPanel,.moduleName,.moduleNamePanel{
     display: none;
 }
-.closeModulesWindow,#closeUserManagementButton{
+.closeModulesWindow,#closeUserManagementButton,#closeSlotCreationButton{
     display:block;
     position:absolute;
     top: 0;

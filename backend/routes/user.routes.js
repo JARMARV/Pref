@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { requireAdmin, requireTempUser } from '../middlewares/auth.middleware.js';
-import { getAllUsers , newTempUser ,newUser} from '../controllers/user.controller.js';
+import { getAllUsers, getEventUsers , newTempUser ,newUser} from '../controllers/user.controller.js';
 const userRouter = Router();
 
-userRouter.get('/',getAllUsers);
+userRouter.get('/',requireAdmin,getAllUsers);
+
+userRouter.get('/event/:eventID',requireAdmin, getEventUsers);
 
 userRouter.post('/temp', requireAdmin, newTempUser);
 

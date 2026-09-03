@@ -87,6 +87,8 @@ function showAdminPanel(templateID, display = "grid") {
         }
         case "userManagementTemplate": {
             bindUserManagementClosing();
+            populateUserManagementPanel ();
+            bindAddUserButton()
             break;
         }
     }
@@ -291,6 +293,17 @@ function bindSlotCreation() {
     const dayOfSlot = document.getElementById("dayOfSlot");
     const startTimeSlot = document.getElementById("startTimeSlot");
     const endTimeSlot = document.getElementById("endTimeSlot");
+    const closeSlotCreationButton= document.getElementById("closeSlotCreationButton");
+    if (closeSlotCreationButton){
+        closeSlotCreationButton.addEventListener("click", () =>{
+            darkenedSite.style.display = "none";
+            adminPanel.style.display = "none"
+
+        })
+    }
+    else{
+        console.log("error could not find button to close slot creation panel")
+    }
     if (submitSlotCreationButton) {
     submitSlotCreationButton.addEventListener("click",async () => {
         const slotDay = dayOfSlot?.value
@@ -651,8 +664,15 @@ function bindUserManagementClosing(){
         darkenedSite.style.display = "none";
     });
 }
-function populateUserManagementPanel(){
 
+async function populateUserManagementPanel (){
+    const userListContainer =document.getElementById("closeSlotCreationButton");
+    const response = await  fetch(apiURL + "/api/v1/users/event/"+ eventID, {
+        method: "GET",
+        credentials: "include"
+    })
+    const responseJson = await response.json()
+    console.log(responseJson)
 }
 
 if(usersOfEventButton){
@@ -859,7 +879,6 @@ function bindModulePanelInteractions() {
  */
 function addSlotEditingPanelLogic() {
     bindModulePanelInteractions();
-    console.log("test")
     addModuleButton = document.getElementById("addModuleButton");
     if (addModuleButton && adminModulePanel) {
         addModuleButton.onclick = async () => {
@@ -1024,4 +1043,17 @@ function deleteModuleButtons() {
             }
         });
     }
+}
+
+function bindAddUserButton(){
+    const addUsersButton = document.getElementById("addUsersButton")
+
+    addUsersButton.addEventListener("click", async event => {
+        const response = await fetch(apiURL + "/api/v1/users/temp/"+eventID, {
+            method: "POST",
+            credentials: "include",
+        });
+        const responseJson = await response.json();
+        console.log(responseJson);
+    })
 }

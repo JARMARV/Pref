@@ -152,6 +152,34 @@ export const newUser = async (req, res) => {
     }
 }
 
+export const getEventUsers = async (req,res) => {
+    const client = await pool.connect();
+    try {
+        const eventID = req.params.eventID
+
+        await client.query("BEGIN");
+        const response = await client.query(`SELECT * FROM users_in_events WHERE event_id = $1 `,[eventID])
+
+        let users = [];
+        for (const row of response.rows) {
+            const userResponse = await client.query(`SELECT * FROM users WHERE user_id = $1`,[row.user_id])
+            users.push(userResponse.rows[0]);
+        }
+
+        await client.query("COMMIT");
+        return res.status(200).json({users:users});
+
+
+    } catch(error) {
+        console.error(error);
+        await client.query("ROLLBACK");
+        return res.status(500).json({message:"Database error"});
+
+    } finally {
+        client.release();
+    }
+}
+
 function generateRandomString(length) {
     const chars =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
