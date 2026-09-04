@@ -32,12 +32,14 @@ loginButton.addEventListener("click", async event => {
         })
     })
     const responseJson = await response.json();
+    console.log(responseJson)
     if (responseJson.success !== true){
         alert("could not find user with the given information")
         return;
     }
     console.log(responseJson.success);
     console.log(responseJson.userAuth);
+    localStorage.setItem("organizationName", organizationInput.value);
 
     window.location.href = authSites[responseJson.userAuth];  
 

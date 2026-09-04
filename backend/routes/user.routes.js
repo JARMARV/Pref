@@ -7,7 +7,7 @@ userRouter.get('/',requireAdmin,getAllUsers);
 
 userRouter.get('/event/:eventID',requireAdmin, getEventUsers);
 
-userRouter.post('/temp', requireAdmin, newTempUser);
+userRouter.post('/temp/:eventID', requireAdmin, newTempUser);
 
 userRouter.get('/:id', (req,res) => res.send({title:'GET user details'}));
 

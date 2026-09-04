@@ -144,24 +144,24 @@
     </template>
     
     <template id="userManagementTemplate">
-        <button id="closeUserManagementButton">x</button>
+        <div id="userManagementPanel">
+            <button id="closeUserManagementButton">x</button>
 
-        <div id="userManagementHeader">
-            <button id="addUsersButton">add users</button>
-        </div>
+            <div id="userManagementHeader">
+                <button id="addUsersButton">create users</button>
+            </div>
 
-        <div id="userListContainer">
-            <div id="adminUserContainer">
-                <div id="adminUserHeader">admins</div>
-                <div id="adminUserList"></div>
-            </div>
-            <div id="standartUserContainer">
-                <div id="standartUserHeader">users</div>
-                <div id="standartUserList"></div>
-            </div>
-            <div id="tempUserContainer">
-                <div id="tempUserHeader">unregistered users</div>
-                <div id="tempUserList"></div>
+            <div id="userListContainer">
+                <div id="standardUserContainer">
+                    <div id="standardUserHeader">Registeredusers</div>
+                    <div id ="horizontalLine"></div>
+                    <div id="standardUserList"></div>
+                </div>
+                <div id="tempUserContainer">
+                    <div id="tempUserHeader">Unregistered users</div>
+                    <div id ="horizontalLine"></div>
+                    <div id="tempUserList"></div>
+                </div>
             </div>
         </div>
     </template>

@@ -33,22 +33,36 @@ export const newTempUser = async (req, res) => {
             if(!organizationID){
                 return res.status(400).json({success:false , message:"no organization id"})
             };
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(password, salt);
             try {
-                await client.query(
+                await client.query("BEGIN");
+                const result = await client.query(
                     `
                     INSERT INTO temp_users 
                     (name, password_hash, organization_id, authorization_level)
-                    VALUES ($1, $2, $3, $4);
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING user_id;
                     `,
                     [
                         userName,
-                        passwordHash,
+                        password,
                         organizationID,
                         newAuthorizationLevel
                     ]
                 );
+                const userID = result.rows[0].user_id;
+                const eventID = req.params.eventID;
+                await client.query(
+                    `
+                    INSERT INTO users_in_events (user_id, event_id)
+                    VALUES($1, $2);
+                    `,
+                    [
+                        userID,
+                        eventID
+                    ]
+                )
+
+                await client.query("COMMIT");
                 res.status(201).json({
                     success: true,
                     message: "Temporary user created successfully",
@@ -58,10 +72,10 @@ export const newTempUser = async (req, res) => {
                 break;
 
             } catch (error) {
+                await client.query("ROLLBACK");
                 if (error.code === "23505") {
                     continue;
                 }
-
                 throw error;
             }
         }
@@ -152,27 +166,45 @@ export const newUser = async (req, res) => {
     }
 }
 
+//returns all users in a specified event to the client
 export const getEventUsers = async (req,res) => {
     const client = await pool.connect();
     try {
+        //getting the user data
         const eventID = req.params.eventID
-
-        await client.query("BEGIN");
         const response = await client.query(`SELECT * FROM users_in_events WHERE event_id = $1 `,[eventID])
 
         let users = [];
+        let tempUsers = [];
         for (const row of response.rows) {
             const userResponse = await client.query(`SELECT * FROM users WHERE user_id = $1`,[row.user_id])
-            users.push(userResponse.rows[0]);
+            if (userResponse.rows[0] !== undefined) {
+                users.push(userResponse.rows[0]);
+                continue;    
+            }
+            const tempUserResponse = await client.query(`SELECT * FROM temp_users WHERE user_id = $1`,[row.user_id])
+            if (tempUserResponse.rows[0] !== undefined) {
+                tempUsers.push(tempUserResponse.rows[0]);
+                continue;
+            }
+            console.warn(`User with ID ${row.user_id} not found in either users or temp_users table`);
         }
-
-        await client.query("COMMIT");
-        return res.status(200).json({users:users});
+        //making sure the password hash isnt sent to the client
+        for ( const user of users){
+            delete user.password_hash;
+            delete user.authorization_level;
+            delete user.organization_id;
+        }
+        for ( const user of tempUsers){
+            delete user.authorization_level;
+            delete user.organization_id;
+        }
+        //returning temp users and normal users
+        return res.status(200).json({users:users, tempUsers: tempUsers});
 
 
     } catch(error) {
         console.error(error);
-        await client.query("ROLLBACK");
         return res.status(500).json({message:"Database error"});
 
     } finally {
@@ -180,6 +212,7 @@ export const getEventUsers = async (req,res) => {
     }
 }
 
+//generates a random string of specified length with the characters in "chars"
 function generateRandomString(length) {
     const chars =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -191,4 +224,8 @@ function generateRandomString(length) {
 
     return password;
 }
-
+/*
+Username:FcSx8iYe
+Password:Lo3XbE3tUMeL
+organization:please_set_organization_name
+*/

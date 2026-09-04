@@ -57,7 +57,7 @@ let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots 
 
 // ---- Event editing Elements ----
 
-function showAdminPanel(templateID, display = "grid") {
+function showAdminPanel(templateID, display) {
     if (!adminPanel) return;
     const template = document.getElementById(templateID);
     if (!template) return;
@@ -86,6 +86,7 @@ function showAdminPanel(templateID, display = "grid") {
             break;
         }
         case "userManagementTemplate": {
+            console.log("test")
             bindUserManagementClosing();
             populateUserManagementPanel ();
             bindAddUserButton()
@@ -655,7 +656,7 @@ function bindEventDeleting(){
     })
     }
 }
-
+//binds the button that closes the panel
 function bindUserManagementClosing(){
     const closeUserManagementButton = document.getElementById("closeUserManagementButton");
     const userManagementPanel = adminPanel;
@@ -664,15 +665,57 @@ function bindUserManagementClosing(){
         darkenedSite.style.display = "none";
     });
 }
-
+//renders the panel aka gets the users from backend and draws the info on the panel
 async function populateUserManagementPanel (){
-    const userListContainer =document.getElementById("closeSlotCreationButton");
     const response = await  fetch(apiURL + "/api/v1/users/event/"+ eventID, {
         method: "GET",
         credentials: "include"
     })
     const responseJson = await response.json()
     console.log(responseJson)
+
+    const standardUserList = document.getElementById("standardUserList");
+    const tempUserList = document.getElementById("tempUserList");
+    for (const user of responseJson.users){
+
+        const userEntryHTML =
+        `
+        <div class="userEntry" data-username="${user.name}" data-userID="${user.user_id}">
+            <div class="userName">${user.name}</div>
+        </div>
+        `;
+
+        standardUserList.innerHTML += userEntryHTML;
+    }
+    for (const user of responseJson.tempUsers){
+        const userEntryHTML =
+        `
+        <button class="userEntryButton" data-username="${user.name}" data-userID="${user.user_id}" data-password="${user.password_hash}">
+            <div class="userName">${user.name}</div>
+        </button>
+        `;
+
+        tempUserList.innerHTML += userEntryHTML;
+    }
+    
+    userEntryButtons = document.getElementsByClassName("userEntryButton");
+    for (const button of userEntryButtons){
+        button.addEventListener("click", async () => {
+            try {
+                const organizationName = localStorage.getItem("organizationName") || eventData?.organizationName || "";
+                
+                await navigator.clipboard.writeText(
+                    "Username:" + button.dataset.username +
+                    "\nPassword:" + button.dataset.password +
+                    "\norganization:" + organizationName
+                );
+
+                button.style.backgroundColor="green";
+            } catch (error) {
+                console.error("Failed to copy:", error);
+            }
+        });
+    }
 }
 
 if(usersOfEventButton){
@@ -681,7 +724,6 @@ if(usersOfEventButton){
     })
 }
 
-// ==================== CALENDAR DRAWING FUNCTIONS ==================== 
 function drawCalendarHeader(){
     if(!headerTitle){ 
         console.log("error could not find calendar title object") 
@@ -1055,5 +1097,6 @@ function bindAddUserButton(){
         });
         const responseJson = await response.json();
         console.log(responseJson);
+        showAdminPanel("userManagementTemplate", "grid")
     })
 }

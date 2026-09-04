@@ -43,8 +43,7 @@ export const signIn=async (req,res) => {
 
             }else if (temp_users.rows.length === 1) {
                 const user = temp_users.rows[0];
-                const passwordMatches = await bcrypt.compare(password, user.password_hash)
-                if (passwordMatches){
+                if (password === user.password_hash){
                     const token = jwt.sign({
                         userName: name,
                         userId: user.user_id,
