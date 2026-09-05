@@ -166,6 +166,40 @@ export const newUser = async (req, res) => {
     }
 }
 
+//deletes the users given in the request selectedUsers array from the database
+export const deleteUsers = async (req,res) => {
+    const {selectedUsers} = req.body;
+    if (!Array.isArray(selectedUsers) || selectedUsers.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "No users selected"
+        });
+    }
+    const client = await pool.connect();
+    try{
+        const result = await client.query(
+            `
+            DELETE FROM users
+            WHERE user_id = ANY($1::uuid[])
+            AND organization_id = $2
+            RETURNING user_id;
+            `,
+            [selectedUsers,req.user.organizationID]
+        );
+        if (result.rowCount !== selectedUsers.length){
+            return res.status(200).json({success:true, message:"not sure what happened but the ammount of deleted users is not the same as the users that were sent to delete"});
+        }
+        return res.status(200).json({success:true, message:"deleted users from database"});
+
+
+    }catch(error){
+        console.error(error);
+        return res.status(500).send('Database error');
+    }finally{
+        client.release();
+    }
+}
+
 //returns all users in a specified event to the client
 export const getEventUsers = async (req,res) => {
     const client = await pool.connect();

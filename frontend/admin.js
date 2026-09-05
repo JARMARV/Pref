@@ -27,7 +27,10 @@ const userPanel = document.getElementById("userPanel"); // Panel showing user op
 const logoutButton = document.getElementById("logoutButton"); // Button to logout
 
 //---- User Management Elements ----
-const usersOfEventButton = document.getElementById("usersOfEventButton"); // Button to open user management panel
+const usersOfEventButton = document.getElementById("usersOfEventButton"); // Button to open user management panel#
+let users = [];
+let tempUsers = [];
+let selectedUsers = [];
 
 // ---- Overlay Element ----
 const darkenedSite = document.getElementById("darkenedSite"); // Dark overlay when modals are open
@@ -86,7 +89,6 @@ function showAdminPanel(templateID, display) {
             break;
         }
         case "userManagementTemplate": {
-            console.log("test")
             bindUserManagementClosing();
             populateUserManagementPanel ();
             bindAddUserButton()
@@ -668,37 +670,75 @@ function bindUserManagementClosing(){
 }
 //renders the panel aka gets the users from backend and draws the info on the panel
 async function populateUserManagementPanel (){
+    //get the user data
     const response = await  fetch(apiURL + "/api/v1/users/event/"+ eventID, {
         method: "GET",
         credentials: "include"
     })
     const responseJson = await response.json()
-    console.log(responseJson)
 
+    users = responseJson.users;
+    tempUsers = responseJson.tempUsers;
+
+    // populating the panel with the user Entrys
     const standardUserList = document.getElementById("standardUserList");
     const tempUserList = document.getElementById("tempUserList");
-    for (const user of responseJson.users){
+    for (const user of users){
+        const userEntryHTML = `
+            <div class="userEntry">
+                <button
+                    class="userEntryButton userName"
+                    data-username="${user.name}"
+                    data-user-id="${user.user_id}"
+                    data-password="${user.password_hash}">
+                    ${user.name}
+                </button>
 
-        const userEntryHTML =
-        `
-        <div class="userEntry" data-username="${user.name}" data-userID="${user.user_id}">
-            <div class="userName">${user.name}</div>
-        </div>
+                <input
+                    type="checkbox"
+                    class="userCheckbox"
+                    data-user-id="${user.user_id}">
+            </div>
         `;
-
         standardUserList.innerHTML += userEntryHTML;
     }
-    for (const user of responseJson.tempUsers){
-        const userEntryHTML =
-        `
-        <button class="userEntryButton" data-username="${user.name}" data-userID="${user.user_id}" data-password="${user.password_hash}">
-            <div class="userName">${user.name}</div>
-        </button>
-        `;
+    for (const user of tempUsers) {
+        const userEntryHTML = `
+            <div class="userEntry">
+                <button
+                    class="userEntryButton userName"
+                    data-username="${user.name}"
+                    data-user-id="${user.user_id}"
+                    data-password="${user.password_hash}">
+                    ${user.name}
+                </button>
 
+                <input
+                    type="checkbox"
+                    class="userCheckbox"
+                    data-user-id="${user.user_id}">
+            </div>
+        `;
         tempUserList.innerHTML += userEntryHTML;
     }
-    
+    //making the checkboxes add / delete the selected users from the selected users array
+    const userCheckboxes = document.getElementsByClassName("userCheckbox");
+
+    for (const checkbox of userCheckboxes) {
+        checkbox.addEventListener("change", () => {
+            const userID = checkbox.dataset.userId;
+            if (checkbox.checked) {
+                selectedUsers.push(userID);
+            } else {
+                const index = selectedUsers.findIndex(id => id === userID);
+                if (index !== -1) {
+                    selectedUsers.splice(index, 1);
+                }
+            }
+        });
+    }
+
+    //making the temp users Buttons add the temp users information to the admins clipboard
     userEntryButtons = document.getElementsByClassName("userEntryButton");
     for (const button of userEntryButtons){
         button.addEventListener("click", async () => {
@@ -717,6 +757,28 @@ async function populateUserManagementPanel (){
             }
         });
     }
+    //creating logic to delete the selected users of the selected users array
+    const deleteUsersButton = document.getElementById("deleteUsersButon");
+    deleteUsersButton.addEventListener("click", async () => {
+        if (selectedUsers.length === 0){
+            alert("no users to delete selected")
+            return
+        }
+        const response2 = await fetch(apiURL + "/api/v1/users/", {
+            method: "DELETE",
+            credentials: "include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({selectedUsers})
+        })
+        const responseJson2 = await response2.json();
+        console.log(responseJson2);
+        if (responseJson2.success === false){
+            alert("an eroor occured cannot delete users")
+            return
+        }
+        selectedUsers = [];
+        showAdminPanel("userManagementTemplate","grid")
+    })
 }
 
 if(usersOfEventButton){
