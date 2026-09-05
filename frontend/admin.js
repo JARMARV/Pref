@@ -557,6 +557,7 @@ function bindCalendarSettings() {
         if (darkenedSite) darkenedSite.style.display = "none"
         if (adminPanel) adminPanel.style.display = "none"
         mainGrid.style.display = "grid";
+        localStorage.selectedEventID = eventID;
         renderCalendar()
     });
     }

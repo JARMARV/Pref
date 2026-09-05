@@ -27,55 +27,19 @@ export const signIn=async (req,res) => {
         }
         const organizationID = organization.rows[0].organization_id;
 
-        let users = await client.query("SELECT * FROM users WHERE name=$1 AND organization_id=$2",
+        const users = await client.query("SELECT * FROM users WHERE name=$1 AND organization_id=$2",
         [name,organizationID]);
-        //if there are no matching users in the users table check in temp_users
+
         if (users.rows.length === 0) {
-            
-            const temp_users = await client.query("SELECT * FROM temp_users WHERE name=$1 AND organization_id=$2",
-            [name,organizationID]);
-            
-            if (temp_users.rows.length === 0) {
-                return res.status(404).json({ message: "User not found" });
-
-            }else if (users.rows.length > 1) {
-             return res.status(400).json({ message: "Multiple users found with the same credentials" });
-
-            }else if (temp_users.rows.length === 1) {
-                const user = temp_users.rows[0];
-                if (password === user.password_hash){
-                    const token = jwt.sign({
-                        userName: name,
-                        userId: user.user_id,
-                        authorizationLevel: user.authorization_level,
-                        organizationID: user.organization_id},
-                        JWT_SECRET,
-                        { expiresIn: JWT_EXPIRES_IN }
-                    );
-                    res.cookie("token",token,{
-                        httpOnly: true, 
-                        path: "/",
-                        secure: false, // Set to true in production
-                        sameSite: "lax", // Set to "strict" in production
-                        maxAge: 1000 * 60 * 60 * 24
-                    });
-                    return res.status(200).json({
-                        message: "Temporary user signed in successfully",
-                        success: true,   
-                        userAuth: 0
-                    });
-                }else{
-                    return res.status(400).json({ message: "User not found" });
-                }
-            }
-            
-        //spit out error if there are multiple matching users which should theoretically not be possible 
+            return res.status(404).json({ message: "User not found" });
+        //spit out error if there are multiple matching users which should theoretically not be possible
         } else if (users.rows.length > 1) {
             return res.status(400).json({ message: "Multiple users found with the same credentials" });
         //if the user is found sign them in and give them a token cookie
         }else if (users.rows.length === 1) {
             const user = users.rows[0];
             const passwordMatches = await bcrypt.compare(password, user.password_hash)
+                || (user.authorization_level === 0 && password === user.password_hash);
 
             if (passwordMatches){
                 const token = jwt.sign({
@@ -102,10 +66,7 @@ export const signIn=async (req,res) => {
                 return res.status(400).json({ message: "User not found" });
             }
         }
-        console.log(res.statusCode);  
-    //end the fetch
-    }catch(error){
-        throw error;
+        console.log(res.statusCode);
     }finally{
         client.release();
     }   

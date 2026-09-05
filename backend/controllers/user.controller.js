@@ -37,7 +37,7 @@ export const newTempUser = async (req, res) => {
                 await client.query("BEGIN");
                 const result = await client.query(
                     `
-                    INSERT INTO temp_users 
+                    INSERT INTO users
                     (name, password_hash, organization_id, authorization_level)
                     VALUES ($1, $2, $3, $4)
                     RETURNING user_id;
@@ -118,15 +118,16 @@ export const newUser = async (req, res) => {
         };
         await client.query("BEGIN");
         transactionStarted = true;
-        const result = await client.query(`DELETE FROM temp_users WHERE user_id = $1`,[userID]);
         const newAuthLevel = 1;
+        const result = await client.query(`UPDATE users
+            SET name = $1, password_hash = $2, authorization_level = $3
+            WHERE user_id = $4 AND organization_id = $5 AND authorization_level = 0
+            RETURNING user_id`,
+            [newUserName,newHashedPassword,newAuthLevel,userID,organizationID]
+        );
         if (result.rowCount !== 1) {
             throw new Error("Temporary user not found");
-        };
-        await client.query(`INSERT INTO users (user_id, name, password_hash, organization_id, authorization_level ) 
-            VALUES($1,$2,$3,$4,$5)`,
-            [userID,newUserName,newHashedPassword,organizationID,newAuthLevel]
-        );
+        }
         await client.query("COMMIT");
         transactionStarted = false;
         const token = jwt.sign({
@@ -152,7 +153,6 @@ export const newUser = async (req, res) => {
     }catch(error){
         if (transactionStarted) {
             await client.query("ROLLBACK");
-            return;
         }
         if (error.code === "23505") {
             return res.status(409).json({
@@ -174,20 +174,20 @@ export const getEventUsers = async (req,res) => {
         const eventID = req.params.eventID
         const response = await client.query(`SELECT * FROM users_in_events WHERE event_id = $1 `,[eventID])
 
-        let users = [];
-        let tempUsers = [];
+        const users = [];
+        const tempUsers = [];
         for (const row of response.rows) {
             const userResponse = await client.query(`SELECT * FROM users WHERE user_id = $1`,[row.user_id])
             if (userResponse.rows[0] !== undefined) {
-                users.push(userResponse.rows[0]);
+                const user = userResponse.rows[0];
+                if (user.authorization_level === 0) {
+                    tempUsers.push(user);
+                } else {
+                    users.push(user);
+                }
                 continue;    
             }
-            const tempUserResponse = await client.query(`SELECT * FROM temp_users WHERE user_id = $1`,[row.user_id])
-            if (tempUserResponse.rows[0] !== undefined) {
-                tempUsers.push(tempUserResponse.rows[0]);
-                continue;
-            }
-            console.warn(`User with ID ${row.user_id} not found in either users or temp_users table`);
+            console.warn(`User with ID ${row.user_id} not found in users table`);
         }
         //making sure the password hash isnt sent to the client
         for ( const user of users){

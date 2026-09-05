@@ -18,6 +18,13 @@ export const newEvent = async (req, res) => {
             [organizationID,eventName,startDate,endDate]
             
         );
+        const response2 = await client.query(`
+            INSERT INTO users_in_events
+            (event_id,user_id)
+            VALUES ($1,$2)
+            `,
+            [response.rows[0].event_id,req.user.userId]
+        )
 
         return res.status(200).json({success:true,message:"Created new event",eventID:response.rows[0].event_id})
     }catch(error){
