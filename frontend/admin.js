@@ -92,6 +92,7 @@ function showAdminPanel(templateID, display) {
             bindUserManagementClosing();
             populateUserManagementPanel ();
             bindAddUserButton()
+            bindSelectAllUsersButtons ()
             break;
         }
     }
@@ -696,7 +697,7 @@ async function populateUserManagementPanel (){
 
                 <input
                     type="checkbox"
-                    class="userCheckbox"
+                    class="userCheckbox standardUserCheckbox"
                     data-user-id="${user.user_id}">
             </div>
         `;
@@ -715,7 +716,7 @@ async function populateUserManagementPanel (){
 
                 <input
                     type="checkbox"
-                    class="userCheckbox"
+                    class="userCheckbox tempUserCheckbox"
                     data-user-id="${user.user_id}">
             </div>
         `;
@@ -780,6 +781,29 @@ async function populateUserManagementPanel (){
         showAdminPanel("userManagementTemplate","grid")
     })
 }
+//adds functionaility to the select all users buttons
+function bindSelectAllUsersButtons (){
+    const standardUsersButton = document.getElementById("selectAllUsers");
+    const tempUsersButton = document.getElementById("selectAllTempUsers");
+
+    if (standardUsersButton){
+        standardUsersButton.addEventListener("click", () => {
+            const standardUserChecks = document.getElementsByClassName("standardUserCheckbox");
+            for (const check of standardUserChecks){
+                check.checked = true;
+            }
+        })
+    }
+    else console.log("error could not find select all users button")
+    if (tempUsersButton){
+        tempUsersButton.addEventListener("click", () => {
+            const tempUserChecks = document.getElementsByClassName("tempUserCheckbox");
+            for (const check of tempUserChecks){
+                check.checked = true;
+            }
+        })
+    }
+    else console.log("error could not find select all users button")}
 
 if(usersOfEventButton){
     usersOfEventButton.addEventListener("click",async event => {

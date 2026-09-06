@@ -41,6 +41,22 @@ app.get('/', async (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
 
+setInterval(async () => {
+    try{
+        const result = await pool.query(`
+            DELETE FROM users
+            WHERE authorization_level = 0
+            AND expires_at <= NOW()
+            RETURNING user_id;
+        `)
+        console.log(`Deleted ${result.rowCount} expired users at `)
+
+    }catch(error){
+        console.error("Faield to delete expired users:",error);
+    }
+}, 60 * 60 * 1000 * 24);
+
+
 app.listen(PORT, () => {
     console.log (`running on port ${ PORT } ?`);
 });

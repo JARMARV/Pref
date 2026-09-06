@@ -1,7 +1,7 @@
 import pool from "../postgre_database/database.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
+import { JWT_SECRET, JWT_EXPIRES_IN ,TEMP_USER_DELETION_INTERVAL} from "../config/env.js";
 
 export const getAllUsers = async (req, res) => {
     const client = await pool.connect();
@@ -38,15 +38,16 @@ export const newTempUser = async (req, res) => {
                 const result = await client.query(
                     `
                     INSERT INTO users
-                    (name, password_hash, organization_id, authorization_level)
-                    VALUES ($1, $2, $3, $4)
+                    (name, password_hash, organization_id, authorization_level, expires_at)
+                    VALUES ($1, $2, $3, $4, NOW() + $5::interval)
                     RETURNING user_id;
                     `,
                     [
                         userName,
                         password,
                         organizationID,
-                        newAuthorizationLevel
+                        newAuthorizationLevel,
+                        TEMP_USER_DELETION_INTERVAL
                     ]
                 );
                 const userID = result.rows[0].user_id;
@@ -120,7 +121,10 @@ export const newUser = async (req, res) => {
         transactionStarted = true;
         const newAuthLevel = 1;
         const result = await client.query(`UPDATE users
-            SET name = $1, password_hash = $2, authorization_level = $3
+            SET name = $1, 
+            password_hash = $2, 
+            authorization_level = $3,
+            expires_at = NULL
             WHERE user_id = $4 AND organization_id = $5 AND authorization_level = 0
             RETURNING user_id`,
             [newUserName,newHashedPassword,newAuthLevel,userID,organizationID]
@@ -175,19 +179,26 @@ export const deleteUsers = async (req,res) => {
             message: "No users selected"
         });
     }
+    const maxDeletionLevel = req.user.authorizationLevel;
+
     const client = await pool.connect();
+
     try{
         const result = await client.query(
             `
             DELETE FROM users
             WHERE user_id = ANY($1::uuid[])
             AND organization_id = $2
+            AND authorization_level < $3
             RETURNING user_id;
             `,
-            [selectedUsers,req.user.organizationID]
+            [selectedUsers,req.user.organizationID,maxDeletionLevel]
         );
-        if (result.rowCount !== selectedUsers.length){
-            return res.status(200).json({success:true, message:"not sure what happened but the ammount of deleted users is not the same as the users that were sent to delete"});
+        if (result.rowCount !== selectedUsers.length) {
+            return res.status(200).json({
+                success: true,
+                message: `couldnt delete ${selectedUsers.length - result.rowCount} user/s`
+            });
         }
         return res.status(200).json({success:true, message:"deleted users from database"});
 

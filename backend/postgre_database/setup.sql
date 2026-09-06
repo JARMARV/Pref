@@ -19,26 +19,15 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL, 
     password_hash TEXT NOT NULL,
     authorization_level INTEGER NOT NULL DEFAULT 0,
-    organization_id UUID NOT NULL 
+    organization_id UUID NOT NULL ,
+    expires_at TIMESTAMPTZ,
     REFERENCES organizations(organization_id)
     ON DELETE CASCADE,
 
     CONSTRAINT unique_username_per_org
         UNIQUE (name, organization_id)
 );
-/*
-DO $$
-BEGIN
-    IF to_regclass('public.temp_users') IS NOT NULL THEN
-        EXECUTE '
-            INSERT INTO users (user_id, name, password_hash, organization_id, authorization_level)
-            SELECT user_id, name, password_hash, organization_id, authorization_level
-            FROM temp_users
-            ON CONFLICT DO NOTHING';
-        EXECUTE 'DROP TABLE temp_users';
-    END IF;
-END $$;
-*/
+
 CREATE TABLE IF NOT EXISTS events (
     event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL 

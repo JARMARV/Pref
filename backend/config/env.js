@@ -13,6 +13,7 @@ export const {
     JWT_SECRET,
     JWT_EXPIRES_IN,
     ORIGIN,
+    TEMP_USER_DELETION_INTERVAL,
 } = process.env;
 
 const requiredVariables = [
@@ -26,6 +27,7 @@ const requiredVariables = [
     "JWT_SECRET",
     "JWT_EXPIRES_IN",
     "ORIGIN",
+    "TEMP_USER_DELETION_INTERVAL",
 ];
 
 for (const key of requiredVariables) {
