@@ -257,6 +257,49 @@ export const getEventUsers = async (req,res) => {
     }
 }
 
+export const savePref = async (req,res) => { //saves the user preference to database using a list of json objects called userPref which contains pref value and module id
+    const {userId} = req.user;
+    const {userPref} = req.body;
+    let moduleIDs = [];
+    let preferenceValues = [];
+    if (!Array.isArray(userPref)) {
+        return res.status(400).json({
+            success: false,
+            message: "userPref must be an array"
+        });
+    }
+
+    for (const { moduleID, preferenceValue } of userPref) {
+        moduleIDs.push(moduleID);
+        preferenceValues.push(preferenceValue);
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query(`
+            INSERT INTO user_preferences (user_id, module_id, preference_value)
+            SELECT $1,module_id,preference_value
+            FROM unnest($2::uuid[], $3::integer[])
+            AS t(module_id, preference_value)
+            ON CONFLICT (user_id, module_id)
+            DO UPDATE SET preference_value = EXCLUDED.preference_value
+            `,
+            [userId,moduleIDs,preferenceValues]
+        )
+
+        return res.status(200).json({success:true,message:"updated the preference settings of the user"+ userId})
+
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({message:"Database error"});
+
+    } finally {
+        client.release();
+    }
+}
+
+
+
 //generates a random string of specified length with the characters in "chars"
 function generateRandomString(length) {
     const chars =

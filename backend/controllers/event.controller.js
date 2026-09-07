@@ -18,14 +18,6 @@ export const newEvent = async (req, res) => {
             [organizationID,eventName,startDate,endDate]
             
         );
-        const response2 = await client.query(`
-            INSERT INTO users_in_events
-            (event_id,user_id)
-            VALUES ($1,$2)
-            `,
-            [response.rows[0].event_id,req.user.userId]
-        )
-
         return res.status(200).json({success:true,message:"Created new event",eventID:response.rows[0].event_id})
     }catch(error){
         console.error(error);
@@ -241,7 +233,7 @@ export const deleteEvent = async (req,res) => {
 
         return res.status(200).json({
             success:true,
-            message:"slot deleted successfully"
+            message:"event deleted successfully"
         })
 
     }catch(error){
@@ -307,13 +299,13 @@ export const deleteModule = async (req,res) => {
         if (result.rowCount === 0) {
             return res.status(404).json({
                 success: false,
-                message: "Slot not found"
+                message: "module not found"
             });
         }
 
         return res.status(200).json({
             success:true,
-            message:"slot deleted successfully"
+            message:"module deleted successfully"
         })
 
 
@@ -327,8 +319,6 @@ export const deleteModule = async (req,res) => {
 
 //aquisition
 export const getEventJson = async (req, res)=>{
-    const client = await pool.connect();
-
     // User data is already validated and attached by middleware
     const userID = req.user.userId;
     const authorizationLevel = req.user.authorizationLevel;
@@ -343,6 +333,7 @@ export const getEventJson = async (req, res)=>{
         console.log("Authorization failed. Temp user access required");
         return res.status(403).json({message: "Authorization failed"});
     };
+    const client = await pool.connect();
     if (authorizationLevel === 1){
         if (await checkEventAccess(client, userID, req) === false){
             console.log("Authorization failed. User not connected to event");
@@ -351,7 +342,6 @@ export const getEventJson = async (req, res)=>{
     }
 
     const eventID = req.params.eventID;
-
     try{
         // get event data from database
         const result = await client.query(
@@ -438,7 +428,6 @@ export const getEventJson = async (req, res)=>{
 };
 
 export const getOrganizationEvents = async (req,res)=>{
-    const client = await pool.connect();
 
     // User data is already validated and attached by middleware
     const authorizationLevel = req.user.authorizationLevel;
@@ -447,6 +436,8 @@ export const getOrganizationEvents = async (req,res)=>{
     if (authorizationLevel < 2){
         return res.status(403).json({message: "Authorization failed"});
     };
+
+    const client = await pool.connect();
 
     try{
         const result = await client.query(`
@@ -469,7 +460,41 @@ export const getOrganizationEvents = async (req,res)=>{
     }finally{
         client.release();
     }
-}
+};
+
+export const getEventsConnectedToUser = async (req,res) =>{
+    const userID = req.user.userId
+    const client = await pool.connect();
+
+    try{
+        const result = await client.query(`
+            SELECT events.*
+            FROM users_in_events
+            JOIN events
+                ON events.event_id = users_in_events.event_id
+            JOIN users
+                ON users.user_id = users_in_events.user_id
+            WHERE users_in_events.user_id = $1
+            AND events.organization_id = users.organization_id;
+            `,
+            [userID]   
+        )
+
+        let response = [];
+        for (const row of result.rows){
+            response.push({
+                eventName: row.event_name,
+                eventID:row.event_id
+            })
+        }
+        return res.status(200).json({success:true,message:"gathered all events connected to the requesting user", events:response})
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
 
 //function to do some timezone magic
 function berlinDateTime(utcString) {

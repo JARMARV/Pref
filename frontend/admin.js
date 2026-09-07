@@ -217,7 +217,7 @@ async function renderEventSelector(){
  * @returns {Promise<object>} Response object with success status, event data, and message
  */
 async function getEventData(){
-    const response = await fetch(apiURL + "/api/v1/events/" + eventID, {
+    const response = await fetch(apiURL + "/api/v1/events/event/" + eventID, {
         method: "GET",
         credentials: "include",
         headers:{"Content-Type": "application/json"},
@@ -517,7 +517,6 @@ else{
     console.log("error could not find week change buttons")
 };
 
-
 //Handles creating a new event when the button is clicked
 /**
  * Submits the calendar settings and creates a new event on the server
@@ -565,7 +564,6 @@ function bindCalendarSettings() {
     });
     }
 }
-
 //sends an api request to delete a slot and its modules , deletes it from the  
 //eventData json and closes the panel
 function bindSlotDeleting() {
@@ -596,7 +594,6 @@ function bindSlotDeleting() {
     })
     }
 }
-
 // sends an api request to update the selected event and then moves teh user back to the event selector panel
 function bindEventEditing() {
     const editEventSettingsButton = document.getElementById("editEventSettingsButton");
@@ -791,7 +788,10 @@ function bindSelectAllUsersButtons (){
             const standardUserChecks = document.getElementsByClassName("standardUserCheckbox");
             for (const check of standardUserChecks){
                 check.checked = true;
-            }
+
+                const userID = check.dataset.userId;
+                selectedUsers.push(userID);     
+            }   
         })
     }
     else console.log("error could not find select all users button")
@@ -800,15 +800,22 @@ function bindSelectAllUsersButtons (){
             const tempUserChecks = document.getElementsByClassName("tempUserCheckbox");
             for (const check of tempUserChecks){
                 check.checked = true;
+
+                const userID = check.dataset.userId;
+                selectedUsers.push(userID);   
             }
         })
     }
-    else console.log("error could not find select all users button")}
+    else console.log("error could not find select all users button")
+}
 
 if(usersOfEventButton){
     usersOfEventButton.addEventListener("click",async event => {
         showAdminPanel("userManagementTemplate","grid")
     })
+}
+else{
+console.log("error coudl not find user Management Button")
 }
 
 function drawCalendarHeader(){

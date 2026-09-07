@@ -219,22 +219,22 @@ body {
     padding-left: 5px;
     overflow: hidden;
 }
-.preferenceLevel1{
+.calendarModule.preferenceLevel1{
     background-color: #FC1919;
 }
-.preferenceLevel2{
+.calendarModule.preferenceLevel2{
     background-color: #FD750F;
 }
-.preferenceLevel3{
+.calendarModule.preferenceLevel3{
     background-color: #FFFF00;
 }
-.preferenceLevel4{
+.calendarModule.preferenceLevel4{
     background-color: #8DF500;
 }
-.preferenceLevel5{
+.calendarModule.preferenceLevel5{
     background-color: #12EB00;
 }
-.preferenceLevelnull{
+.calendarModule.preferenceLevelnull{
     background-color: blue;
 }
 .calendarModule > * {
@@ -270,7 +270,7 @@ body {
     max-width: 90vw;
 }
 
-#userModalPanel {
+#userPanelParent {
     background-color: #1e2447;
     justify-content: center;
     display: none;
@@ -285,13 +285,13 @@ body {
     box-sizing: border-box;
 }
 
-#userModalPanel[data-panel="userEventSelectorTemplate"] {
+#userPanelParent[data-panel="userEventSelectorTemplate"] {
     flex-direction: column;
     align-items: center;
     justify-items: baseline;
 }
 
-#userModalPanel[data-panel="userSlotEditTemplate"] {
+#userPanelParent[data-panel="userSlotEditTemplate"] {
     grid-template-rows: auto auto;
     max-width: 90vw;
     width: auto;

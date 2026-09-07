@@ -44,14 +44,3 @@ loginButton.addEventListener("click", async event => {
     window.location.href = authSites[responseJson.userAuth];  
 
 })
-
-async function createTempUser(){
-    const response = await fetch(apiURL + "/api/v1/users/temp", {
-        method: "POST",
-        credentials: "include",
-        headers:{"Content-Type": "application/json"},
-    });
-    const responseJson = await response.json();
-    console.log(responseJson);
-};
-createTempUser()

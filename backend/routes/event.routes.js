@@ -12,7 +12,8 @@ import {
         deleteSlot,
         deleteEvent,
         deleteModule,
-        updateEvent
+        updateEvent,
+        getEventsConnectedToUser
         } from '../controllers/event.controller.js';
 
 const eventRouter = Router();
@@ -29,8 +30,9 @@ eventRouter.post('/:eventID/:slotID/module', requireAdmin, newModule);
 
 //--aquisition--
 
-eventRouter.get('/:eventID', verifyToken, getEventJson);
+eventRouter.get('/event/:eventID', verifyToken, getEventJson);
 eventRouter.get('/', requireAdmin, getOrganizationEvents);
+eventRouter.get('/user', verifyToken, getEventsConnectedToUser);
 
 
 //--updation--
