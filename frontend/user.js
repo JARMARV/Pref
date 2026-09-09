@@ -83,6 +83,15 @@ async function getEventData(){
     return responseJson;
 };
 
+async function getEventPreference(){
+    const response = await fetch(apiURL + "/api/v1/events/pref/" + eventID, {
+        method: "GET",
+        credentials: "include",
+    });
+    const responseJson = await response.json();
+    return responseJson.preferences;
+};
+
 //currently not fully implemented just gives the first event
 //scales the width of the horizontal lines in the calendar
 function updateCalendarColumnsWidth() {
@@ -298,6 +307,17 @@ async function renderEventSelector(){
             return;
         }
         eventData = result.event;
+
+        const preferences = await getEventPreference();
+        const preferenceMap = new Map(
+            preferences.map(pref => [pref.module_id, pref.preference_value])
+        );
+        for (const slot of eventData.slots) {
+            for (const module of slot.modules) {
+                module.userPreference = preferenceMap.get(module.moduleID);
+            }
+        }
+
         console.log(eventData);
         localStorage.selectedEventID = eventData.eventID;
         eventSelectorPanel.style.display = "none";
@@ -331,7 +351,19 @@ async function renderEventSelector(){
                 console.error(result);
                 return;
             }
+
             eventData = result.event;
+
+            const preferences = await getEventPreference();
+            const preferenceMap = new Map(
+                preferences.map(pref => [pref.module_id, pref.preference_value])
+            );
+            for (const slot of eventData.slots) {
+                for (const module of slot.modules) {
+                    module.userPreference = preferenceMap.get(module.moduleID);
+                }
+            }
+
             console.log(eventData);
             localStorage.selectedEventID = eventData.eventID;
             eventSelectorPanel.style.display = "none";

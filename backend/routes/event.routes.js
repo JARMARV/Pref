@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin, verifyToken } from '../middlewares/auth.middleware.js';
+import { requireAdmin, requireUser, verifyToken } from '../middlewares/auth.middleware.js';
 
 import { 
         newEvent,
@@ -13,7 +13,8 @@ import {
         deleteEvent,
         deleteModule,
         updateEvent,
-        getEventsConnectedToUser
+        getEventsConnectedToUser,
+        getEventPref 
         } from '../controllers/event.controller.js';
 
 const eventRouter = Router();
@@ -33,6 +34,7 @@ eventRouter.post('/:eventID/:slotID/module', requireAdmin, newModule);
 eventRouter.get('/event/:eventID', verifyToken, getEventJson);
 eventRouter.get('/', requireAdmin, getOrganizationEvents);
 eventRouter.get('/user', verifyToken, getEventsConnectedToUser);
+eventRouter.get('/pref/:eventID', requireUser, getEventPref );
 
 
 //--updation--

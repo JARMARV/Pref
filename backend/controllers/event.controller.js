@@ -427,6 +427,49 @@ export const getEventJson = async (req, res)=>{
     }
 };
 
+export const getEventPref = async (req, res)=>{
+    const userID = req.user.userId;
+    const eventID = req.params.eventID;
+
+    const client = await pool.connect();
+    try{
+        // get event data from database
+        const result = await client.query(`
+            SELECT 
+                m.module_id,
+                p.preference_value 
+            FROM events e
+
+            JOIN slots s
+                ON s.event_id = e.event_id
+
+            JOIN modules m 
+                ON m.slot_id = s.slot_id
+
+            LEFT JOIN user_preferences p
+                ON p.module_id = m.module_id
+                AND p.user_id = $2
+
+            WHERE e.event_id = $1
+            `,
+            [eventID,userID]
+        );
+        const pref = result.rows
+        //convert to json format
+        
+        return res.status(200).json({
+            success: true,
+            preferences: pref
+        });
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+}
+
+
 export const getOrganizationEvents = async (req,res)=>{
 
     // User data is already validated and attached by middleware
