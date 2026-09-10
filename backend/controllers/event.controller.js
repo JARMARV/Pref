@@ -171,7 +171,7 @@ export const updateModule = async (req,res) =>{
         const generalInfo = req.body.generalInfo;
         const moduleName = req.body.moduleName;
         const moduleID = req.body.moduleID;
-        console.log(slotID,locationInfo,generalInfo,moduleName,moduleID);
+
         if (!slotID || !moduleID){
             return res.status(404).json({ success:false, message:"missing information"})
         }
@@ -194,6 +194,30 @@ export const updateModule = async (req,res) =>{
     }
 };
 
+export const lockEvent = async (req,res) =>{
+
+    const eventID = req.params.eventID
+    const client = await pool.connect();
+    try{
+        const result = await client.query(`
+            UPDATE events
+            SET is_locked = NOT is_locked
+            WHERE event_id = $1
+            RETURNING is_locked;
+            `,
+            [eventID]
+        );
+        if (result.rowCount !== 1){
+            return res.status(500).json({success:false,message:'Database error'});
+        }
+        return res.status(200).json({success:true,message:"set is_locked of event to: "+ result.rows[0].is_locked})
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
 //deletion
 export const deleteEvent = async (req,res) => {
      const client = await pool.connect();
@@ -352,6 +376,7 @@ export const getEventJson = async (req, res)=>{
                 e.end_date,
                 e.organization_id,
                 e.event_name,
+                e.is_locked,
 
                 s.slot_id,
                 s.start_time,
@@ -385,6 +410,7 @@ export const getEventJson = async (req, res)=>{
             endDate: berlinDateTime(result.rows[0].end_date),
             eventID: result.rows[0].event_id,
             eventName: result.rows[0].event_name,
+            isLocked: result.rows[0].is_locked,
             slots: []
         };
         for (const row of result.rows) {
@@ -468,7 +494,6 @@ export const getEventPref = async (req, res)=>{
         client.release();
     }
 }
-
 
 export const getOrganizationEvents = async (req,res)=>{
 

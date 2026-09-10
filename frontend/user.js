@@ -107,9 +107,14 @@ function renderCalendar() {
     drawCalendarHeader()
     drawCalendarTimeColumn()
     drawDateRow()
-    drawSlots()
-    makeSlotLogic()
     renderWeekChangeButtons()
+    if(eventData.isLocked === false){
+        drawSlots()
+        makeSlotLogic()
+    }
+    else{
+        
+    }
 }
 
 function drawCalendarTimeColumn() {

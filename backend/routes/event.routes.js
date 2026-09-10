@@ -14,7 +14,8 @@ import {
         deleteModule,
         updateEvent,
         getEventsConnectedToUser,
-        getEventPref 
+        getEventPref,
+        lockEvent
         } from '../controllers/event.controller.js';
 
 const eventRouter = Router();
@@ -24,9 +25,9 @@ const eventRouter = Router();
 
 //--creation--
 
-eventRouter.post('/event', requireAdmin, newEvent);
-eventRouter.post('/:eventID/slot', requireAdmin, newSlot);
-eventRouter.post('/:eventID/:slotID/module', requireAdmin, newModule);
+eventRouter.post('/create/event', requireAdmin, newEvent);
+eventRouter.post('/create/:eventID/slot', requireAdmin, newSlot);
+eventRouter.post('/create/:eventID/:slotID/module', requireAdmin, newModule);
 
 
 //--aquisition--
@@ -39,9 +40,10 @@ eventRouter.get('/pref/:eventID', requireUser, getEventPref );
 
 //--updation--
 
-eventRouter.patch('/:eventID', requireAdmin, updateEvent);
-eventRouter.patch('/:eventID/:slotID', requireAdmin, updateSlot);
-eventRouter.patch('/:eventID/:slotID/:moduleID', requireAdmin, updateModule);
+eventRouter.patch('/update/:eventID', requireAdmin, updateEvent);
+eventRouter.patch('/update/:eventID/:slotID', requireAdmin, updateSlot);
+eventRouter.patch('/update/:eventID/:slotID/:moduleID', requireAdmin, updateModule);
+eventRouter.patch('/lock/:eventID', requireAdmin, lockEvent);
 
 
 //--deletion--

@@ -34,29 +34,33 @@ body{
     display: grid;
     box-sizing: border-box;
     grid-template-rows: 40px auto;
-    grid-template-columns: 1fr 1fr 40px;
+    grid-template-columns: 200px auto 40px 40px 40px 40px 40px;
     grid-template-areas: 
-        "title title userButton"
-        "button1 button2 null"
+        "title empty events newSlotButton lockEventButton usersButton userButton"
     ;
 }
 #headerTitle{
     align-self: center;
     justify-self: center;
-    grid-area: 1/1/2/4;
+    grid-area: title;
 }
 #selectEventButton{
-    grid-area: button1;
+    grid-area: events;
     max-width: 100px;
 }
 #newSlotButton{
-    grid-area: button2;
+    grid-area: newSlotButton;
     max-width: 100px;
 }
 #userButton{
     grid-area: userButton;
 }
-
+#usersOfEventButton{
+    grid-area: usersButton;
+}
+#eventLockingButton{
+    grid-area: lockEventButton;
+}
 #main{
     padding:10px;
 }

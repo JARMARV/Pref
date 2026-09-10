@@ -58,7 +58,9 @@ const newSlotButton = document.getElementById("newSlotButton"); // Button to ope
 // ---- Slot & Module Editing Panel Elements ----
 let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots and modules
 
-// ---- Event editing Elements ----
+
+
+const eventLockingButton = document.getElementById("eventLockingButton");
 
 function showAdminPanel(templateID, display) {
     if (!adminPanel) return;
@@ -332,7 +334,7 @@ function bindSlotCreation() {
             return
         }
         
-        const response = await fetch(apiURL + "/api/v1/events/event/slot", {
+        const response = await fetch(apiURL + "/api/v1/events/create/event/slot", {
             method: "POST",
             credentials: "include",
             headers:{"Content-Type": "application/json"},
@@ -379,7 +381,7 @@ function bindSlotSaving() {
             const startTime = String(dayOfSlotPanel.value + "T" + startTimeSlotPanel.value);
             const endTime = String(dayOfSlotPanel.value + "T" + endTimeSlotPanel.value)
             // Save the slot settings to database
-            const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
+            const response = await fetch(apiURL + "/api/v1/events/update/"+eventID+"/"+selectedSlotUUID, {
                 method: "PATCH",
                 credentials: "include",
                 headers:{"Content-Type": "application/json"},
@@ -418,7 +420,7 @@ function bindSlotSaving() {
                 const moduleID = adminModulePanel.children[i].id;
 
                 // Save module to database
-                const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
+                const response = await fetch(apiURL + "/api/v1/events/update/event/slot/module", {
                     method: "PATCH",
                     credentials: "include",
                     headers:{"Content-Type": "application/json"},
@@ -480,8 +482,22 @@ else{
 };
 
 /**
- * Logs out the user and redirects to login page
+ * Locks/unlocks the users from changing their preferences
  */
+if (eventLockingButton){
+    eventLockingButton.addEventListener("click", async () => {
+        const response = await fetch(apiURL + "/api/v1/events/lock/"+ eventID, {
+            method:"PATCH",
+            credentials:"include"
+        });
+        console.log(await response.json())
+        eventData.isLocked = !eventData.isLocked;
+    })
+}
+else{
+    console.log("error could not find locking button")
+};
+
 if (logoutButton){
     logoutButton.addEventListener("click", async () => {
         const response = await fetch(apiURL + "/api/v1/auth/sign-out", {
@@ -536,7 +552,7 @@ function bindCalendarSettings() {
             return
         }
 
-        const response = await fetch(apiURL + "/api/v1/events/event", {
+        const response = await fetch(apiURL + "/api/v1/events/create/event", {
             method: "POST",
             credentials: "include",
             headers:{"Content-Type": "application/json"},
@@ -1020,7 +1036,7 @@ function addSlotEditingPanelLogic() {
         addModuleButton.onclick = async () => {
             const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
             // Create a new module on the server
-            const response = await fetch(apiURL + "/api/v1/events/event/slot/module", {
+            const response = await fetch(apiURL + "/api/v1/events/create/event/slot/module", {
                 method: "POST",
                 credentials: "include",
                 headers:{"Content-Type": "application/json"},

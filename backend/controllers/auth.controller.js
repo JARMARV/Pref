@@ -79,7 +79,6 @@ export const signOut=async (req,res) => {
     path: "/",
     sameSite: "lax"
     });
-    console.log(req.header.cookies)
     return res.status(200).json({
         success: true,
         message: "Successfully signed out"
