@@ -113,7 +113,7 @@ function renderCalendar() {
         makeSlotLogic()
     }
     else{
-        
+
     }
 }
 
@@ -245,10 +245,14 @@ function makeSlotLogic() {
 function bindModulePanelInteractions() {
     const textAreas = document.querySelectorAll(".moduleLocationShortPanel, .moduleInfoPanel, .moduleNamePanel")
     for (let i = 0; i < textAreas.length; i++) {
-        textAreas[i].oninput = () => {
-            textAreas[i].style.height = "auto"
-            textAreas[i].style.height = textAreas[i].scrollHeight + "px"
-        }
+        const area = textAreas[i];
+        const resizeArea = () => {
+            area.style.height = "auto";
+            area.style.height = area.scrollHeight + "px";
+        };
+
+        area.oninput = resizeArea;
+        resizeArea();
     }
 
     const closeWindowButtons = document.getElementsByClassName("closeModulesWindow")

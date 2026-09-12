@@ -1,5 +1,5 @@
 import pool from "../postgre_database/database.js";
-
+import { HIGH_VALUE_BIAS } from "../config/env.js";
 //creation
 export const newEvent = async (req, res) => {
     const client = await pool.connect();
@@ -171,18 +171,22 @@ export const updateModule = async (req,res) =>{
         const generalInfo = req.body.generalInfo;
         const moduleName = req.body.moduleName;
         const moduleID = req.body.moduleID;
-
+        let maxUsers = req.body.maxUsers;
         if (!slotID || !moduleID){
             return res.status(404).json({ success:false, message:"missing information"})
+        }
+        if (!maxUsers){
+            maxUsers = 0
         }
         const result = await client.query(`UPDATE modules SET 
             slot_id = $1,
             location_info = $2,
             general_info = $3,
-            module_name= $4
+            module_name= $4,
+            max_users= $6
             WHERE module_id = $5
             `,
-            [slotID,locationInfo,generalInfo,moduleName,moduleID]
+            [slotID,locationInfo,generalInfo,moduleName,moduleID,maxUsers]
         );
         return res.status(200).json({success:true,message:"Updated module" ,moduleID: moduleID})
 
@@ -366,6 +370,7 @@ export const getEventJson = async (req, res)=>{
     }
 
     const eventID = req.params.eventID;
+    assignUsersToModules(client,eventID)
     try{
         // get event data from database
         const result = await client.query(
@@ -385,6 +390,7 @@ export const getEventJson = async (req, res)=>{
                 m.module_id,
                 m.module_name,
                 m.location_info,
+                m.max_users,
                 m.general_info
 
             FROM events e
@@ -436,7 +442,8 @@ export const getEventJson = async (req, res)=>{
                     locationInfoShort: row.location_info,
                     additionalInfo: row.general_info,
                     name: row.module_name,
-                    moduleID: row.module_id
+                    moduleID: row.module_id,
+                    maxUsers: row.max_users
                 });
             }
         }
@@ -594,4 +601,145 @@ async function checkEventAccess(client, userID, req){
         }
     }
     return false;
+}
+
+/*naive algorithm : 
+    For each slot:
+
+    1. Start with no assignments.
+
+    2. Repeatedly find the best available user-module assignment.
+
+       Score each possible assignment using:
+
+           preference²
+           - fairness penalty
+           - penalty if the module is nearly full
+
+    3. Assign the best candidate.
+
+    4. Continue until:
+           - every user has a module, or
+           - all modules are full, or
+           - no acceptable preference remains
+
+    5. Try to improve the result:
+           - swap two users
+           - move a user to another module
+           - keep the change only if it improves the objective
+
+
+What i will eventually have to do to always get optimal results (according to chat gpt): 
+    Mixed-Integer Linear Programming 
+    Fair capacitated assignment using mixed-integer linear programming
+
+    And i think this is stuff you learn late into a computer science degree,
+    explaining why 90% of it looks like dark magic to me
+
+    (-_-)
+
+*/
+
+async function getUserPreferenceData(client, eventID) {
+
+    const pref = await client.query(`
+        SELECT 
+            m.module_id,
+            p.preference_value,
+            p.user_id,
+            s.slot_id
+        FROM events e
+
+        JOIN slots s
+            ON s.event_id = e.event_id
+
+        JOIN modules m 
+            ON m.slot_id = s.slot_id
+
+        LEFT JOIN user_preferences p
+            ON p.module_id = m.module_id
+
+        WHERE e.event_id = $1
+    `, [eventID]);
+
+    const slotsAndModules = await client.query(`
+        SELECT 
+            m.module_id,
+            s.slot_id
+        FROM events e
+        
+        JOIN slots s
+            ON s.event_id = e.event_id
+        
+        LEFT JOIN modules m 
+            ON m.slot_id = s.slot_id
+
+        WHERE e.event_id = $1
+    `, [eventID]);
+
+    const userIDs = [
+        ...new Set(
+            pref.rows
+                .map(row => row.user_id)
+                .filter(userID => userID !== null)
+        )
+    ];
+
+    const slotIDs = [
+        ...new Set(
+            slotsAndModules.rows.map(row => row.slot_id)
+        )
+    ];
+
+    const preferenceMap = new Map(
+        pref.rows
+            .filter(row => row.user_id !== null)
+            .map(row => [
+                `${row.user_id}:${row.module_id}`,
+                row.preference_value
+            ])
+    );
+
+
+    // Create users
+    const users = userIDs.map(userID => {
+
+        // Create slots for this user
+        const slots = slotIDs.map(slotID => ({
+
+            slotID: slotID,
+
+            // Find all modules belonging to this slot
+            modules: slotsAndModules.rows
+                .filter(module =>
+                    module.slot_id === slotID &&
+                    module.module_id !== null
+                )
+                .map(module => {
+
+                    // Look up this user's preference for this module
+                    const preference = preferenceMap.get(
+                        `${userID}:${module.module_id}`
+                    );
+
+                    return {
+                        moduleID: module.module_id,
+                        preference: preference ?? null
+                    };
+                })
+        }));
+        return {
+            userID: userID,
+            slots: slots
+        };
+    });
+    //console.log(JSON.stringify(users, null, 2));
+    return(users);
+}
+
+async function assignUsersToModules(client, eventID){
+    const userData = getUserPreferenceData(client,eventID);
+    const highValueBias = parseFloat(HIGH_VALUE_BIAS);
+    
+
 }

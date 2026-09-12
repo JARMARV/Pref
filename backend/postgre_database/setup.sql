@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS slots (
     REFERENCES events(event_id)
     ON DELETE CASCADE,
     start_time TIMESTAMPTZ NOT NULL,
-    end_time TIMESTAMPTZ NOT NULL
+    end_time TIMESTAMPTZ NOT NULL,
+    choice_enabled BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS modules (
@@ -55,7 +56,8 @@ CREATE TABLE IF NOT EXISTS modules (
     ON DELETE CASCADE,
     location_info TEXT NOT NULL,
     general_info TEXT NOT NULL,
-    module_name TEXT NOT NULL
+    module_name TEXT NOT NULL,
+    max_users INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS user_preferences (

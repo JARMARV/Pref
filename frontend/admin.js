@@ -1,5 +1,7 @@
 // ==================== GLOBAL VARIABLES ====================
 
+const body = document.body;
+
 // ---- API Configuration ----
 const apiURL = "http://localhost:5600";
 
@@ -70,6 +72,7 @@ function showAdminPanel(templateID, display) {
     adminPanel.dataset.panel = templateID;
     adminPanel.style.display = display;
     darkenedSite.style.display = "block";
+    body.style.overflowY ="hidden";
     switch (templateID) {
         case "adminCalendarSettingsTemplate":{
             bindCalendarSettings();
@@ -210,6 +213,7 @@ async function renderEventSelector(){
             eventSelectorPanel.style.display = "none";
             darkenedSite.style.display = "none";
             mainGrid.style.display = "grid";
+            body.style.overflowY ="auto";
             renderCalendar();
         })
     }
@@ -304,7 +308,7 @@ function bindSlotCreation() {
         closeSlotCreationButton.addEventListener("click", () =>{
             darkenedSite.style.display = "none";
             adminPanel.style.display = "none"
-
+            body.style.overflowY="auto";
         })
     }
     else{
@@ -407,7 +411,8 @@ function bindSlotSaving() {
                     "locationInfoShort": "",
                     "additionalInfo": "",
                     "name": "",
-                    "moduleID": NaN,
+                    "moduleID": null,
+                    "maxUsers": null
                 })
                 continue;
             }
@@ -418,6 +423,7 @@ function bindSlotSaving() {
                 const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
                 const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
                 const moduleID = adminModulePanel.children[i].id;
+                const maxUsers =  adminModulePanel.children[i].querySelector(".moduleMaxUsersInput").value;
 
                 // Save module to database
                 const response = await fetch(apiURL + "/api/v1/events/update/event/slot/module", {
@@ -429,23 +435,24 @@ function bindSlotSaving() {
                         locationInfo: locationInfo,
                         generalInfo: moduleInfo,
                         moduleName: moduleName,
-                        moduleID: moduleID
+                        moduleID: moduleID,
+                        maxUsers: maxUsers
                     })
                 });
                 const responseJson = await response.json();
                 
                 // Update local data with module information
-                eventData.slots[selectedSlotID].modules[i].locationInfoShort = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
-                eventData.slots[selectedSlotID].modules[i].additionalInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
-                eventData.slots[selectedSlotID].modules[i].name = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
+                eventData.slots[selectedSlotID].modules[i].locationInfoShort = locationInfo;
+                eventData.slots[selectedSlotID].modules[i].additionalInfo = moduleInfo;
+                eventData.slots[selectedSlotID].modules[i].name = moduleName;
                 eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
+                eventData.slots[selectedSlotID].modules[i].maxUsers = maxUsers;
             }
-            
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
             if (adminModulePanel) adminModulePanel.style.display = "none"
             if (darkenedSite) darkenedSite.style.display = "none"
             adminModulePanel.dataset.idOfSelectedSlot = "null";
-
+            body.style.overflowY="auto";
             renderCalendar()
         })
     }
@@ -575,6 +582,7 @@ function bindCalendarSettings() {
         if (darkenedSite) darkenedSite.style.display = "none"
         if (adminPanel) adminPanel.style.display = "none"
         mainGrid.style.display = "grid";
+        body.style.overflowY="auto";
         localStorage.selectedEventID = eventID;
         renderCalendar()
     });
@@ -605,6 +613,7 @@ function bindSlotDeleting() {
             if (adminModulePanel) adminModulePanel.style.display = "none"
             if (darkenedSite) darkenedSite.style.display = "none"
             adminModulePanel.dataset.idOfSelectedSlot = "null";
+            body.style.overflowY="auto";
             renderCalendar()
         }
     })
@@ -623,7 +632,7 @@ function bindEventEditing() {
     editEventSettingsButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
 
-        const response = await fetch(apiURL + "/api/v1/events/"+eventUUID, {
+        const response = await fetch(apiURL + "/api/v1/events/update/"+eventUUID, {
             method: "PATCH",
             credentials: "include",
             headers:{"Content-Type": "application/json"},
@@ -649,6 +658,7 @@ function bindEventEditorClosing() {
     if (closeEventEditor){
     closeEventEditor.addEventListener("click",async event => {
         eventEditingPanel.style.display = "none"
+        body.style.overflowY ="auto";
         renderEventSelector()
     })
     }
@@ -680,6 +690,7 @@ function bindUserManagementClosing(){
     closeUserManagementButton.addEventListener("click", () => {
         userManagementPanel.style.display = "none";
         darkenedSite.style.display = "none";
+        body.style.overflowY ="auto";
     });
 }
 //renders the panel aka gets the users from backend and draws the info on the panel
@@ -980,6 +991,7 @@ function populateSlotEditingPanel(selectedSlot){
                         <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${selectedSlot.modules[j].name}</textarea>
                         <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${selectedSlot.modules[j].additionalInfo}</textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${selectedSlot.modules[j].locationInfoShort}</textarea>
+                        <input class="moduleMaxUsersInput inputStyle2" type="number" placeholder="max users" value="${selectedSlot.modules[j].maxUsers}">
                     </div>
                 `;
             }
@@ -1007,10 +1019,14 @@ function bindModulePanelInteractions() {
     // Auto-expand textareas to fit content
     const textAreas = document.querySelectorAll(".moduleLocationShortPanel, .moduleInfoPanel, .moduleNamePanel");
     for (let i = 0; i < textAreas.length; i++) {
-        textAreas[i].oninput = () => {
-            textAreas[i].style.height = "auto";
-            textAreas[i].style.height = textAreas[i].scrollHeight + "px";
+        const area = textAreas[i];
+        const resizeArea = () => {
+            area.style.height = "auto";
+            area.style.height = area.scrollHeight + "px";
         };
+
+        area.oninput = resizeArea;
+        resizeArea();
     }
 
     // Handle close button clicks
@@ -1020,6 +1036,7 @@ function bindModulePanelInteractions() {
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none";
             if (adminModulePanel) adminModulePanel.style.display = "none";
             if (darkenedSite) darkenedSite.style.display = "none";
+            body.style.overflowY="auto";
             renderCalendar();
         };
     }

@@ -312,8 +312,3 @@ function generateRandomString(length) {
 
     return password;
 }
-/*
-Username:FcSx8iYe
-Password:Lo3XbE3tUMeL
-organization:please_set_organization_name
-*/

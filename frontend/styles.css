@@ -20,10 +20,14 @@ p{
 button{
     cursor:pointer;
 }
-
+html{
+    scrollbar-gutter: stable;
+}
 body{
     background-color: #121936;
     color:#dedee3;
+    overflow-x: hidden;
+    overflow-y:auto;
 }
 
 #header{
@@ -132,7 +136,8 @@ body{
 }
 .inputStyle2{
     background: none;
-    border:none;
+    border:2px solid rgba(17, 9, 126, 0.5);
+    border-radius: 5px;
 }
 #adminModulePanel{
     max-width: 90vw;
@@ -376,6 +381,8 @@ body{
 }
 #adminModulePanel{
     overflow-x: auto;
+    max-height: 650px;
+
 }
 ::-webkit-scrollbar {
     width: 8px;
@@ -564,4 +571,9 @@ body{
     width:20px;
     margin:0px;
     cursor:pointer;
+}
+
+.moduleMaxUsersInput{
+    color:aqua;
+    font-size: 15px;
 }
