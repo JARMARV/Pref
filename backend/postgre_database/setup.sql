@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS modules (
     location_info TEXT NOT NULL,
     general_info TEXT NOT NULL,
     module_name TEXT NOT NULL,
-    max_users INTEGER
+    capacity INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS user_preferences (

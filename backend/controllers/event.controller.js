@@ -1,5 +1,5 @@
 import pool from "../postgre_database/database.js";
-import { HIGH_VALUE_BIAS } from "../config/env.js";
+import solver from "javascript-lp-solver";
 //creation
 export const newEvent = async (req, res) => {
     const client = await pool.connect();
@@ -214,6 +214,10 @@ export const lockEvent = async (req,res) =>{
         if (result.rowCount !== 1){
             return res.status(500).json({success:false,message:'Database error'});
         }
+        if (result.rows[0].is_locked){
+            assignUsersToModules(client, eventID)
+        }
+
         return res.status(200).json({success:true,message:"set is_locked of event to: "+ result.rows[0].is_locked})
     }catch(error){
         console.error(error);
@@ -368,9 +372,8 @@ export const getEventJson = async (req, res)=>{
             return res.status(403).json({message: "Authorization failed"});
         }
     }
-
     const eventID = req.params.eventID;
-    assignUsersToModules(client,eventID)
+
     try{
         // get event data from database
         const result = await client.query(
@@ -390,7 +393,7 @@ export const getEventJson = async (req, res)=>{
                 m.module_id,
                 m.module_name,
                 m.location_info,
-                m.max_users,
+                m.capacity,
                 m.general_info
 
             FROM events e
@@ -603,43 +606,6 @@ async function checkEventAccess(client, userID, req){
     return false;
 }
 
-/*naive algorithm : 
-    For each slot:
-
-    1. Start with no assignments.
-
-    2. Repeatedly find the best available user-module assignment.
-
-       Score each possible assignment using:
-
-           preference²
-           - fairness penalty
-           - penalty if the module is nearly full
-
-    3. Assign the best candidate.
-
-    4. Continue until:
-           - every user has a module, or
-           - all modules are full, or
-           - no acceptable preference remains
-
-    5. Try to improve the result:
-           - swap two users
-           - move a user to another module
-           - keep the change only if it improves the objective
-
-
-What i will eventually have to do to always get optimal results (according to chat gpt): 
-    Mixed-Integer Linear Programming 
-    Fair capacitated assignment using mixed-integer linear programming
-
-    And i think this is stuff you learn late into a computer science degree,
-    explaining why 90% of it looks like dark magic to me
-
-    (-_-)
-
-*/
-
 async function getUserPreferenceData(client, eventID) {
 
     const pref = await client.query(`
@@ -664,6 +630,7 @@ async function getUserPreferenceData(client, eventID) {
 
     const slotsAndModules = await client.query(`
         SELECT 
+            m.capacity,
             m.module_id,
             s.slot_id
         FROM events e
@@ -676,7 +643,6 @@ async function getUserPreferenceData(client, eventID) {
 
         WHERE e.event_id = $1
     `, [eventID]);
-
     const userIDs = [
         ...new Set(
             pref.rows
@@ -724,7 +690,8 @@ async function getUserPreferenceData(client, eventID) {
 
                     return {
                         moduleID: module.module_id,
-                        preference: preference ?? null
+                        preference: preference ?? 0,
+                        capacity: module.capacity
                     };
                 })
         }));
@@ -733,13 +700,226 @@ async function getUserPreferenceData(client, eventID) {
             slots: slots
         };
     });
-    //console.log(JSON.stringify(users, null, 2));
     return(users);
 }
 
 async function assignUsersToModules(client, eventID){
-    const userData = getUserPreferenceData(client,eventID);
-    const highValueBias = parseFloat(HIGH_VALUE_BIAS);
-    
 
+    //gets event data and user preferences
+    const userData = await getUserPreferenceData(client,eventID);
+
+    //builds and solves the model to maximize overall satisfaction ignoring fairness between users
+    const satisfactionModel = buildSatisfactionModel(userData)
+
+    const satisfactionMaxxing = solver.Solve(satisfactionModel);
+    if (!satisfactionMaxxing.feasible) {
+        throw new Error("No feasible assignment exists.");
+    }
+    
+    const {fairnessModel,variableMap} = buildFairnessModel(userData,0.9,satisfactionMaxxing.result )
+    const fairnessMaxxing = solver.Solve(fairnessModel)
+    if (!fairnessMaxxing.feasible) {
+        throw new Error("No feasible assignment exists.");
+    }
+    const assignments = Object.entries(fairnessMaxxing)
+        .filter(([key, value]) =>
+            value === 1 && variableMap.has(key)
+        )
+        .map(([key]) =>
+            variableMap.get(key)
+        );
+    console.log(assignments)
+    //console.log(fairnessMaxxing)
+}
+
+function buildSatisfactionModel(users) {
+
+    const model = {
+        optimize: "satisfaction",
+        opType: "max",
+
+        constraints: {},
+        variables: {},
+        binaries: {}
+    };
+
+    for (const user of users) {
+
+        for (const slot of user.slots) {
+
+            /*
+            * Constraint:
+            *
+            * User must get exactly one module
+            * in this slot.
+            */
+            if (slot.modules.length === 0) {
+                continue;
+            }
+            const userSlotConstraint =
+                `user_${user.userID}_slot_${slot.slotID}`;
+
+            model.constraints[userSlotConstraint] = {
+                equal: 1
+            };
+
+
+            for (const module of slot.modules) {
+
+                const variableName =
+                    `${user.userID}_${slot.slotID}_${module.moduleID}`;
+
+
+                /*
+                * Create binary variable
+                */
+                model.variables[variableName] = {
+                    satisfaction: module.preference ?? 0
+                };
+
+                model.binaries[variableName] = 1;
+
+
+                /*
+                * User/slot constraint
+                */
+                model.variables[variableName][
+                    userSlotConstraint
+                ] = 1;
+
+
+                /*
+                * Module capacity constraint
+                */
+                const capacityConstraint =
+                    `capacity_${slot.slotID}_${module.moduleID}`;
+
+                if (!model.constraints[capacityConstraint]) {
+                    model.constraints[capacityConstraint] = {
+                        max: module.capacity
+                    };
+                }
+
+                model.variables[variableName][
+                    capacityConstraint
+                ] = 1;
+
+            }
+        }
+    }
+
+    return model;
+}
+
+function buildFairnessModel(users, fairnessFactor, maxSatisfaction) {
+
+    const avgSatisfaction = maxSatisfaction / users.length;
+
+    const variableMap = new Map();
+
+    const model = {
+        optimize: "unfairness",
+        opType: "min",
+
+        constraints: {},
+        variables: {},
+        binaries: {}
+    };
+
+    model.constraints.minimumTotalSatisfaction = {
+        min: maxSatisfaction * fairnessFactor
+    };
+
+    for (const user of users) {
+
+        const positiveDeviation =
+            `positiveDeviation_${user.userID}`;
+
+        model.constraints[positiveDeviation] = {
+            max: avgSatisfaction
+        };
+
+        const negativeDeviation =
+            `negativeDeviation_${user.userID}`;
+
+        model.constraints[negativeDeviation] = {
+            max: -avgSatisfaction
+        };
+
+        const deviationVariable =
+            `deviation_${user.userID}`;
+
+        model.variables[deviationVariable] = {
+            unfairness: 1,
+            [positiveDeviation]: -1,
+            [negativeDeviation]: -1
+        };
+
+        for (const slot of user.slots) {
+
+            if (slot.modules.length === 0) {
+                continue;
+            }
+
+
+            const userSlotConstraint =
+                `user_${user.userID}_slot_${slot.slotID}`;
+
+            model.constraints[userSlotConstraint] = {
+                equal: 1
+            };
+
+
+            for (const module of slot.modules) {
+
+                const variableName =
+                    `${user.userID}_${slot.slotID}_${module.moduleID}`;
+
+                const preference =
+                    module.preference ?? 0;
+
+                model.variables[variableName] = {
+
+                    minimumTotalSatisfaction:
+                        preference,
+
+                    [positiveDeviation]:
+                        preference,
+
+
+                    [negativeDeviation]:
+                        -preference,
+
+                    [userSlotConstraint]: 1
+                };
+
+
+                model.binaries[variableName] = 1;
+
+                const capacityConstraint =
+                    `capacity_${slot.slotID}_${module.moduleID}`;
+
+
+                if (!model.constraints[capacityConstraint]) {
+
+                    model.constraints[capacityConstraint] = {
+                        max: module.capacity
+                    };
+                }
+
+
+                model.variables[variableName][
+                    capacityConstraint
+                ] = 1;
+
+                variableMap.set(variableName, {
+                    userID: user.userID,
+                    slotID: slot.slotID,
+                    moduleID: module.moduleID
+                });
+            }
+        }
+    }
+
+    return {fairnessModel:model,variableMap:variableMap};
 }

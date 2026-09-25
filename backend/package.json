@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "setup":"node postgre_database/setup.js"
+    "setup": "node postgre_database/setup.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -14,9 +14,10 @@
     "cors": "^2.8.6",
     "debug": "~2.6.9",
     "dotenv": "^17.4.2",
-    "express": "~4.16.1",
+    "express": "^4.22.3",
+    "javascript-lp-solver": "^1.0.3",
     "jsonwebtoken": "^9.0.3",
-    "morgan": "~1.9.1",
+    "morgan": "^1.12.1",
     "pg": "^8.22.0"
   },
   "devDependencies": {
@@ -27,5 +28,3 @@
     "nodemon": "^3.1.14"
   }
 }
-
-
