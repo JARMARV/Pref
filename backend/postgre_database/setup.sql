@@ -15,15 +15,14 @@ CREATE TABLE IF NOT EXISTS organizations (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    user_id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL, 
     password_hash TEXT NOT NULL,
     authorization_level INTEGER NOT NULL DEFAULT 0,
-    organization_id UUID NOT NULL ,
+    organization_id UUID NOT NULL
+        REFERENCES organizations(organization_id)
+        ON DELETE CASCADE,
     expires_at TIMESTAMPTZ,
-    REFERENCES organizations(organization_id)
-    ON DELETE CASCADE,
-
     CONSTRAINT unique_username_per_org
         UNIQUE (name, organization_id)
 );
@@ -85,6 +84,12 @@ CREATE TABLE IF NOT EXISTS users_in_events (
         UNIQUE (user_id, event_id)
 );
 
+CREATE TABLE IF NOT EXISTS assignments (
+    module_id UUID NOT NULL REFERENCES modules(module_id),
+    user_id UUID NOT NULL REFERENCES users(user_id),
 
+    CONSTRAINT unique_user_module_combination
+        UNIQUE (user_id, module_id)
+);
 
 INSERT INTO organizations (organization_name) VALUES ('TestOrganization');

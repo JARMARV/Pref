@@ -203,6 +203,44 @@ export const lockEvent = async (req,res) =>{
     const eventID = req.params.eventID
     const client = await pool.connect();
     try{
+
+        const isLocked = await client.query(`
+            SELECT * FROM events
+            WHERE event_id = $1;
+            `,
+            [eventID]
+        );
+
+        if (isLocked.rows[0].is_locked){
+            const assignments = await assignUsersToModules(client, eventID);
+            if (assignments.length < 1){
+                return res.status(400).json({success:false,message:'user assignment error'});
+            }
+            const values = [];
+            const placeholders = [];
+            assignments.forEach((assignment, i) => {
+                const offset = i * 2;
+
+                placeholders.push(
+                    `($${offset + 1}, $${offset + 2})`
+                );
+
+                values.push(
+                    assignment.moduleID,
+                    assignment.userID
+                );
+            });
+
+            const query = `
+                INSERT INTO assignments
+                    (module_id, user_id)
+                VALUES ${placeholders.join(", ")}
+            `;
+
+            const result = await client.query(query, values);
+
+        }
+
         const result = await client.query(`
             UPDATE events
             SET is_locked = NOT is_locked
@@ -214,9 +252,7 @@ export const lockEvent = async (req,res) =>{
         if (result.rowCount !== 1){
             return res.status(500).json({success:false,message:'Database error'});
         }
-        if (result.rows[0].is_locked){
-            assignUsersToModules(client, eventID)
-        }
+
 
         return res.status(200).json({success:true,message:"set is_locked of event to: "+ result.rows[0].is_locked})
     }catch(error){
@@ -728,7 +764,7 @@ async function assignUsersToModules(client, eventID){
         .map(([key]) =>
             variableMap.get(key)
         );
-    console.log(assignments)
+    return assignments;
     //console.log(fairnessMaxxing)
 }
 
@@ -914,7 +950,6 @@ function buildFairnessModel(users, fairnessFactor, maxSatisfaction) {
 
                 variableMap.set(variableName, {
                     userID: user.userID,
-                    slotID: slot.slotID,
                     moduleID: module.moduleID
                 });
             }
