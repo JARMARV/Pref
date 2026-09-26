@@ -83,6 +83,7 @@ function showAdminPanel(templateID, display) {
             break;
         }
         case "slotAndModuleEditTemplate": {
+            
             bindSlotSaving();
             bindSlotDeleting();
             break;
@@ -412,7 +413,7 @@ function bindSlotSaving() {
                     "additionalInfo": "",
                     "name": "",
                     "moduleID": null,
-                    "maxUsers": null
+                    "capacity": null
                 })
                 continue;
             }
@@ -423,7 +424,7 @@ function bindSlotSaving() {
                 const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
                 const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
                 const moduleID = adminModulePanel.children[i].id;
-                const maxUsers =  adminModulePanel.children[i].querySelector(".moduleMaxUsersInput").value;
+                const capacity = adminModulePanel.children[i].querySelector(".moduleCapacityInput").value;
 
                 // Save module to database
                 const response = await fetch(apiURL + "/api/v1/events/update/event/slot/module", {
@@ -436,7 +437,7 @@ function bindSlotSaving() {
                         generalInfo: moduleInfo,
                         moduleName: moduleName,
                         moduleID: moduleID,
-                        maxUsers: maxUsers
+                        capacity: capacity
                     })
                 });
                 const responseJson = await response.json();
@@ -446,7 +447,7 @@ function bindSlotSaving() {
                 eventData.slots[selectedSlotID].modules[i].additionalInfo = moduleInfo;
                 eventData.slots[selectedSlotID].modules[i].name = moduleName;
                 eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
-                eventData.slots[selectedSlotID].modules[i].maxUsers = maxUsers;
+                eventData.slots[selectedSlotID].modules[i].capacity = capacity;
             }
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
             if (adminModulePanel) adminModulePanel.style.display = "none"
@@ -982,21 +983,18 @@ function populateSlotEditingPanel(selectedSlot){
     // Populate module editing panel with existing modules
     if (adminModulePanel) {
         adminModulePanel.innerHTML = ``;
-        let modulesHTML = "";
         if (selectedSlot && selectedSlot.modules.length) {
-            for (let j = 0; j < selectedSlot.modules.length; j++) {
-                modulesHTML += `
-                    <div class="adminModulePanelSlot" id="${selectedSlot.modules[j].moduleID}">
-                        <button class="deleteModuleButton"></button>
-                        <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${selectedSlot.modules[j].name}</textarea>
-                        <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${selectedSlot.modules[j].additionalInfo}</textarea>
-                        <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${selectedSlot.modules[j].locationInfoShort}</textarea>
-                        <input class="moduleMaxUsersInput inputStyle2" type="number" placeholder="max users" value="${selectedSlot.modules[j].maxUsers}">
+            adminModulePanel.innerHTML =
+                selectedSlot.modules.map(module => `
+                    <div class="adminModulePanelSlot"id="${module.moduleID}">
+                        <button class="deleteModuleButton" type="button"></button>
+                        <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
+                        <textarea class="moduleInfoPanel inputStyle2" placeholder="General info">${module.additionalInfo ?? ""}</textarea>
+                        <textarea class="moduleLocationShortPanel inputStyle2" placeholder="Short location info">${module.locationInfoShort ?? ""}</textarea>
+                        <input class="moduleCapacityInput inputStyle2" type="number" placeholder="capacity" value="${module.capacity ?? ""}">
                     </div>
-                `;
-            }
+                `).join("");
         }
-        adminModulePanel.innerHTML += modulesHTML;
     }
 
     // Populate slot timing fields
@@ -1061,7 +1059,8 @@ function addSlotEditingPanelLogic() {
                     slotID: selectedSlotUUID,
                     locationInfo: "",
                     generalInfo: "",
-                    moduleName: ""
+                    moduleName: "",
+                    capacity:""
                 })
             }); 
             const responseJson = await response.json();
@@ -1074,6 +1073,7 @@ function addSlotEditingPanelLogic() {
                         <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
                         <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General information"></textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Location info"></textarea>
+                        <input class="moduleCapacityInput inputStyle2" type="number" placeholder="capacity">
                     </div>
                 `;
 

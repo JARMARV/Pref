@@ -573,7 +573,7 @@ body{
     cursor:pointer;
 }
 
-.moduleMaxUsersInput{
+.moduleCapacityInput{
     color:aqua;
     font-size: 15px;
 }

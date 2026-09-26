@@ -171,22 +171,22 @@ export const updateModule = async (req,res) =>{
         const generalInfo = req.body.generalInfo;
         const moduleName = req.body.moduleName;
         const moduleID = req.body.moduleID;
-        let maxUsers = req.body.maxUsers;
+        let capacity = req.body.capacity;
         if (!slotID || !moduleID){
             return res.status(404).json({ success:false, message:"missing information"})
         }
-        if (!maxUsers){
-            maxUsers = 0
+        if (!capacity){
+            capacity = 0
         }
         const result = await client.query(`UPDATE modules SET 
             slot_id = $1,
             location_info = $2,
             general_info = $3,
             module_name= $4,
-            max_users= $6
+            capacity= $6
             WHERE module_id = $5
             `,
-            [slotID,locationInfo,generalInfo,moduleName,moduleID,maxUsers]
+            [slotID,locationInfo,generalInfo,moduleName,moduleID,capacity]
         );
         return res.status(200).json({success:true,message:"Updated module" ,moduleID: moduleID})
 
@@ -446,7 +446,7 @@ export const getEventJson = async (req, res)=>{
                     additionalInfo: row.general_info,
                     name: row.module_name,
                     moduleID: row.module_id,
-                    maxUsers: row.max_users
+                    capacity:row.capacity,
                 });
             }
         }
