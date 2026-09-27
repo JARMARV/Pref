@@ -10,6 +10,7 @@
     #dedee3
     white
 */
+
 h2{
     margin:0px;
 }
@@ -268,10 +269,10 @@ body{
     flex-wrap: nowrap;
     border:0px;
     padding:0px;
-    cursor:pointer;
     border-radius: 10px;
 
 }
+
 .calendarSlotActive{
     background-color: orangered;
     animation:bobbing 2s infinite ease-in-out;

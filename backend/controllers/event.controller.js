@@ -211,7 +211,7 @@ export const lockEvent = async (req,res) =>{
             [eventID]
         );
 
-        if (isLocked.rows[0].is_locked){
+        if (!isLocked.rows[0].is_locked){
             const assignments = await assignUsersToModules(client, eventID);
             if (assignments.length < 1){
                 return res.status(400).json({success:false,message:'user assignment error'});
@@ -238,7 +238,6 @@ export const lockEvent = async (req,res) =>{
             `;
 
             const result = await client.query(query, values);
-
         }
 
         const result = await client.query(`
@@ -411,6 +410,7 @@ export const getEventJson = async (req, res)=>{
     const eventID = req.params.eventID;
 
     try{
+        const moduleIDs = []
         // get event data from database
         const result = await client.query(
             `
@@ -484,8 +484,30 @@ export const getEventJson = async (req, res)=>{
                     moduleID: row.module_id,
                     capacity:row.capacity,
                 });
+                moduleIDs.push(row.module_id);
             }
         }
+        // return only assigned modules to the users,when the event is locked
+        if (result.rows[0].is_locked && authorizationLevel === 1){
+            const query = `
+                SELECT * FROM assignments
+                WHERE module_id = ANY($1::uuid[]) 
+                AND user_id = $2
+            
+            `;
+            const parameters = [moduleIDs,userID];
+            const assignments = await client.query(query,parameters);
+
+            const assignedModuleIDs = assignments.rows.map(assignment => assignment.module_id)
+            //console.log(assignedModuleIDs)
+
+            for (const slot of event.slots) {
+                slot.modules = slot.modules.filter(module =>
+                    assignedModuleIDs.includes(module.moduleID)
+                );
+            }
+        };
+
         //return if successful
         return res.status(200).json({
             success: true,
@@ -765,7 +787,6 @@ async function assignUsersToModules(client, eventID){
             variableMap.get(key)
         );
     return assignments;
-    //console.log(fairnessMaxxing)
 }
 
 function buildSatisfactionModel(users) {

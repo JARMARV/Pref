@@ -108,13 +108,9 @@ function renderCalendar() {
     drawCalendarTimeColumn()
     drawDateRow()
     renderWeekChangeButtons()
-    if(eventData.isLocked === false){
-        drawSlots()
-        makeSlotLogic()
-    }
-    else{
-
-    }
+    drawSlots()
+    makeSlotLogic()
+    
 }
 
 function drawCalendarTimeColumn() {
@@ -159,11 +155,10 @@ function drawSlots() {
 
         const eventStartDate = new Date(eventData.startDate)
         const slotWeekIndex = Math.trunc((slotStartDate - eventStartDate) / 604800000)
-        if (slotWeekIndex !== currentWeekIndex) continue
-
+        if (slotWeekIndex !== currentWeekIndex) continue;
         if (!eventData.slots[i].modules.length) {
             targetColumn.innerHTML += `
-                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotInactive" style="top:${topPosition}px; height:${slotHeight}px">
+                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotActive" style="top:${topPosition}px; height:${slotHeight}px">
                     <div>No modules for this time slot</div>
                 </button>
             `
@@ -185,6 +180,7 @@ function drawSlots() {
                 </button>
             `
         }
+        
     }
 }
 
@@ -206,24 +202,39 @@ function makeSlotLogic() {
                 let modulesHTML = ""
                 console.log(selectedSlot)
                 if (selectedSlot && selectedSlot.modules.length) {
-                    for (const module of  selectedSlot.modules) {
+                    if (eventData.isLocked){
+                        const module = selectedSlot.modules[0];
+                        saveUserPreference.style.display = "none";
+                        userModulePanel.style.justifyContent = "center";
                         modulesHTML += `
                             <div class="userModulePanelSlot" id="${module.moduleID}">
                                 <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
                                 <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
                                 <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
-                                <div class="preferenceContainer">
-                                <div class="minMaxValuesSlider">
-                                    <div>1</div>
-                                    <div>preference</div>
-                                    <div>5</div>
-                                    </div>
-                                    <div class="sliderContainer">
-                                        <input type="range" class="sliderInput" min="1" max="5" value="${module.userPreference || 3}">
-                                    </div>
-                                </div>
                             </div>
                         `
+                    }
+                    else{
+                        saveUserPreference.style.display = "block";
+                        for (const module of  selectedSlot.modules) {
+                            modulesHTML += `
+                                <div class="userModulePanelSlot" id="${module.moduleID}">
+                                    <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
+                                    <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
+                                    <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
+                                    <div class="preferenceContainer">
+                                        <div class="minMaxValuesSlider">
+                                            <div>1</div>
+                                            <div>preference</div>
+                                            <div>5</div>
+                                        </div>
+                                        <div class="sliderContainer">
+                                            <input type="range" class="sliderInput" min="1" max="5" value="${module.userPreference || 3}">
+                                        </div>
+                                    </div>
+                                </div>
+                            `
+                        }
                     }
                 }
 
