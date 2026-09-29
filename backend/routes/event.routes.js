@@ -15,7 +15,8 @@ import {
         updateEvent,
         getEventsConnectedToUser,
         getEventPref,
-        lockEvent
+        lockEvent,
+        deleteAssignments
         } from '../controllers/event.controller.js';
 
 const eventRouter = Router();
@@ -48,8 +49,8 @@ eventRouter.patch('/lock/:eventID', requireAdmin, lockEvent);
 
 //--deletion--
 
-eventRouter.delete('/:eventID', requireAdmin, deleteEvent);
-eventRouter.delete('/:eventID/:slotID', requireAdmin, deleteSlot);
-eventRouter.delete('/:eventID/:slotID/:moduleID', requireAdmin, deleteModule);
-
+eventRouter.delete('/event/:eventID', requireAdmin, deleteEvent);
+eventRouter.delete('/event/:eventID/:slotID', requireAdmin, deleteSlot);
+eventRouter.delete('/event/:eventID/:slotID/:moduleID', requireAdmin, deleteModule);
+eventRouter.delete('/assignments/:eventID', requireAdmin, deleteAssignments)
 export default eventRouter;

@@ -60,8 +60,7 @@ const newSlotButton = document.getElementById("newSlotButton"); // Button to ope
 // ---- Slot & Module Editing Panel Elements ----
 let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots and modules
 
-
-
+//  locks/unlocks the selected event
 const eventLockingButton = document.getElementById("eventLockingButton");
 
 function showAdminPanel(templateID, display) {
@@ -494,12 +493,28 @@ else{
  */
 if (eventLockingButton){
     eventLockingButton.addEventListener("click", async () => {
+        const moduleIDs = eventData.slots.flatMap(
+            slot => slot.modules.map(module => module.moduleID)
+        );
+
+        if (eventData.isLocked){
+            const responseDel = await fetch (apiURL + "/api/v1/events/assignments/"+eventID, {
+            method:"DELETE",
+            credentials:"include",
+            headers:{"Content-Type": "application/json"},
+            body: JSON.stringify({moduleIDs: moduleIDs})
+            });
+            responseDelJson = await responseDel.json()
+            console.log(responseDelJson);
+
+        }
         const response = await fetch(apiURL + "/api/v1/events/lock/"+ eventID, {
             method:"PATCH",
             credentials:"include"
         });
-        console.log(await response.json())
+        console.log(await response.json());
         eventData.isLocked = !eventData.isLocked;
+        renderCalendar();
     })
 }
 else{
@@ -597,7 +612,7 @@ function bindSlotDeleting() {
     deleteSlotAndModules.addEventListener("click",async event => {
         const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
 
-        const response = await fetch(apiURL + "/api/v1/events/"+eventID+"/"+selectedSlotUUID, {
+        const response = await fetch(apiURL + "/api/v1/events/event/"+eventID+"/"+selectedSlotUUID, {
             method: "DELETE",
             credentials: "include",
             headers:{"Content-Type": "application/json"}
@@ -672,7 +687,7 @@ function bindEventDeleting(){
     deleteEventButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
 
-        const response = await fetch(apiURL + "/api/v1/events/"+eventUUID, {
+        const response = await fetch(apiURL + "/api/v1/events/event/"+eventUUID, {
             method: "DELETE",
             credentials: "include"
         })
@@ -1185,10 +1200,7 @@ function deleteModuleButtons() {
             );
 
             const response = await fetch(
-                apiURL + "/api/v1/events/" +
-                eventID + "/" +
-                selectedSlotUUID + "/" +
-                selectedModuleUUID,
+                apiURL + "/api/v1/events/event/" +eventID + "/" +selectedSlotUUID + "/" +selectedModuleUUID,
                 {
                     method: "DELETE",
                     credentials: "include"

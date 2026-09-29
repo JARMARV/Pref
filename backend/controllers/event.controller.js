@@ -234,10 +234,16 @@ export const lockEvent = async (req,res) =>{
             const query = `
                 INSERT INTO assignments
                     (module_id, user_id)
-                VALUES ${placeholders.join(", ")}
+                    VALUES ${placeholders.join(", ")}
+                    ON CONFLICT (user_id, module_id)
+                    DO NOTHING
+                    RETURNING *
             `;
 
             const result = await client.query(query, values);
+            if (result.rows.length !== placeholders.length){
+                console.warn("something fishy with the user assignments")
+            }
         }
 
         const result = await client.query(`
@@ -263,7 +269,7 @@ export const lockEvent = async (req,res) =>{
 };
 //deletion
 export const deleteEvent = async (req,res) => {
-     const client = await pool.connect();
+    const client = await pool.connect();
     try{
         // User data is already validated and attached by middleware
         const eventID = req.params.eventID
@@ -383,6 +389,33 @@ export const deleteModule = async (req,res) => {
         client.release();
     }
 };
+
+export const deleteAssignments = async (req,res) => {
+    const moduleIDs = req.body.moduleIDs;
+    const client = await pool.connect();
+    try{
+        const result = await client.query(`
+            SELECT * FROM events
+            WHERE event_id = $1`,
+            [req.params.eventID]
+        )
+        if (result.rows.length !== 1){
+            return res.status(500).json({success:false, message:"Database error" })
+        }
+        await client.query(`
+            DELETE FROM assignments 
+            WHERE module_id = ANY($1 :: uuid[])`,
+            [moduleIDs]
+        )
+        return res.status(200).json({success:true, message:"Deleted assignments from database" , modules:moduleIDs})
+
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+}
 
 //aquisition
 export const getEventJson = async (req, res)=>{
