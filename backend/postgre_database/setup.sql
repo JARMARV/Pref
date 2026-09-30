@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS users_in_events (
 CREATE TABLE IF NOT EXISTS assignments (
     module_id UUID NOT NULL REFERENCES modules(module_id),
     user_id UUID NOT NULL REFERENCES users(user_id),
-
+    event_id UUID NOT NULL REFERENCES events(event_id),
     CONSTRAINT unique_user_module_combination
         UNIQUE (user_id, module_id)
 );

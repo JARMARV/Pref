@@ -219,21 +219,22 @@ export const lockEvent = async (req,res) =>{
             const values = [];
             const placeholders = [];
             assignments.forEach((assignment, i) => {
-                const offset = i * 2;
+                const offset = i * 3;
 
                 placeholders.push(
-                    `($${offset + 1}, $${offset + 2})`
+                    `($${offset + 1}, $${offset + 2}, $${offset + 3})`
                 );
 
                 values.push(
                     assignment.moduleID,
-                    assignment.userID
+                    assignment.userID,
+                    eventID,
                 );
             });
 
             const query = `
                 INSERT INTO assignments
-                    (module_id, user_id)
+                    (module_id, user_id, event_id)
                     VALUES ${placeholders.join(", ")}
                     ON CONFLICT (user_id, module_id)
                     DO NOTHING
@@ -443,7 +444,6 @@ export const getEventJson = async (req, res)=>{
     const eventID = req.params.eventID;
 
     try{
-        const moduleIDs = []
         // get event data from database
         const result = await client.query(
             `
@@ -517,18 +517,17 @@ export const getEventJson = async (req, res)=>{
                     moduleID: row.module_id,
                     capacity:row.capacity,
                 });
-                moduleIDs.push(row.module_id);
             }
         }
         // return only assigned modules to the users,when the event is locked
         if (result.rows[0].is_locked && authorizationLevel === 1){
             const query = `
                 SELECT * FROM assignments
-                WHERE module_id = ANY($1::uuid[]) 
+                WHERE event_id = $1
                 AND user_id = $2
             
             `;
-            const parameters = [moduleIDs,userID];
+            const parameters = [eventID,userID];
             const assignments = await client.query(query,parameters);
 
             const assignedModuleIDs = assignments.rows.map(assignment => assignment.module_id)
@@ -864,7 +863,7 @@ function buildSatisfactionModel(users) {
                 * Create binary variable
                 */
                 model.variables[variableName] = {
-                    satisfaction: module.preference ?? 0
+                    satisfaction: module.preference ?? 3
                 };
 
                 model.binaries[variableName] = 1;

@@ -466,6 +466,12 @@ function bindSlotSaving() {
 if (userButton) {
     userButton.addEventListener("click", () => {
 
+        const closeUserPanel = (event) => {
+            if (!userPanel.contains(event.target) && !userButton.contains(event.target)) {
+                userPanel.style.display = "none";
+                document.removeEventListener("click", closeUserPanel);
+            }
+        };
         if (userPanel.style.display === "grid") {
             userPanel.style.display = "none";
             document.removeEventListener("click", closeUserPanel);
@@ -474,12 +480,7 @@ if (userButton) {
 
         userPanel.style.display = "grid";
 
-        closeUserPanel = (event) => {
-            if (!userPanel.contains(event.target) && event.target !== userButton) {
-                userPanel.style.display = "none";
-                document.removeEventListener("click", closeUserPanel);
-            }
-        };
+        
 
         document.addEventListener("click", closeUserPanel);
     });
@@ -514,7 +515,7 @@ if (eventLockingButton){
         });
         console.log(await response.json());
         eventData.isLocked = !eventData.isLocked;
-        renderCalendar();
+        getEventData();
     })
 }
 else{

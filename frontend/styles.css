@@ -20,6 +20,7 @@ p{
 
 button{
     cursor:pointer;
+    background-color:darkorchid;
 }
 html{
     scrollbar-gutter: stable;
