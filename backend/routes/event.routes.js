@@ -16,7 +16,8 @@ import {
         getEventsConnectedToUser,
         getEventPref,
         lockEvent,
-        deleteAssignments
+        deleteAssignments,
+        disableUserChoiceInSlot
         } from '../controllers/event.controller.js';
 
 const eventRouter = Router();
@@ -45,7 +46,7 @@ eventRouter.patch('/update/:eventID', requireAdmin, updateEvent);
 eventRouter.patch('/update/:eventID/:slotID', requireAdmin, updateSlot);
 eventRouter.patch('/update/:eventID/:slotID/:moduleID', requireAdmin, updateModule);
 eventRouter.patch('/lock/:eventID', requireAdmin, lockEvent);
-
+eventRouter.patch('/disable-user-choice/:slotID', requireAdmin, disableUserChoiceInSlot);
 
 //--deletion--
 

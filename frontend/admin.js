@@ -82,7 +82,7 @@ function showAdminPanel(templateID, display) {
             break;
         }
         case "slotAndModuleEditTemplate": {
-            
+            bindDisableingSlotChoice();
             bindSlotSaving();
             bindSlotDeleting();
             break;
@@ -163,7 +163,7 @@ async function renderEventSelector(){
         eventButtonsContainer.innerHTML += `
         <div class="eventButtonContainer" id="${event.eventID}">
             <button class="eventButton">${event.eventName}</button>
-            <button class="openEventEditorButton">x</button>
+            <button class="openEventEditorButton"></button>
         </div>
         `
     }
@@ -488,6 +488,7 @@ if (userButton) {
 else{
     console.log("error could not find user Button")
 };
+
 
 /**
  * Locks/unlocks the users from changing their preferences
@@ -977,10 +978,9 @@ function makeSlotLogic() {
             
             const selectedSlotID = slots[i].id;
             const selectedSlot = eventData.slots.find(slot => slot.slotID === selectedSlotID);
-
-            populateSlotEditingPanel(selectedSlot)
             SlotAndModuleEditPanel.dataset.idOfSelectedSlot = String(selectedSlotID);
 
+            populateSlotEditingPanel(selectedSlot)
             addSlotEditingPanelLogic();
             deleteModuleButtons();
         });
@@ -1003,7 +1003,7 @@ function populateSlotEditingPanel(selectedSlot){
             adminModulePanel.innerHTML =
                 selectedSlot.modules.map(module => `
                     <div class="adminModulePanelSlot"id="${module.moduleID}">
-                        <button class="deleteModuleButton" type="button"></button>
+                        <button class="deleteModuleButton" type="button"><img src="icons/close.svg" alt=""></button>
                         <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
                         <textarea class="moduleInfoPanel inputStyle2" placeholder="General info">${module.additionalInfo ?? ""}</textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" placeholder="Short location info">${module.locationInfoShort ?? ""}</textarea>
@@ -1085,7 +1085,7 @@ function addSlotEditingPanelLogic() {
             if (responseJson.success === true){
                 adminModulePanel.innerHTML += `
                     <div class="adminModulePanelSlot" id="${responseJson.moduleID}">
-                        <button class="deleteModuleButton"></button>
+                        <button class="deleteModuleButton"> <img src="icons/close.svg" alt=""> </button>
                         <textarea class="moduleNamePanel inputStyle2" type="text" placeholder="Module name"></textarea>
                         <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General information"></textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Location info"></textarea>
@@ -1238,5 +1238,18 @@ function bindAddUserButton(){
         const responseJson = await response.json();
         console.log(responseJson);
         showAdminPanel("userManagementTemplate", "grid")
+    })
+}
+
+function bindDisableingSlotChoice(){
+    const disableUserChoiceButton = document.getElementById("disableUserChoiceButton")
+    const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
+    disableUserChoiceButton.addEventListener("click", async event => {
+        const response = await fetch(apiURL + "/api/v1/events/disable-user-choice/" + selectedSlotUUID, {
+            method: "PATCH",
+            credentials: "include",
+        });
+        const responseJson = await response.json();
+        console.log(responseJson);
     })
 }

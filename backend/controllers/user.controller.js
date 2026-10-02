@@ -259,7 +259,8 @@ export const getEventUsers = async (req,res) => {
 
 export const savePref = async (req,res) => { //saves the user preference to database using a list of json objects called userPref which contains pref value and module id
     const {userId} = req.user;
-    const {userPref} = req.body;
+    let {userPref} = req.body;
+    const eventID = req.params.eventID;
     let moduleIDs = [];
     let preferenceValues = [];
     if (!Array.isArray(userPref)) {
@@ -268,14 +269,35 @@ export const savePref = async (req,res) => { //saves the user preference to data
             message: "userPref must be an array"
         });
     }
-
-    for (const { moduleID, preferenceValue } of userPref) {
-        moduleIDs.push(moduleID);
-        preferenceValues.push(preferenceValue);
-    }
-
     const client = await pool.connect();
     try {
+        const result = await client.query(`
+            SELECT m.module_id
+            FROM events e
+            JOIN slots s ON e.event_id = s.event_id
+            JOIN modules m ON s.slot_id = m.slot_id
+            WHERE s.choice_enabled = false AND e.event_id = $1
+            `,[eventID]);
+        console.log(userPref);
+
+        for (const row of result.rows) {
+            const index = userPref.findIndex(pref => pref.moduleID === row.module_id);
+            if (index !== -1) {
+                userPref[index].preferenceValue = 3;
+            }
+        }
+        for (const row of result.rows) {
+
+        }
+        
+
+
+        for (const { moduleID, preferenceValue } of userPref) {
+            moduleIDs.push(moduleID);
+            preferenceValues.push(preferenceValue);
+        }
+
+
         await client.query(`
             INSERT INTO user_preferences (user_id, module_id, preference_value)
             SELECT $1,module_id,preference_value

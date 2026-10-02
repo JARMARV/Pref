@@ -268,6 +268,28 @@ export const lockEvent = async (req,res) =>{
         client.release();
     }
 };
+
+export const disableUserChoiceInSlot = async (req,res) =>{
+    const slotID = req.params.slotID;
+    const client = await pool.connect();
+    try{
+        const result = await client.query(`
+            UPDATE slots
+            SET choice_enabled = NOT choice_enabled
+            WHERE slot_id = $1
+            RETURNING choice_enabled;
+            `,
+            [slotID]
+        );
+        return res.status(200).json({success:true,message:"set choice_enabled of slot to: "+ result.rows[0].choice_enabled , choiceEnabled: result.rows[0].choice_enabled})
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
 //deletion
 export const deleteEvent = async (req,res) => {
     const client = await pool.connect();
@@ -458,6 +480,7 @@ export const getEventJson = async (req, res)=>{
                 s.slot_id,
                 s.start_time,
                 s.end_time,
+                s.choice_enabled,
 
                 m.module_id,
                 m.module_name,
@@ -503,7 +526,8 @@ export const getEventJson = async (req, res)=>{
                     start: berlinDateTime(row.start_time),
                     end: berlinDateTime(row.end_time),
                     slotID: row.slot_id,
-                    modules: []
+                    modules: [],
+                    choiceEnabled: row.choice_enabled
                 };
                 event.slots.push(slot);
             }

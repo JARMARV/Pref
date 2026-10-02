@@ -141,6 +141,9 @@ function drawSlots() {
         calendarColumns.children[i].innerHTML = ""
     }
 
+    const eventStartDate = new Date(eventData.startDate)
+    const eventStartHours = new Date(eventData.startDate).getHours()
+
     for (let i = 0; i < eventData.slots.length; i++) {
         const slotStartDate = new Date(eventData.slots[i].start)
         const columnIndex = (slotStartDate.getDay() + 6) % 7
@@ -148,12 +151,10 @@ function drawSlots() {
         if (!targetColumn) continue
 
         const slotStartHours = slotStartDate.getHours() + 0.5 + (slotStartDate.getMinutes() / 60)
-        const eventStartHours = new Date(eventData.startDate).getHours()
         const topPosition = (slotStartHours - eventStartHours) * hourIncrement
         const slotDurationHours = ((new Date(eventData.slots[i].end).getTime() - new Date(eventData.slots[i].start).getTime()) / 3600000) % 24
         const slotHeight = slotDurationHours * hourIncrement
 
-        const eventStartDate = new Date(eventData.startDate)
         const slotWeekIndex = Math.trunc((slotStartDate - eventStartDate) / 604800000)
         if (slotWeekIndex !== currentWeekIndex) continue;
         if (!eventData.slots[i].modules.length) {
@@ -200,22 +201,35 @@ function makeSlotLogic() {
             if (userModulePanel) {
                 userModulePanel.innerHTML = ``
                 let modulesHTML = ""
-                console.log(selectedSlot)
                 if (selectedSlot && selectedSlot.modules.length) {
-                    if (eventData.isLocked){
+                    if (eventData.isLocked ){
                         const module = selectedSlot.modules[0];
                         saveUserPreference.style.display = "none";
                         userModulePanel.style.justifyContent = "center";
                         modulesHTML += `
-                            <div class="userModulePanelSlot" id="${module.moduleID}">
+                            <div class="userModulePanelSlot" id="${module.moduleID}">d
                                 <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
                                 <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
                                 <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
                             </div>
-                        `
+                        `;
+                    }
+                    else if (selectedSlot.choiceEnabled === false){
+                        saveUserPreference.style.display = "none";
+                        userModulePanel.style.justifyContent = "start";
+                        for (const module of  selectedSlot.modules) {
+                            modulesHTML += `
+                                <div class="userModulePanelSlot" id="${module.moduleID}">
+                                    <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
+                                    <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
+                                    <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
+                                </div>
+                            `;
+                        }
                     }
                     else{
                         saveUserPreference.style.display = "block";
+                        userModulePanel.style.justifyContent = "start";
                         for (const module of  selectedSlot.modules) {
                             modulesHTML += `
                                 <div class="userModulePanelSlot" id="${module.moduleID}">
@@ -233,7 +247,7 @@ function makeSlotLogic() {
                                         </div>
                                     </div>
                                 </div>
-                            `
+                            `;
                         }
                     }
                 }
@@ -397,6 +411,12 @@ async function renderEventSelector(){
 if (userButton) {
     userButton.addEventListener("click", () => {
 
+        const closeUserPanel = (event) => {
+            if (!userPanel.contains(event.target) && !userButton.contains(event.target)) {
+                userPanel.style.display = "none";
+                document.removeEventListener("click", closeUserPanel);
+            }
+        };
         if (userPanel.style.display === "grid") {
             userPanel.style.display = "none";
             document.removeEventListener("click", closeUserPanel);
@@ -405,12 +425,7 @@ if (userButton) {
 
         userPanel.style.display = "grid";
 
-        closeUserPanel = (event) => {
-            if (!userPanel.contains(event.target) && event.target !== userButton) {
-                userPanel.style.display = "none";
-                document.removeEventListener("click", closeUserPanel);
-            }
-        };
+        
 
         document.addEventListener("click", closeUserPanel);
     });
