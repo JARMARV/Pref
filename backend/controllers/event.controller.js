@@ -757,13 +757,16 @@ async function getUserPreferenceData(client, eventID) {
 
         WHERE e.event_id = $1
     `, [eventID]);
-    const userIDs = [
-        ...new Set(
-            pref.rows
-                .map(row => row.user_id)
-                .filter(userID => userID !== null)
-        )
-    ];
+
+    const userIDResult = await client.query(`
+        SELECT u.user_id
+        FROM users u
+        JOIN users_in_events uie
+            ON uie.user_id = u.user_id
+        WHERE uie.event_id = $1 AND u.authorization_level = 1
+    `, [eventID]);
+
+    const userIDs = userIDResult.rows.map(row => row.user_id);
 
     const slotIDs = [
         ...new Set(
@@ -780,28 +783,56 @@ async function getUserPreferenceData(client, eventID) {
             ])
     );
 
+    const modulesBySlot = new Map();
+    for (const module of slotsAndModules.rows) {
+        if (module.module_id === null) continue;
+        if (!modulesBySlot.has(module.slot_id)) {
+            modulesBySlot.set(module.slot_id, []);
+        }
+        modulesBySlot.get(module.slot_id).push(module);
+    }
+
+    const userCount = userIDs.length;
+
+    for (const slotID of slotIDs) {
+        const modules = modulesBySlot.get(slotID) ?? [];
+        let totalCapacity = 0;
+
+        const zeroModules = modules.filter(
+            module => module.capacity === 0
+        );
+        for (const module of modules) {
+            totalCapacity += module.capacity;
+        }
+        if (totalCapacity < userCount) {
+            if (zeroModules.length === 0) {
+                throw new Error(
+                    `Not enough capacity in slot ${slotID} for all users`
+                );
+                
+            }
+            const remainingUsers = userCount - totalCapacity;
+            const capacityPerModule =
+                Math.ceil(remainingUsers / zeroModules.length);
+            for (const module of zeroModules) {
+                module.capacity = capacityPerModule;
+            }
+        }
+    }
+
 
     // Create users
     const users = userIDs.map(userID => {
-
         // Create slots for this user
         const slots = slotIDs.map(slotID => ({
-
             slotID: slotID,
-
             // Find all modules belonging to this slot
-            modules: slotsAndModules.rows
-                .filter(module =>
-                    module.slot_id === slotID &&
-                    module.module_id !== null
-                )
+            modules: (modulesBySlot.get(slotID) ?? [])
                 .map(module => {
-
                     // Look up this user's preference for this module
                     const preference = preferenceMap.get(
                         `${userID}:${module.module_id}`
                     );
-
                     return {
                         moduleID: module.module_id,
                         preference: preference ?? 0,
@@ -814,6 +845,8 @@ async function getUserPreferenceData(client, eventID) {
             slots: slots
         };
     });
+
+   
     return(users);
 }
 

@@ -1,11 +1,11 @@
-handling 0 max user in a module to split the rest of the users evenly between all of the 0 max users modules of a slot
+handling 0 max users in a module to split the rest of the users evenly between all of the 0 max users modules of a slot
 
 need to make it possible to entangle modules of different slots to say it is the same module just at different times
 to ensure a user is not assigned the same module multiple times
 
 outputting lists of users assigned to a module to check for attendance
 
-enableing admins to manually change the users assignment after locking the event
+enabling admins to manually change the users assignment after locking the event
 
 need to make the site "user friendly" and in general more appealing
 
