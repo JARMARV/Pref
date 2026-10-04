@@ -496,6 +496,7 @@ export const getEventJson = async (req, res)=>{
             LEFT JOIN modules m
                 ON m.slot_id = s.slot_id
 
+
             WHERE e.event_id = $1
               AND e.organization_id = $2
 
@@ -505,7 +506,39 @@ export const getEventJson = async (req, res)=>{
         );
 
         //convert to json format
-        
+        const moduleIDs = result.rows
+            .filter(row => row.module_id !== null)
+            .map(row => row.module_id);
+
+        const assignmentsResult = await client.query(`
+            SELECT 
+                a.module_id,
+                a.user_id,
+
+                u.name
+
+            FROM assignments a
+
+            LEFT JOIN users u
+                ON u.user_id = a.user_id
+            
+            WHERE module_id = ANY($1 :: uuid[])
+            `,
+            [moduleIDs]
+        );
+
+        const assignmentsByModule = new Map();
+
+        for (const assignment of assignmentsResult.rows) {
+            if (!assignmentsByModule.has(assignment.module_id)) {
+                assignmentsByModule.set(assignment.module_id, []);
+            }
+
+            assignmentsByModule.get(assignment.module_id).push(
+                {userID: assignment.user_id, userName: assignment.name}            
+            );
+        }
+
         const event = {
             startDate: berlinDateTime(result.rows[0].start_date),
             endDate: berlinDateTime(result.rows[0].end_date),
@@ -540,9 +573,11 @@ export const getEventJson = async (req, res)=>{
                     name: row.module_name,
                     moduleID: row.module_id,
                     capacity:row.capacity,
+                    assignedUsers: assignmentsByModule.get(row.module_id) ?? []
                 });
             }
         }
+
         // return only assigned modules to the users,when the event is locked
         if (result.rows[0].is_locked && authorizationLevel === 1){
             const query = `

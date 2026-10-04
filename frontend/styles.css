@@ -578,4 +578,24 @@ body{
 .moduleCapacityInput{
     color:aqua;
     font-size: 15px;
+    margin-bottom: 10px;
+}
+
+.assignedUsersPanel{
+    display:block;
+    border:2px solid aqua;
+    border-radius: 5px;
+}
+.assignedUserPanel{
+    display:block;
+    background-color: #334399;
+    margin:3px;
+    padding:5px;
+    border-radius: 5px;
+}
+.draggable{
+    cursor: grab;
+}
+.draggable.dragging{
+    opacity: 0.5;
 }

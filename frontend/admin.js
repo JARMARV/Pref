@@ -63,6 +63,9 @@ let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots 
 //  locks/unlocks the selected event
 const eventLockingButton = document.getElementById("eventLockingButton");
 
+//the dragzone the cursor is currently hovering when dragging a draggable object
+let activeDragZone = null;
+
 function showAdminPanel(templateID, display) {
     if (!adminPanel) return;
     const template = document.getElementById(templateID);
@@ -983,6 +986,7 @@ function makeSlotLogic() {
             populateSlotEditingPanel(selectedSlot)
             addSlotEditingPanelLogic();
             deleteModuleButtons();
+            addUserDragAndDropLogic();
         });
     }
 };
@@ -1000,17 +1004,37 @@ function populateSlotEditingPanel(selectedSlot){
     if (adminModulePanel) {
         adminModulePanel.innerHTML = ``;
         if (selectedSlot && selectedSlot.modules.length) {
-            adminModulePanel.innerHTML =
-                selectedSlot.modules.map(module => `
+            adminModulePanel.innerHTML = ``;
+            for (const module of selectedSlot.modules) {
+
+                let assignedUsersHTML = ``;
+                for (const user of module.assignedUsers ?? []) {
+                    assignedUsersHTML += `<div data-user-id="${user.userID}" class="assignedUserPanel draggable" draggable="true">${user.userName}</div>`;
+                }
+
+                let assignedUsersPanelHTML = ``;
+                if (module.assignedUsers && module.assignedUsers.length > 0) {
+                    assignedUsersPanelHTML = `
+                        <div class="assignedUsersPanel">
+                            <div class="assignedUsersList">
+                                ${assignedUsersHTML}
+                            </div>
+                        </div>
+                    `;
+                };
+
+                adminModulePanel.innerHTML += `
                     <div class="adminModulePanelSlot"id="${module.moduleID}">
                         <button class="deleteModuleButton" type="button"><img src="icons/close.svg" alt=""></button>
                         <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
                         <textarea class="moduleInfoPanel inputStyle2" placeholder="General info">${module.additionalInfo ?? ""}</textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" placeholder="Short location info">${module.locationInfoShort ?? ""}</textarea>
                         <input class="moduleCapacityInput inputStyle2" type="number" placeholder="capacity" value="${module.capacity ?? ""}">
+                        ${assignedUsersPanelHTML}
                     </div>
-                `).join("");
-        }
+                `;
+            }
+        }   
     }
 
     // Populate slot timing fields
@@ -1023,6 +1047,39 @@ function populateSlotEditingPanel(selectedSlot){
         if (startTimeSlotPanel) startTimeSlotPanel.value = selectedSlot.start.split("T")[1];
         if (endTimeSlotPanel) endTimeSlotPanel.value = selectedSlot.end.split("T")[1];
     }
+}
+
+
+function addUserDragAndDropLogic() {
+    const draggableObjects = document.querySelectorAll(".draggable");
+    const dropZones = document.querySelectorAll(".assignedUsersList");
+    console.log(draggableObjects)
+    draggableObjects.forEach(draggable => {
+        draggable.addEventListener("dragstart", (event) => {
+            draggable.classList.add("dragging");
+            console.log("start")
+        });
+    });
+    draggableObjects.forEach(draggable => {
+        draggable.addEventListener("dragend", (event) => {
+            draggable.classList.remove("dragging");
+            console.log("stop")
+        });
+    });
+
+
+
+    dropZones.forEach(dropZone => {
+        dropZone.addEventListener("dragover", (event) => {
+            draggedElement = document.querySelector(".dragging");
+            event.preventDefault();
+            dropZone.append(draggedElement);
+
+        });
+    });
+
+
+
 }
 /**
  * Binds input interactions to module panel elements
