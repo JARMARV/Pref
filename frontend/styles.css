@@ -585,13 +585,19 @@ body{
     display:block;
     border:2px solid aqua;
     border-radius: 5px;
+    height:300px;
+    overflow-y:auto;
+}
+.assignedUsersList{
+    height:90%;
+
 }
 .assignedUserPanel{
     display:block;
     background-color: #334399;
     margin:3px;
     padding:5px;
-    border-radius: 5px;
+    border-radius:5px;
 }
 .draggable{
     cursor: grab;

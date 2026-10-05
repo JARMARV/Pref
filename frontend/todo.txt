@@ -3,10 +3,6 @@ to ensure a user is not assigned the same module multiple times
 
 outputting lists of users assigned to a module to check for attendance
 
-saving the mually edited user assignments
-
-enabling admins to manually change the users assignment after locking the event
-
 need to make the site "user friendly" and in general more appealing
 
 deutsch/english

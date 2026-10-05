@@ -400,7 +400,6 @@ function bindSlotSaving() {
                 })
             });
             responseJson = await response.json()
-            console.log(responseJson)
 
             // Update local data with new slot times
             eventData.slots[selectedSlotID].start = startTime;
@@ -450,7 +449,41 @@ function bindSlotSaving() {
                 eventData.slots[selectedSlotID].modules[i].name = moduleName;
                 eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
                 eventData.slots[selectedSlotID].modules[i].capacity = capacity;
+            }   
+            if (eventData.isLocked){
+                const modules = document.getElementsByClassName("adminModulePanelSlot");
+                let moduleIDs = [];
+                let assignments = [];
+                for (const module of modules) {
+
+                    moduleIDs.push(module.id);
+                    const list = module.querySelector(".assignedUsersPanel .assignedUsersList");
+
+                    for (const user of list.children) {
+                        assignments.push({
+                            moduleID: module.id,
+                            userID: user.dataset.userId
+                        });
+                    }
+                }
+
+                const assignemntResponse = await fetch(apiURL + "/api/v1/events/assignments/"+eventData.eventID +"/"+selectedSlotUUID, {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers:{"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        moduleIDs:moduleIDs,
+                        assignments:assignments
+                    })
+                });
+                const result = await getEventData();
+                if (!result.success) {
+                    console.error(result);
+                    return;
+                }
+                eventData = result.event;
             }
+
             if (SlotAndModuleEditPanel) SlotAndModuleEditPanel.style.display = "none"
             if (adminModulePanel) adminModulePanel.style.display = "none"
             if (darkenedSite) darkenedSite.style.display = "none"
@@ -1009,7 +1042,7 @@ function populateSlotEditingPanel(selectedSlot){
 
                 let assignedUsersHTML = ``;
                 for (const user of module.assignedUsers ?? []) {
-                    assignedUsersHTML += `<div data-user-id="${user.userID}" class="assignedUserPanel draggable" draggable="true">${user.userName}</div>`;
+                    assignedUsersHTML += `<div data-user-id="${user.userID}" data-user-name="${user.userName}"class="assignedUserPanel draggable" draggable="true">${user.userName}</div>`;
                 }
 
                 let assignedUsersPanelHTML = ``;
@@ -1053,33 +1086,36 @@ function populateSlotEditingPanel(selectedSlot){
 function addUserDragAndDropLogic() {
     const draggableObjects = document.querySelectorAll(".draggable");
     const dropZones = document.querySelectorAll(".assignedUsersList");
-    console.log(draggableObjects)
+
     draggableObjects.forEach(draggable => {
         draggable.addEventListener("dragstart", (event) => {
             draggable.classList.add("dragging");
-            console.log("start")
         });
     });
     draggableObjects.forEach(draggable => {
         draggable.addEventListener("dragend", (event) => {
             draggable.classList.remove("dragging");
-            console.log("stop")
+            sortAssignmentLists()
         });
     });
-
-
 
     dropZones.forEach(dropZone => {
         dropZone.addEventListener("dragover", (event) => {
             draggedElement = document.querySelector(".dragging");
             event.preventDefault();
-            dropZone.append(draggedElement);
-
+            if (draggedElement.classList.contains("draggable")){
+                dropZone.append(draggedElement);
+            }
         });
     });
-
-
-
+}
+function sortAssignmentLists(){
+    const assignmentLists = document.querySelectorAll(".assignedUsersList");
+    for (const list of assignmentLists){
+        const userCards = Array.from(list.children);
+        userCards.sort((a, b) => a.dataset.userName.localeCompare(b.dataset.userName));
+        list.replaceChildren(...userCards);
+    }
 }
 /**
  * Binds input interactions to module panel elements

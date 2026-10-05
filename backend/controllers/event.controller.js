@@ -290,6 +290,52 @@ export const disableUserChoiceInSlot = async (req,res) =>{
         client.release();
     }
 };
+
+export const changeSlotAssignments = async (req,res) => {
+    const moduleIDs = req.body.moduleIDs;
+    const newAssignments = req.body.assignments;
+    const eventID = req.params.eventID;
+    const client = await pool.connect();
+    try{
+        await client.query("BEGIN");
+
+        await client.query(`
+            DELETE FROM assignments
+            WHERE event_id = $2
+            AND module_id = ANY($1::uuid[])
+        `, [moduleIDs, eventID]);
+
+        const assignmentModuleIDs = newAssignments.map(a => a.moduleID);
+        const assignmentUserIDs = newAssignments.map(a => a.userID);
+
+        await client.query(`
+            INSERT INTO assignments
+            (module_id,user_id,event_id)
+             SELECT
+                module_id,
+                user_id,
+                $3
+            FROM unnest(
+                $1::uuid[],
+                $2::uuid[]
+            ) AS t(module_id, user_id)
+            `,
+            [assignmentModuleIDs,assignmentUserIDs,eventID ]
+        );
+        await client.query("COMMIT");
+        return res.status(200).json({success:true,message:""})
+
+    }catch(error){
+        await client.query("ROLLBACK");
+        console.error(error);
+        res.status(500).json({success:false,message:'Database error'});
+    }finally{
+        client.release();
+    }
+};
+
+
+
 //deletion
 export const deleteEvent = async (req,res) => {
     const client = await pool.connect();
