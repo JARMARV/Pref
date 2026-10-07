@@ -201,7 +201,6 @@ export const updateModule = async (req,res) =>{
 };
 
 export const lockEvent = async (req,res) =>{
-
     const eventID = req.params.eventID
     const client = await pool.connect();
     try{
@@ -212,8 +211,8 @@ export const lockEvent = async (req,res) =>{
             `,
             [eventID]
         );
+        if (!isLocked.rows[0].is_locked){
 
-        if (isLocked.rows.length !== 1){
             const assignments = await assignUsersToModules(client, eventID);
             if (!assignments.success){
                 await client.query("ROLLBACK");
@@ -918,7 +917,7 @@ async function getUserPreferenceData(client, eventID) {
 }
 
 
-const BALANCE_PENALTY_WEIGHT = 0.1;
+const BALANCE_PENALTY_WEIGHT = 5;
 async function assignUsersToModules(client, eventID) {
 
     const userData = await getUserPreferenceData(client, eventID);
