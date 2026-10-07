@@ -126,7 +126,6 @@ async function initialize()  {
             renderEventSelector()
             return;
         }
-
         eventData = result.event;
         console.log(eventData);
         renderCalendar();
@@ -381,6 +380,7 @@ function bindSlotSaving() {
     const startTimeSlotPanel = document.getElementById("startTimeSlotPanel");
     const endTimeSlotPanel = document.getElementById("endTimeSlotPanel");
     const adminModulePanel = document.getElementById("adminModulePanel");
+
     if (saveSlotAndModuleSettings){
         saveSlotAndModuleSettings.addEventListener("click",async () => {
             const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot
@@ -419,63 +419,87 @@ function bindSlotSaving() {
                 continue;
             }
             
-            // Update all module information for the selected slot
-            for (let i = 0; i < adminModulePanel.children.length; i++){
-                const locationInfo = adminModulePanel.children[i].querySelector(".moduleLocationShortPanel").value;
-                const moduleInfo = adminModulePanel.children[i].querySelector(".moduleInfoPanel").value;
-                const moduleName = adminModulePanel.children[i].querySelector(".moduleNamePanel").value;
-                const moduleID = adminModulePanel.children[i].id;
-                const capacity = adminModulePanel.children[i].querySelector(".moduleCapacityInput").value;
 
-                // Save module to database
-                const response = await fetch(apiURL + "/api/v1/events/update/event/slot/module", {
-                    method: "PATCH",
-                    credentials: "include",
-                    headers:{"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        slotID: selectedSlotUUID,
-                        locationInfo: locationInfo,
-                        generalInfo: moduleInfo,
-                        moduleName: moduleName,
-                        moduleID: moduleID,
-                        capacity: capacity
-                    })
-                });
+            // Update all module information for the selected slot
+            for (let i = 0; i < adminModulePanel.children.length; i++) {
+
+                const moduleElement = adminModulePanel.children[i];
+                const locationInfo = moduleElement.querySelector(".moduleLocationShortPanel").value;
+                const moduleInfo = moduleElement.querySelector(".moduleInfoPanel").value;
+                const moduleName = moduleElement.querySelector(".moduleNamePanel").value;
+                const capacity = moduleElement.querySelector(".moduleCapacityInput").value;
+                const isEntangled = moduleElement.querySelector(".entanglementCheckbox").checked;
+                const moduleID = moduleElement.id;
+
+                const response = await fetch(
+                    apiURL + "/api/v1/events/update/event/slot/module",
+                    {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            slotID: selectedSlotUUID,
+                            locationInfo:locationInfo,
+                            generalInfo: moduleInfo,
+                            moduleName:moduleName,
+                            moduleID:moduleID,
+                            capacity:capacity,
+                            isEntangled:isEntangled
+                        })
+                    }
+                );
+
                 const responseJson = await response.json();
-                
-                // Update local data with module information
-                eventData.slots[selectedSlotID].modules[i].locationInfoShort = locationInfo;
-                eventData.slots[selectedSlotID].modules[i].additionalInfo = moduleInfo;
-                eventData.slots[selectedSlotID].modules[i].name = moduleName;
-                eventData.slots[selectedSlotID].modules[i].moduleID = responseJson.moduleID;
-                eventData.slots[selectedSlotID].modules[i].capacity = capacity;
-            }   
-            if (eventData.isLocked){
-                const modules = document.getElementsByClassName("adminModulePanelSlot");
-                let moduleIDs = [];
-                let assignments = [];
+
+                // Update local module data
+                const localModule = eventData.slots[selectedSlotID].modules[i];
+
+                localModule.locationInfoShort = locationInfo;
+                localModule.additionalInfo = moduleInfo;
+                localModule.name = moduleName;
+                localModule.moduleID = responseJson.moduleID;
+                localModule.capacity = capacity;
+                localModule.isEntangled = isEntangled;
+            }
+
+            if (eventData.isLocked) {
+                const modules =document.getElementsByClassName("adminModulePanelSlot");
+                const moduleIDs = [];
+                const assignments = [];
+
                 for (const module of modules) {
 
-                    moduleIDs.push(module.id);
-                    const list = module.querySelector(".assignedUsersPanel .assignedUsersList");
+                    const moduleID = module.id;
+                    moduleIDs.push(moduleID);
 
+                    const moduleData = eventData.slots[selectedSlotID].modules.find(module => module.moduleID === moduleID);
+                    moduleData.assignedUsers = [];
+    
+                    const list = module.querySelector(
+                        ".assignedUsersPanel .assignedUsersList"
+                    );
                     for (const user of list.children) {
                         assignments.push({
-                            moduleID: module.id,
+                            moduleID: moduleID,
                             userID: user.dataset.userId
                         });
                     }
                 }
-
-                const assignemntResponse = await fetch(apiURL + "/api/v1/events/assignments/"+eventData.eventID +"/"+selectedSlotUUID, {
-                    method: "PATCH",
-                    credentials: "include",
-                    headers:{"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        moduleIDs:moduleIDs,
-                        assignments:assignments
-                    })
-                });
+                await fetch(apiURL +"/api/v1/events/assignments/" +eventData.eventID +"/" +selectedSlotUUID,
+                    {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            moduleIDs,
+                            assignments
+                        })
+                    }
+                );
                 const result = await getEventData();
                 if (!result.success) {
                     console.error(result);
@@ -489,7 +513,7 @@ function bindSlotSaving() {
             if (darkenedSite) darkenedSite.style.display = "none"
             adminModulePanel.dataset.idOfSelectedSlot = "null";
             body.style.overflowY="auto";
-            renderCalendar()
+            renderCalendar();
         })
     }
     else{ console.log("error1")}
@@ -552,7 +576,12 @@ if (eventLockingButton){
         });
         console.log(await response.json());
         eventData.isLocked = !eventData.isLocked;
-        getEventData();
+        const result = await getEventData();
+        if (result.success === false) {
+            console.error(result);
+            return;
+        }
+        eventData = result.event;
     })
 }
 else{
@@ -1039,14 +1068,17 @@ function populateSlotEditingPanel(selectedSlot){
         if (selectedSlot && selectedSlot.modules.length) {
             adminModulePanel.innerHTML = ``;
             for (const module of selectedSlot.modules) {
+                let checked = ""
+                if (module.isEntangled){
+                    checked = "checked"
+                }
 
                 let assignedUsersHTML = ``;
                 for (const user of module.assignedUsers ?? []) {
                     assignedUsersHTML += `<div data-user-id="${user.userID}" data-user-name="${user.userName}"class="assignedUserPanel draggable" draggable="true">${user.userName}</div>`;
                 }
-
-                let assignedUsersPanelHTML = ``;
-                if (module.assignedUsers && module.assignedUsers.length > 0) {
+                let assignedUsersPanelHTML = "";
+                if (eventData.isLocked){
                     assignedUsersPanelHTML = `
                         <div class="assignedUsersPanel">
                             <div class="assignedUsersList">
@@ -1054,18 +1086,23 @@ function populateSlotEditingPanel(selectedSlot){
                             </div>
                         </div>
                     `;
-                };
+                }
+
 
                 adminModulePanel.innerHTML += `
                     <div class="adminModulePanelSlot"id="${module.moduleID}">
                         <button class="deleteModuleButton" type="button"><img src="icons/close.svg" alt=""></button>
-                        <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
+                        <div class="nameEntangleContainer">
+                            <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
+                            <input type="checkbox" class="entanglementCheckbox" ${checked}>
+                        </div>
                         <textarea class="moduleInfoPanel inputStyle2" placeholder="General info">${module.additionalInfo ?? ""}</textarea>
                         <textarea class="moduleLocationShortPanel inputStyle2" placeholder="Short location info">${module.locationInfoShort ?? ""}</textarea>
                         <input class="moduleCapacityInput inputStyle2" type="number" placeholder="capacity" value="${module.capacity ?? ""}">
                         ${assignedUsersPanelHTML}
                     </div>
                 `;
+
             }
         }   
     }

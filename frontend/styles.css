@@ -605,3 +605,29 @@ body{
 .draggable.dragging{
     opacity: 0.5;
 }
+
+
+.nameEntangleContainer{
+    display:flex;
+    flex-direction: row;
+}
+
+.entanglementCheckbox{
+    width:30px;
+    height:30px;
+    align-self: center;
+    margin-top: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

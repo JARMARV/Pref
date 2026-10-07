@@ -172,6 +172,7 @@ export const updateModule = async (req,res) =>{
         const moduleName = req.body.moduleName;
         const moduleID = req.body.moduleID;
         let capacity = req.body.capacity;
+        const isEntangled = req.body.isEntangled;
         if (!slotID || !moduleID){
             return res.status(404).json({ success:false, message:"missing information"})
         }
@@ -183,10 +184,11 @@ export const updateModule = async (req,res) =>{
             location_info = $2,
             general_info = $3,
             module_name= $4,
-            capacity= $6
+            capacity= $6,
+            is_entangled = $7
             WHERE module_id = $5
             `,
-            [slotID,locationInfo,generalInfo,moduleName,moduleID,capacity]
+            [slotID,locationInfo,generalInfo,moduleName,moduleID,capacity,isEntangled]
         );
         return res.status(200).json({success:true,message:"Updated module" ,moduleID: moduleID})
 
@@ -203,7 +205,7 @@ export const lockEvent = async (req,res) =>{
     const eventID = req.params.eventID
     const client = await pool.connect();
     try{
-
+        await client.query("BEGIN");
         const isLocked = await client.query(`
             SELECT * FROM events
             WHERE event_id = $1;
@@ -211,14 +213,19 @@ export const lockEvent = async (req,res) =>{
             [eventID]
         );
 
-        if (!isLocked.rows[0].is_locked){
+        if (isLocked.rows.length !== 1){
             const assignments = await assignUsersToModules(client, eventID);
-            if (assignments.length < 1){
-                return res.status(400).json({success:false,message:'user assignment error'});
+            if (!assignments.success){
+                await client.query("ROLLBACK");
+                return res.status(400).json({success:false , message:'found no feasible assignment with the current contraints'});
+            }
+            if (assignments.assignments.length < 1) {
+                await client.query("ROLLBACK");
+                return res.status(400).json({success: false,message: 'user assignment error'});
             }
             const values = [];
             const placeholders = [];
-            assignments.forEach((assignment, i) => {
+            assignments.assignments.forEach((assignment, i) => {
                 const offset = i * 3;
 
                 placeholders.push(
@@ -256,13 +263,15 @@ export const lockEvent = async (req,res) =>{
             [eventID]
         );
         if (result.rowCount !== 1){
+            await client.query("ROLLBACK");
             return res.status(500).json({success:false,message:'Database error'});
         }
 
-
+        await client.query("COMMIT");
         return res.status(200).json({success:true,message:"set is_locked of event to: "+ result.rows[0].is_locked})
     }catch(error){
         console.error(error);
+        await client.query("ROLLBACK");
         res.status(500).json({success:false,message:'Database error'});
     }finally{
         client.release();
@@ -532,7 +541,8 @@ export const getEventJson = async (req, res)=>{
                 m.module_name,
                 m.location_info,
                 m.capacity,
-                m.general_info
+                m.general_info,
+                m.is_entangled
 
             FROM events e
 
@@ -574,17 +584,17 @@ export const getEventJson = async (req, res)=>{
         );
 
         const assignmentsByModule = new Map();
+        if (req.user.authorizationLevel > 1){
+            for (const assignment of assignmentsResult.rows) {
+                if (!assignmentsByModule.has(assignment.module_id)) {
+                    assignmentsByModule.set(assignment.module_id, []);
+                }
 
-        for (const assignment of assignmentsResult.rows) {
-            if (!assignmentsByModule.has(assignment.module_id)) {
-                assignmentsByModule.set(assignment.module_id, []);
+                assignmentsByModule.get(assignment.module_id).push(
+                    {userID: assignment.user_id, userName: assignment.name}            
+                );
             }
-
-            assignmentsByModule.get(assignment.module_id).push(
-                {userID: assignment.user_id, userName: assignment.name}            
-            );
         }
-
         const event = {
             startDate: berlinDateTime(result.rows[0].start_date),
             endDate: berlinDateTime(result.rows[0].end_date),
@@ -619,6 +629,7 @@ export const getEventJson = async (req, res)=>{
                     name: row.module_name,
                     moduleID: row.module_id,
                     capacity:row.capacity,
+                    isEntangled:row.is_entangled,
                     assignedUsers: assignmentsByModule.get(row.module_id) ?? []
                 });
             }
@@ -827,6 +838,8 @@ async function getUserPreferenceData(client, eventID) {
         SELECT 
             m.capacity,
             m.module_id,
+            m.module_name,
+            m.is_entangled,
             s.slot_id
         FROM events e
         
@@ -873,35 +886,6 @@ async function getUserPreferenceData(client, eventID) {
         modulesBySlot.get(module.slot_id).push(module);
     }
 
-    const userCount = userIDs.length;
-
-    for (const slotID of slotIDs) {
-        const modules = modulesBySlot.get(slotID) ?? [];
-        let totalCapacity = 0;
-
-        const zeroModules = modules.filter(
-            module => module.capacity === 0
-        );
-        for (const module of modules) {
-            totalCapacity += module.capacity;
-        }
-        if (totalCapacity < userCount) {
-            if (zeroModules.length === 0) {
-                throw new Error(
-                    `Not enough capacity in slot ${slotID} for all users`
-                );
-                
-            }
-            const remainingUsers = userCount - totalCapacity;
-            const capacityPerModule =
-                Math.ceil(remainingUsers / zeroModules.length);
-            for (const module of zeroModules) {
-                module.capacity = capacityPerModule;
-            }
-        }
-    }
-
-
     // Create users
     const users = userIDs.map(userID => {
         // Create slots for this user
@@ -917,7 +901,9 @@ async function getUserPreferenceData(client, eventID) {
                     return {
                         moduleID: module.module_id,
                         preference: preference ?? 0,
-                        capacity: module.capacity
+                        capacity: module.capacity,
+                        moduleName: module.module_name,
+                        isEntangled: module.is_entangled
                     };
                 })
         }));
@@ -931,119 +917,272 @@ async function getUserPreferenceData(client, eventID) {
     return(users);
 }
 
-async function assignUsersToModules(client, eventID){
 
-    //gets event data and user preferences
-    const userData = await getUserPreferenceData(client,eventID);
+const BALANCE_PENALTY_WEIGHT = 0.1;
+async function assignUsersToModules(client, eventID) {
 
-    //builds and solves the model to maximize overall satisfaction ignoring fairness between users
-    const satisfactionModel = buildSatisfactionModel(userData)
+    const userData = await getUserPreferenceData(client, eventID);
+
+    let entangledFamilys = {};
+
+    for (const slot of userData[0].slots) {
+        for (const module of slot.modules) {
+            if (!module.isEntangled) {continue;}
+
+            if (module.moduleName in entangledFamilys) {
+                entangledFamilys[module.moduleName].push(module.moduleID);
+            }
+            else {
+                entangledFamilys[module.moduleName] = [module.moduleID];
+            }
+        }
+    }
+
+    const satisfactionModel = buildSatisfactionModel(userData,entangledFamilys);
 
     const satisfactionMaxxing = solver.Solve(satisfactionModel);
+
     if (!satisfactionMaxxing.feasible) {
-        throw new Error("No feasible assignment exists.");
+        return {success: false,assignments: []};
     }
-    
-    const {fairnessModel,variableMap} = buildFairnessModel(userData,0.9,satisfactionMaxxing.result )
-    const fairnessMaxxing = solver.Solve(fairnessModel)
+
+    const {fairnessModel,variableMap} = buildFairnessModel(userData,0.9,satisfactionMaxxing.result,entangledFamilys);
+
+    const fairnessMaxxing = solver.Solve(fairnessModel);
+
     if (!fairnessMaxxing.feasible) {
-        throw new Error("No feasible assignment exists.");
+        return {success: false,assignments: []};
     }
-    const assignments = Object.entries(fairnessMaxxing)
-        .filter(([key, value]) =>
-            value === 1 && variableMap.has(key)
-        )
-        .map(([key]) =>
-            variableMap.get(key)
-        );
-    return assignments;
+
+    const assignments =Object.entries(fairnessMaxxing)
+            .filter(([key, value]) =>
+                value === 1 &&
+                variableMap.has(key)
+            )
+            .map(([key]) =>
+                variableMap.get(key)
+            );
+    return {success: true,assignments:assignments};
 }
 
-function buildSatisfactionModel(users) {
+/*
+ * Creates the soft-balance groups.
+ *
+ * There are two types of groups:
+ *
+ * 1. Every slot:
+ *      All modules with capacity 0 should
+ *      share the remaining users equally.
+ *
+ * 2. Every entangled family:
+ *      All modules with capacity 0 in that family
+ *      should share the remaining family users equally.
+ *
+ * The resulting deviation is only PENALIZED.
+ * It is not a hard constraint.
+ */
+function buildSoftBalanceGroups(users, entangledFamilys) {
+    const groups = [];
+    /*
+     * Map module IDs to module objects.
+     * This lets us find the modules belonging
+     * to entangled families.
+     */
+    const moduleByID = new Map();
+    for (const slot of users[0].slots) {
+        for (const module of slot.modules) {
+            moduleByID.set(
+                module.moduleID,
+                module
+            );
+        }
+    }
 
+    for (const slot of users[0].slots) {
+        const softModules =
+            slot.modules.filter(
+                module => Number(module.capacity) === 0
+            );
+        if (softModules.length === 0) {
+            continue;
+        }
+
+        const hardCapacity =
+            slot.modules
+                .filter(
+                    module => Number(module.capacity) > 0
+                )
+                .reduce(
+                    (sum, module) =>
+                        sum + Number(module.capacity),
+                    0
+                );
+
+        /*
+         * These are the users which would have
+         * to go to soft-capacity modules if all
+         * hard capacities were filled.
+         */
+        const remainingUsers = Math.max(0,users.length - hardCapacity);
+
+        const targetPerModule = remainingUsers / softModules.length;
+
+        groups.push({
+            groupID: `slot_${slot.slotID}`,
+
+            modules: softModules.map(module => ({
+                moduleID: module.moduleID,
+                target: targetPerModule
+            }))
+        });
+    }
+
+    for (
+        const [familyName, moduleIDs]
+        of Object.entries(entangledFamilys)
+    ) {
+        const familyModules =
+            moduleIDs
+                .map(moduleID =>
+                    moduleByID.get(moduleID)
+                )
+                .filter(Boolean);
+
+        const softModules =
+            familyModules.filter(
+                module => Number(module.capacity) === 0
+            );
+
+        /*
+         * No soft modules -> nothing to balance.
+         */
+        if (softModules.length === 0) {
+            continue;
+        }
+
+        /*
+         * Sum HARD capacities in the family.
+         */
+        const hardCapacity = familyModules.filter(module => Number(module.capacity) > 0)
+                .reduce(
+                    (sum, module) =>
+                        sum + Number(module.capacity),
+                    0
+                );
+
+        const remainingUsers = Math.max(0,users.length - hardCapacity);
+        const targetPerModule = remainingUsers / softModules.length;
+
+        groups.push({
+            groupID: `family_${familyName}`,
+
+            modules: softModules.map(module => ({
+                moduleID: module.moduleID,
+                target: targetPerModule
+            }))
+        });
+    }
+
+    return groups;
+}
+
+function buildSatisfactionModel(users,entangledFamilys) {
     const model = {
         optimize: "satisfaction",
         opType: "max",
-
         constraints: {},
         variables: {},
         binaries: {}
     };
 
     for (const user of users) {
+        for (const name of Object.keys(entangledFamilys)) {
+            const entangledFamilyConstraint =`user_${user.userID}_moduleFamily_${name}`;
+            model.constraints[entangledFamilyConstraint] = {equal: 1};
+        }
 
         for (const slot of user.slots) {
-
-            /*
-            * Constraint:
-            *
-            * User must get exactly one module
-            * in this slot.
-            */
             if (slot.modules.length === 0) {
                 continue;
             }
-            const userSlotConstraint =
-                `user_${user.userID}_slot_${slot.slotID}`;
 
-            model.constraints[userSlotConstraint] = {
-                equal: 1
-            };
+            const userSlotConstraint =`user_${user.userID}_slot_${slot.slotID}`;
 
+            model.constraints[userSlotConstraint] = {equal: 1};
 
             for (const module of slot.modules) {
-
-                const variableName =
-                    `${user.userID}_${slot.slotID}_${module.moduleID}`;
-
+                const variableName =`${user.userID}_${slot.slotID}_${module.moduleID}`;
 
                 /*
-                * Create binary variable
-                */
-                model.variables[variableName] = {
-                    satisfaction: module.preference ?? 3
-                };
+                 * Binary decision variable.
+                 */
 
+                model.variables[variableName] = {satisfaction:module.preference ?? 3};
                 model.binaries[variableName] = 1;
-
-
                 /*
-                * User/slot constraint
-                */
+                 * User / slot constraint.
+                 */
+
                 model.variables[variableName][
                     userSlotConstraint
                 ] = 1;
+                /*
+                 * ------------------------------------------------
+                 * HARD CAPACITY
+                 * ------------------------------------------------
+                 *
+                 * capacity > 0:
+                 *     real maximum
+                 *
+                 * capacity === 0:
+                 *     SOFT capacity -> no hard constraint
+                 */
+
+                if (Number(module.capacity) > 0) {
+
+                    const capacityConstraint =
+                        `capacity_${slot.slotID}_${module.moduleID}`;
+
+                    if (!model.constraints[capacityConstraint]) {
+                        model.constraints[capacityConstraint] = {
+                            max: Number(module.capacity)
+                        };
+                    }
+
+                    model.variables[variableName][
+                        capacityConstraint
+                    ] = 1;
+                }
 
 
                 /*
-                * Module capacity constraint
-                */
-                const capacityConstraint =
-                    `capacity_${slot.slotID}_${module.moduleID}`;
+                 * ------------------------------------------------
+                 * ENTANGLEMENT
+                 * ------------------------------------------------
+                 */
 
-                if (!model.constraints[capacityConstraint]) {
-                    model.constraints[capacityConstraint] = {
-                        max: module.capacity
-                    };
+                if (
+                    module.moduleName &&
+                    entangledFamilys[module.moduleName] &&
+                    module.isEntangled
+                ) {
+                    const familyConstraint =
+                        `user_${user.userID}_moduleFamily_${module.moduleName}`;
+
+                    model.variables[variableName][
+                        familyConstraint
+                    ] = 1;
                 }
-
-                model.variables[variableName][
-                    capacityConstraint
-                ] = 1;
-
             }
         }
     }
-
     return model;
 }
 
-function buildFairnessModel(users, fairnessFactor, maxSatisfaction) {
+function buildFairnessModel(users,fairnessFactor,maxSatisfaction,entangledFamilys,balancePenaltyWeight) {
 
     const avgSatisfaction = maxSatisfaction / users.length;
-
-    const variableMap = new Map();
-
+    const variableMap =new Map();
     const model = {
         optimize: "unfairness",
         opType: "min",
@@ -1053,34 +1192,54 @@ function buildFairnessModel(users, fairnessFactor, maxSatisfaction) {
         binaries: {}
     };
 
-    model.constraints.minimumTotalSatisfaction = {
-        min: maxSatisfaction * fairnessFactor
-    };
+    model.constraints.minimumTotalSatisfaction = {min: maxSatisfaction * fairnessFactor};
 
     for (const user of users) {
+        for (const name of Object.keys(entangledFamilys)) {
 
-        const positiveDeviation =
-            `positiveDeviation_${user.userID}`;
+            const entangledFamilyConstraint =
+                `user_${user.userID}_moduleFamily_${name}`;
 
-        model.constraints[positiveDeviation] = {
-            max: avgSatisfaction
-        };
+            model.constraints[entangledFamilyConstraint] = {
+                equal: 1
+            };
+        }
+    
 
-        const negativeDeviation =
-            `negativeDeviation_${user.userID}`;
+        const positiveDeviation =`positiveDeviation_${user.userID}`;
 
-        model.constraints[negativeDeviation] = {
-            max: -avgSatisfaction
-        };
+        model.constraints[positiveDeviation] = {max: avgSatisfaction};
 
-        const deviationVariable =
-            `deviation_${user.userID}`;
+        const negativeDeviation = `negativeDeviation_${user.userID}`;
+
+        model.constraints[negativeDeviation] = {max: -avgSatisfaction};
+        /*
+         * Absolute deviation variable.
+         *
+         * This becomes:
+         *
+         * |userSatisfaction - average|
+         */
+        const deviationVariable = `deviation_${user.userID}`;
 
         model.variables[deviationVariable] = {
+            /*
+             * Normal user fairness penalty.
+             */
             unfairness: 1,
+
+            /*
+             * Deviation constraints.
+             */
             [positiveDeviation]: -1,
             [negativeDeviation]: -1
         };
+
+        /*
+         * ------------------------------------------------
+         * USER SLOTS / MODULES
+         * ------------------------------------------------
+         */
 
         for (const slot of user.slots) {
 
@@ -1088,64 +1247,253 @@ function buildFairnessModel(users, fairnessFactor, maxSatisfaction) {
                 continue;
             }
 
-
             const userSlotConstraint =
                 `user_${user.userID}_slot_${slot.slotID}`;
 
-            model.constraints[userSlotConstraint] = {
+            model.constraints[
+                userSlotConstraint
+            ] = {
                 equal: 1
             };
 
+            for (const module of slot.modules) {
 
+                const variableName = `${user.userID}_${slot.slotID}_${module.moduleID}`;
+                const preference = module.preference ?? 0;
+
+
+                /*
+                 * Decision variable.
+                 */
+
+                model.variables[variableName] = {
+
+                    /*
+                     * Keeps total satisfaction >=
+                     * required minimum.
+                     */
+                    minimumTotalSatisfaction:
+                        preference,
+
+                    /*
+                     * User fairness.
+                     */
+                    [positiveDeviation]:
+                        preference,
+
+                    [negativeDeviation]:
+                        -preference,
+
+                    /*
+                     * One module per slot.
+                     */
+                    [userSlotConstraint]: 1
+                };
+
+                model.binaries[variableName] = 1;
+                /*
+                 * ------------------------------------------------
+                 * HARD CAPACITY
+                 * ------------------------------------------------
+                 */
+
+                if (Number(module.capacity) > 0) {
+
+                    const capacityConstraint =
+                        `capacity_${slot.slotID}_${module.moduleID}`;
+
+                    if (
+                        !model.constraints[
+                            capacityConstraint
+                        ]
+                    ) {
+
+                        model.constraints[
+                            capacityConstraint
+                        ] = {
+                            max: Number(module.capacity)
+                        };
+                    }
+
+                    model.variables[variableName][
+                        capacityConstraint
+                    ] = 1;
+                }
+
+
+                /*
+                 * Needed later to extract assignments
+                 * from the solver result.
+                 */
+
+                variableMap.set(
+                    variableName,
+                    {
+                        userID: user.userID,
+                        moduleID: module.moduleID
+                    }
+                );
+                /*
+                 * ------------------------------------------------
+                 * ENTANGLEMENT
+                 * ------------------------------------------------
+                 */
+
+                if (module.moduleName && entangledFamilys[module.moduleName] && module.isEntangled) {
+                    const familyConstraint =
+                        `user_${user.userID}_moduleFamily_${module.moduleName}`;
+
+                    model.variables[variableName][
+                        familyConstraint
+                    ] = 1;
+                }
+            }
+        }
+    }
+    /*
+     * ------------------------------------------------
+     * SOFT CAPACITY BALANCING
+     * ------------------------------------------------
+     */
+    const softBalanceGroups = buildSoftBalanceGroups(
+            users,
+            entangledFamilys
+        );
+
+    /*
+     * For every soft-capacity module we create:
+     *
+     *     deviation >= actual - target
+     *     deviation >= target - actual
+     *
+     * Therefore:
+     *
+     *     deviation = |actual - target|
+     *
+     * This deviation is NOT a hard limit.
+     * It simply adds a penalty to the objective.
+     */
+
+    const balanceConstraintsByModule = new Map();
+
+    for (let groupIndex = 0; groupIndex < softBalanceGroups.length; groupIndex++) {
+        const group = softBalanceGroups[groupIndex];
+
+        for (const moduleInfo of group.modules) {
+
+            const moduleID =moduleInfo.moduleID;
+            const target =moduleInfo.target;
+
+            const upperConstraint =`balanceUpper_${groupIndex}_${moduleID}`;
+            const lowerConstraint =`balanceLower_${groupIndex}_${moduleID}`;
+            /*
+             * actual - deviation <= target
+             */
+            model.constraints[
+                upperConstraint
+            ] = {
+                max: target
+            };
+            /*
+             * -actual - deviation <= -target
+             */
+            model.constraints[
+                lowerConstraint
+            ] = {
+                max: -target
+            };
+            /*
+             * The deviation variable is continuous.
+             *
+             * javascript-lp-solver variables are non-negative
+             * by default, so deviation cannot become negative.
+             */
+            const balanceDeviationVariable =
+                `balanceDeviation_${groupIndex}_${moduleID}`;
+
+            model.variables[
+                balanceDeviationVariable
+            ] = {
+                /*
+                 * Add the balance penalty to the same
+                 * objective as user unfairness.
+                 */
+                unfairness:
+                    balancePenaltyWeight,
+
+                /*
+                 * actual - deviation <= target
+                 */
+                [upperConstraint]: -1,
+
+                /*
+                 * -actual - deviation <= -target
+                 */
+                [lowerConstraint]: -1
+            };
+            /*
+             * A module can participate in more than one
+             * balance group:
+             *
+             * e.g.:
+             *
+             *     slot balancing
+             *     +
+             *     entangled-family balancing
+             */
+
+            if (
+                !balanceConstraintsByModule.has(moduleID)
+            ) {
+                balanceConstraintsByModule.set(
+                    moduleID,
+                    []
+                );
+            }
+            balanceConstraintsByModule
+                .get(moduleID)
+                .push({
+                    upperConstraint,
+                    lowerConstraint
+                });
+        }
+    }
+    /*
+     * Add the module-count coefficients to the
+     * assignment variables.
+     */
+
+    for (const user of users) {
+        for (const slot of user.slots) {
             for (const module of slot.modules) {
 
                 const variableName =
                     `${user.userID}_${slot.slotID}_${module.moduleID}`;
 
-                const preference =
-                    module.preference ?? 0;
+                const balanceConstraints =
+                    balanceConstraintsByModule.get(
+                        module.moduleID
+                    );
 
-                model.variables[variableName] = {
-
-                    minimumTotalSatisfaction:
-                        preference,
-
-                    [positiveDeviation]:
-                        preference,
-
-
-                    [negativeDeviation]:
-                        -preference,
-
-                    [userSlotConstraint]: 1
-                };
-
-
-                model.binaries[variableName] = 1;
-
-                const capacityConstraint =
-                    `capacity_${slot.slotID}_${module.moduleID}`;
-
-
-                if (!model.constraints[capacityConstraint]) {
-
-                    model.constraints[capacityConstraint] = {
-                        max: module.capacity
-                    };
+                if (!balanceConstraints) {
+                    continue;
                 }
 
+                for (const balanceConstraint of balanceConstraints) {
 
-                model.variables[variableName][
-                    capacityConstraint
-                ] = 1;
+                    model.variables[variableName][
+                        balanceConstraint.upperConstraint
+                    ] = 1;
 
-                variableMap.set(variableName, {
-                    userID: user.userID,
-                    moduleID: module.moduleID
-                });
+                    model.variables[variableName][
+                        balanceConstraint.lowerConstraint
+                    ] = -1;
+                }
             }
         }
     }
-
-    return {fairnessModel:model,variableMap:variableMap};
+    return {
+        fairnessModel: model,
+        variableMap: variableMap
+    };
 }

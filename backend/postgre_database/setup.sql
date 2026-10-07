@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS modules (
     location_info TEXT NOT NULL,
     general_info TEXT NOT NULL,
     module_name TEXT NOT NULL,
-    capacity INT NOT NULL DEFAULT 0
+    capacity INT NOT NULL DEFAULT 0,
+    is_entangled BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS user_preferences (

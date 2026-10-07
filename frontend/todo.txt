@@ -1,6 +1,3 @@
-need to make it possible to entangle modules of different slots to say it is the same module just at different times
-to ensure a user is not assigned the same module multiple times
-
 outputting lists of users assigned to a module to check for attendance
 
 need to make the site "user friendly" and in general more appealing
