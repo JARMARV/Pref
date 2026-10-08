@@ -362,6 +362,16 @@ body{
     z-index: 12;
     cursor: pointer;
 }
+
+.copyUserListButton{
+    top: 0;
+    right: 0;
+    position:absolute;
+    transform: translate(0% ,-100%);
+}
+
+
+
 #SlotAndModuleEditPanel{
     justify-self: center;
     display:none;
@@ -582,15 +592,17 @@ body{
 }
 
 .assignedUsersPanel{
+    position:relative;
+    margin-top:30px;
+}
+
+.assignedUsersList{
     display:block;
     border:2px solid aqua;
     border-radius: 5px;
     height:300px;
     overflow-y:auto;
-}
-.assignedUsersList{
-    height:90%;
-
+    position:relative;
 }
 .assignedUserPanel{
     display:block;

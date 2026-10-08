@@ -1047,12 +1047,34 @@ function makeSlotLogic() {
 
             populateSlotEditingPanel(selectedSlot)
             addSlotEditingPanelLogic();
+            sortAssignmentLists();
             deleteModuleButtons();
             addUserDragAndDropLogic();
+            copyUserListFromSlotLogic ();
         });
     }
 };
+function copyUserListFromSlotLogic (){
+    const copyUserListButtons = document.getElementsByClassName("copyUserListButton");
+    for (const button of copyUserListButtons){
+        button.addEventListener("click", async () => {
+            const moduleID = button.parentElement.parentElement.id;
+            const response = await fetch(apiURL + "/api/v1/users/assigned/"+moduleID, {
+                method: "GET",
+                credentials: "include"
+            }); 
+            
+            const responseJson = await response.json();
+            const users = responseJson.assignedUsers;
 
+            users.sort((a, b) => a.localeCompare(b));
+
+            await navigator.clipboard.writeText(
+                    users.join("\n")
+            );
+        });
+    }
+}
 
 function populateSlotEditingPanel(selectedSlot){
     if (!eventData) return;
@@ -1081,6 +1103,7 @@ function populateSlotEditingPanel(selectedSlot){
                 if (eventData.isLocked){
                     assignedUsersPanelHTML = `
                         <div class="assignedUsersPanel">
+                            <button class="copyUserListButton" ><img src="icons/copy.svg" alt="copy"></button>
                             <div class="assignedUsersList">
                                 ${assignedUsersHTML}
                             </div>
@@ -1088,10 +1111,9 @@ function populateSlotEditingPanel(selectedSlot){
                     `;
                 }
 
-
                 adminModulePanel.innerHTML += `
                     <div class="adminModulePanelSlot"id="${module.moduleID}">
-                        <button class="deleteModuleButton" type="button"><img src="icons/close.svg" alt=""></button>
+                        <button class="deleteModuleButton" type="button"><img src="icons/close.svg" alt="x"></button>
                         <div class="nameEntangleContainer">
                             <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
                             <input type="checkbox" class="entanglementCheckbox" ${checked}>

@@ -320,6 +320,32 @@ export const savePref = async (req,res) => { //saves the user preference to data
     }
 }
 
+export const getAssignedUsers = async (req, res) => {
+    const moduleID = req.params.moduleID;
+    const client = await pool.connect();
+
+    try {
+        const userResult = await client.query(`
+            SELECT u.name
+            FROM assignments a
+            JOIN users u
+                ON u.user_id = a.user_id
+            WHERE a.module_id = $1
+        `, [moduleID]);
+        
+        const users = userResult.rows.map(row => row.name)
+
+        return res.status(200).json({success: true,assignedUsers: users});
+
+    } catch (error) {
+
+        console.error(error);
+        return res.status(500).json({success: false,message: "Database error"});
+
+    } finally {
+        client.release();
+    }
+};
 
 
 //generates a random string of specified length with the characters in "chars"
