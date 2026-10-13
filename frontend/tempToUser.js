@@ -1,7 +1,6 @@
 const createAccountButton = document.getElementById("createAccountButton");
 const userNameInput = document.getElementById("userName");
 const passwordInput = document.getElementById("password");
-const apiURL = "http://localhost:5600";
 const authSites = ["tempToUser.html", "user.html", "admin.html" , "superUser.html"];
 
 createAccountButton.addEventListener("click", async event => {

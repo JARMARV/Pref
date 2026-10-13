@@ -34,6 +34,17 @@ export const verifyToken = (req, res, next) => {
     }
 };
 
+//Middleware to verify token AND require superUser authorization (level 3)
+export const requireSuperUser = (req, res, next) => {
+    verifyToken(req, res, () => {
+        if (req.user.authorizationLevel !== 3) {
+            console.log("Authorization failed. Admin access required");
+            return res.status(403).json({ message: "Authorization failed. Admin access required" });
+        }
+        next();
+    });
+};
+
 // Middleware to verify token AND require admin authorization (level 2)
 export const requireAdmin = (req, res, next) => {
     verifyToken(req, res, () => {

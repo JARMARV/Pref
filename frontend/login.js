@@ -5,7 +5,6 @@ const userNameInput = document.getElementById("userName");
 const organizationInput = document.getElementById("establishmentID");
 const passwordInput = document.getElementById("password");
 const title = document.getElementById("title");
-const apiURL = "http://localhost:5600";
 const authSites = ["tempToUser.html", "user.html", "admin.html" , "superUser.html"];
 
 //defining the behaviour of the login button

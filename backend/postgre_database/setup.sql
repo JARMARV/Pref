@@ -93,4 +93,4 @@ CREATE TABLE IF NOT EXISTS assignments (
         UNIQUE (user_id, module_id)
 );
 
-INSERT INTO organizations (organization_name) VALUES ('TestOrganization');
+INSERT INTO organizations (organization_name,organization_id) VALUES ('Admin','11111111-1111-1111-1111-111111111111');

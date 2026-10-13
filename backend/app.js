@@ -7,6 +7,7 @@ import {ORIGIN} from './config/env.js';
 import eventRouter from './routes/event.routes.js';
 import userRouter from './routes/user.routes.js';
 import authRouter from './routes/auth.routes.js';
+import organizationRouter from './routes/organization.routes.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 import cookieParser from 'cookie-parser';
 import cors from "cors";
@@ -26,6 +27,7 @@ app.use(cors({
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/events', eventRouter);
+app.use('/api/v1/organization', organizationRouter);
 
 
 app.get('/', async (req, res) => {
@@ -37,6 +39,7 @@ app.get('/', async (req, res) => {
         res.status(500).send('Database error');
     }
 });
+
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);

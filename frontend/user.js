@@ -1,7 +1,5 @@
 // ==================== GLOBAL VARIABLES ====================
 
-// ---- API Configuration ----
-const apiURL = "http://localhost:5600";
 
 // ---- Calendar Display Configuration ----
 const hourIncrement = 90; // Height in pixels for each hour slot in the calendar

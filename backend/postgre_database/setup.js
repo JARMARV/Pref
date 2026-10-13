@@ -1,5 +1,7 @@
 import pg from "pg";
 import fs from "fs";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const { Client } = pg;
 
@@ -75,6 +77,27 @@ try {
     );
 
     await client.query(schema);
+
+    const adminName = PGUSER;
+
+    const adminPassword = PGPASSWORD;
+    const salt = await bcrypt.genSalt(10);
+    const hashedAdminPassword = await bcrypt.hash(adminPassword, salt);
+    
+    const adminAuth = 3;
+    const adminorganization = "11111111-1111-1111-1111-111111111111"
+
+
+
+    await client.query(`
+        INSERT INTO users 
+        (name,password_hash,authorization_level,organization_id)
+         VALUES ($1,$2,$3,$4);
+        `,
+        [adminName,hashedAdminPassword,adminAuth,adminorganization]
+        )
+
+
 
     console.log("Database setup completed successfully!");
 

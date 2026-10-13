@@ -2,9 +2,6 @@
 
 const body = document.body;
 
-// ---- API Configuration ----
-const apiURL = "http://localhost:5600";
-
 // ---- Calendar Display Configuration ----
 const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 
@@ -67,12 +64,12 @@ const eventLockingButton = document.getElementById("eventLockingButton");
 let activeDragZone = null;
 
 function showAdminPanel(templateID, display) {
-    if (!adminPanel) return;
+    if (!panel) return;
     const template = document.getElementById(templateID);
     if (!template) return;
-    adminPanel.innerHTML = template.innerHTML;
-    adminPanel.dataset.panel = templateID;
-    adminPanel.style.display = display;
+    panel.innerHTML = template.innerHTML;
+    panel.dataset.panel = templateID;
+    panel.style.display = display;
     darkenedSite.style.display = "block";
     body.style.overflowY ="hidden";
     switch (templateID) {

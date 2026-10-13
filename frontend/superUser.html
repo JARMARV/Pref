@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Pref Admin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="superUser.css">
+    <link rel="icon" href="" type="image/x-icon">
+</head>
+<body>
+
+    <div id="darkenedSite"></div>
+
+    <div id="header">
+        <h2 id="headerTitle">Pref Superuser</h2>
+        <button id="userButton"><img src="icons\settings.svg" alt=""></button>
+    </div>
+
+    <div id="panel"></div>
+
+    <div id="userPanel">
+        <button id="logoutButton">Log out</button>
+    </div>
+
+    <template id="organizationManagementTemplate">
+        <button id="createOrganizationButton"><img src="icons\add.svg" alt=""></button>
+        <div id="organizationsHeaderContainer">
+            <div id="organizationsHeader">Select Organization</div>
+        </div>
+        <div id="organizationButtonsContainer"></div>
+    </template>
+
+    <template id="adminAccountManagementTemplate">
+        <div id="userManagementPanel">
+            <button id="closeUserManagementButton"><img src="icons\close.svg" alt=""></button>
+
+            <div id="userManagementHeader">
+                <button id="addUsersButton">create user</button>
+                <button id="deleteUsersButon">delete users</button>
+            </div>
+
+            <div id="userListContainer">
+                <div id="standardUserContainer">
+                    <div id="standardUserHeader">Registered users</div>
+                    <button id="selectAllUsers">select all</button>
+                    <div id ="horizontalLine"></div>
+                    <div id="standardUserList"></div>
+                </div>
+                <div id="tempUserContainer">
+                    <div id="tempUserHeader">Unregistered users</div>
+                    <button id="selectAllTempUsers">select all</button>
+                    <div id ="horizontalLine"></div>
+                    <div id="tempUserList"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script src="config.js"></script>
+    <script src="superUser.js"></script>
+</body>
+</html>
