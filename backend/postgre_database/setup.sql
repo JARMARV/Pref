@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS organizations;
 */
 
+
 CREATE TABLE IF NOT EXISTS organizations (
     organization_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_name TEXT NOT NULL UNIQUE
@@ -16,16 +17,29 @@ CREATE TABLE IF NOT EXISTS organizations (
 
 CREATE TABLE IF NOT EXISTS users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL, 
+    name TEXT NOT NULL,
     password_hash TEXT NOT NULL,
-    authorization_level INTEGER NOT NULL DEFAULT 0,
-    organization_id UUID NOT NULL
+    authorization_level INTEGER NOT NULL DEFAULT -1,
+    organization_id UUID
         REFERENCES organizations(organization_id)
         ON DELETE CASCADE,
     expires_at TIMESTAMPTZ,
     CONSTRAINT unique_username_per_org
-        UNIQUE (name, organization_id)
+        UNIQUE NULLS NOT DISTINCT (name, organization_id),
+    CONSTRAINT check_z_based_on_x
+        CHECK (
+            authorization_level = 3
+            OR organization_id IS NOT NULL
+        )
 );
+
+ALTER TABLE users
+    ALTER COLUMN authorization_level SET DEFAULT -1;
+
+UPDATE users
+SET authorization_level = -1
+WHERE authorization_level = 0
+AND expires_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS events (
     event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

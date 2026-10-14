@@ -39,7 +39,7 @@ export const signIn=async (req,res) => {
         }else if (users.rows.length === 1) {
             const user = users.rows[0];
             const passwordMatches = await bcrypt.compare(password, user.password_hash)
-                || (user.authorization_level === 0 && password === user.password_hash);
+                || (user.authorization_level === -1 && password === user.password_hash);
 
             if (passwordMatches){
                 const token = jwt.sign({

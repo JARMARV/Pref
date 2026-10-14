@@ -23,13 +23,16 @@ export const newTempUser = async (req, res) => {
 
     try {
         // User data is already validated and attached by middleware
-        const organizationID = req.user.organizationID;
-        
+        const reqAuthLevel = req.user.authorizationLevel;
+        let organizationID = "";
+        if (reqAuthLevel === 3){organizationID = req.params.ID;}
+        else{organizationID = req.user.organizationID;};
+
         let userName;
         while (true) {
             userName = generateRandomString(8);
             const password = generateRandomString(12);
-            const newAuthorizationLevel = 0;
+            const authorizationLevel = 1 - reqAuthLevel ;
             if(!organizationID){
                 return res.status(400).json({success:false , message:"no organization id"})
             };
@@ -46,23 +49,24 @@ export const newTempUser = async (req, res) => {
                         userName,
                         password,
                         organizationID,
-                        newAuthorizationLevel,
+                        authorizationLevel,
                         TEMP_USER_DELETION_INTERVAL
                     ]
                 );
-                const userID = result.rows[0].user_id;
-                const eventID = req.params.eventID;
-                await client.query(
-                    `
-                    INSERT INTO users_in_events (user_id, event_id)
-                    VALUES($1, $2);
-                    `,
-                    [
-                        userID,
-                        eventID
-                    ]
-                )
-
+                if (authorizationLevel === 1){
+                    const userID = result.rows[0].user_id;
+                    const eventID = req.params.eventID;
+                    await client.query(
+                        `
+                        INSERT INTO users_in_events (user_id, event_id)
+                        VALUES($1, $2);
+                        `,
+                        [
+                            userID,
+                            eventID
+                        ]
+                    )
+                }
                 await client.query("COMMIT");
                 res.status(201).json({
                     success: true,
@@ -89,7 +93,7 @@ export const newTempUser = async (req, res) => {
         client.release();
     }
 };
-    
+
 export const newUser = async (req, res) => {
     const client = await pool.connect();
     // check for valid token in the request cookies
@@ -98,6 +102,7 @@ export const newUser = async (req, res) => {
         // User data is already validated and attached by middleware
         const userID = req.user.userId;
         const organizationID = req.user.organizationID;
+        const tempAuthLevel = req.body.authorizationLevel;
 
         const newUserName = req.body.name;
         const newUserPassword = req.body.password;
@@ -119,13 +124,13 @@ export const newUser = async (req, res) => {
         };
         await client.query("BEGIN");
         transactionStarted = true;
-        const newAuthLevel = 1;
+        const newAuthLevel = tempAuthLevel*(-1);
         const result = await client.query(`UPDATE users
             SET name = $1, 
             password_hash = $2, 
             authorization_level = $3,
             expires_at = NULL
-            WHERE user_id = $4 AND organization_id = $5 AND authorization_level = 0
+            WHERE user_id = $4 AND organization_id = $5 AND authorization_level = -1
             RETURNING user_id`,
             [newUserName,newHashedPassword,newAuthLevel,userID,organizationID]
         );
@@ -225,7 +230,7 @@ export const getEventUsers = async (req,res) => {
             const userResponse = await client.query(`SELECT * FROM users WHERE user_id = $1`,[row.user_id])
             if (userResponse.rows[0] !== undefined) {
                 const user = userResponse.rows[0];
-                if (user.authorization_level === 0) {
+                if (user.authorization_level === -1) {
                     tempUsers.push(user);
                 } else {
                     users.push(user);

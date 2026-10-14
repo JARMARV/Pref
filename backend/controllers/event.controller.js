@@ -506,7 +506,7 @@ export const getEventJson = async (req, res)=>{
         return res.status(400).json({success:false,message:"wrong api request"})
     };
 
-    if (authorizationLevel === 0){
+    if (authorizationLevel === -1){
         console.log("Authorization failed. Temp user access required");
         return res.status(403).json({message: "Authorization failed"});
     };

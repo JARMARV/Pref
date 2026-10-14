@@ -26,32 +26,28 @@ let client;
 
 try {
     client = new Client(serverConfig);
-
     await client.connect();
 
     console.log("Connected to PostgreSQL server");
 
-    const result = await client.query(
-        `SELECT 1 FROM pg_database WHERE datname = $1`,
+        const result = await client.query(
+        "SELECT 1 FROM pg_database WHERE datname = $1",
         [PGDATABASE]
     );
 
-
-    if (result.rowCount === 0) {
-
-        console.log(`Database "${PGDATABASE}" does not exist.`);
+    if (result.rowCount > 0) {
+        console.log(`Dropping database "${PGDATABASE}"...`);
 
         await client.query(
-            `CREATE DATABASE "${PGDATABASE}"`
+            `DROP DATABASE "${PGDATABASE}" WITH (FORCE)`
         );
-
-        console.log(`Database "${PGDATABASE}" created!`);
-
-    } else {
-
-        console.log(`Database "${PGDATABASE}" already exists.`);
-
     }
+
+    console.log(`Creating database "${PGDATABASE}"...`);
+
+    await client.query(
+        `CREATE DATABASE "${PGDATABASE}"`
+);
 
     await client.end();
 
@@ -85,16 +81,13 @@ try {
     const hashedAdminPassword = await bcrypt.hash(adminPassword, salt);
     
     const adminAuth = 3;
-    const adminorganization = "11111111-1111-1111-1111-111111111111"
-
-
 
     await client.query(`
         INSERT INTO users 
         (name,password_hash,authorization_level,organization_id)
          VALUES ($1,$2,$3,$4);
         `,
-        [adminName,hashedAdminPassword,adminAuth,adminorganization]
+        [adminName,hashedAdminPassword,adminAuth,null]
         )
 
 

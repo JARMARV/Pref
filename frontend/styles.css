@@ -348,7 +348,7 @@ body{
 .scrollable::-webkit-scrollbar .moduleInfo ,.moduleInfoPanel, .moduleLocationShort, .moduleLocationShortPanel,.moduleName,.moduleNamePanel{
     display: none;
 }
-.closeModulesWindow,#closeUserManagementButton,#closeSlotCreationButton{
+.closeModulesWindow,#closeUserManagementButton,#closeSlotCreationButton,#closeOrganizationManagementButton{
     display:block;
     position:absolute;
     top: 0;
@@ -440,7 +440,7 @@ body{
     height:100%;
     width:50px;
 }
-.eventButtonContainer{
+.eventButtonContainer,.organizationButtonContainer{
     width:100%;
     position: relative;
     display:flex;
@@ -484,7 +484,7 @@ body{
     flex: 0 0 auto;
 }
 
-.eventButton{
+.eventButton,.organizationButton{
     width:100%;
     height:100%
 }
@@ -531,10 +531,10 @@ body{
     z-index: 12;
     cursor: pointer;
 }
-.openEventEditorButton{
+.openEventEditorButton,.openOrganizationEditorButton{
     width:30px;
 }
-#userManagementHeader{
+#userManagementHeader,#adminManagementHeader{
     display:flex;
     flex-direction: row;
     justify-content: space-between;
@@ -542,11 +542,12 @@ body{
     width:100%;
     height:50px;
 }
-#userManagementPanel{
+#userManagementPanel,#organizationManagementPanel{
     width:max-content;
     position: relative;
     height:auto;
     display:flex;
+    align-self:flex-start;
     flex-direction: column;
     padding-right:10px;
     flex: 0 0 auto;

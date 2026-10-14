@@ -48,7 +48,7 @@ setInterval(async () => {
     try{
         const result = await pool.query(`
             DELETE FROM users
-            WHERE authorization_level = 0
+            WHERE authorization_level = -1
             AND expires_at <= NOW()
             RETURNING user_id;
         `)

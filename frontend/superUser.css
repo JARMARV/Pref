@@ -1,7 +1,6 @@
 #panel{
     max-width:90vw;
     background-color:#1e2447;
-    justify-content:center;
     display:none;
     border-radius:10px;
     position:fixed;

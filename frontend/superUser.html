@@ -24,7 +24,7 @@
         <button id="logoutButton">Log out</button>
     </div>
 
-    <template id="organizationManagementTemplate">
+    <template id="organizationsTemplate">
         <button id="createOrganizationButton"><img src="icons\add.svg" alt=""></button>
         <div id="organizationsHeaderContainer">
             <div id="organizationsHeader">Select Organization</div>
@@ -32,24 +32,23 @@
         <div id="organizationButtonsContainer"></div>
     </template>
 
-    <template id="adminAccountManagementTemplate">
-        <div id="userManagementPanel">
-            <button id="closeUserManagementButton"><img src="icons\close.svg" alt=""></button>
-
-            <div id="userManagementHeader">
-                <button id="addUsersButton">create user</button>
-                <button id="deleteUsersButon">delete users</button>
+    <template id="organizationManagementTemplate">
+        <button id="closeOrganizationManagementButton"><img src="icons\close.svg" alt=""></button>
+        <div id="organizationManagementPanel">
+            <div id="adminManagementHeader">
+                <button id="addAdminButton">create admin</button>
+                <button id="deleteAdminsButton">delete admins</button>
             </div>
 
             <div id="userListContainer">
                 <div id="standardUserContainer">
-                    <div id="standardUserHeader">Registered users</div>
+                    <div id="standardAdminHeader">Registered admins</div>
                     <button id="selectAllUsers">select all</button>
                     <div id ="horizontalLine"></div>
                     <div id="standardUserList"></div>
                 </div>
                 <div id="tempUserContainer">
-                    <div id="tempUserHeader">Unregistered users</div>
+                    <div id="tempUserHeader">Unregistered admins</div>
                     <button id="selectAllTempUsers">select all</button>
                     <div id ="horizontalLine"></div>
                     <div id="tempUserList"></div>

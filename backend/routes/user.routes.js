@@ -7,7 +7,7 @@ userRouter.get('/',requireAdmin,getAllUsers);
 
 userRouter.get('/event/:eventID',requireAdmin, getEventUsers);
 
-userRouter.post('/temp/:eventID', requireAdmin, newTempUser);
+userRouter.post('/temp/:ID', requireAdmin, newTempUser);
 
 userRouter.post('/user', requireTempUser, newUser);
 
