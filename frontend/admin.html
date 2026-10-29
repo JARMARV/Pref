@@ -24,7 +24,7 @@
     <div id="adminPanel"></div>
 
     <template id="eventSelectorTemplate">
-        <button id="createEventButton"><img src="icons\add.svg" alt=""></button>
+        <button class="topRightButton" id="createEventButton"><img src="icons\add.svg" alt=""></button>
         <div id="eventsheaderContainer">
             <div id="eventsHeader">Select Event</div>
         </div>
@@ -67,7 +67,7 @@
 
     
     <template id="adminSlotCreationTemplate">
-        <button id = "closeSlotCreationButton"><img src="icons\close.svg" alt=""></button>
+        <button class="topRightButton closePanelButton" id="closeSlotCreationButton"><img src="icons\close.svg" alt=""></button>
         <div>
             <h3>Test</h3>
         </div>
@@ -89,7 +89,7 @@
     </template>
 
     <template id="slotAndModuleEditTemplate">
-        <button class="closeModulesWindow"><img src="icons\close.svg" alt="x"></button>
+        <button class="topRightButton closePanelButton closeModulesWindow"><img src="icons\close.svg" alt="x"></button>
         <div id="adminSlotPanel">
             <div>
                 day
@@ -113,8 +113,7 @@
 
     <template id="eventEditingTemplate">
 
-        <button id="closeEventEditor"><img src="icons\close.svg" alt=""></button>
-
+        <button class="topRightButton closePanelButton" id="closeEventEditor"><img src="icons\close.svg" alt=""></button>
         <div>
             <h3 id="eventEditingTitle">Test</h3>
         </div>
@@ -147,7 +146,7 @@
     
     <template id="userManagementTemplate">
         <div id="userManagementPanel">
-            <button id="closeUserManagementButton"><img src="icons\close.svg" alt=""></button>
+            <button class="topRightButton closePanelButton" id="closeUserManagementButton"><img src="icons\close.svg" alt=""></button>
 
             <div id="userManagementHeader">
                 <button id="addUsersButton">create user</button>

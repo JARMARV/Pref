@@ -348,19 +348,21 @@ body{
 .scrollable::-webkit-scrollbar .moduleInfo ,.moduleInfoPanel, .moduleLocationShort, .moduleLocationShortPanel,.moduleName,.moduleNamePanel{
     display: none;
 }
-.closeModulesWindow,#closeUserManagementButton,#closeSlotCreationButton,#closeOrganizationManagementButton{
+.topRightButton{
     display:block;
     position:absolute;
     top: 0;
     right: 0;
     transform: translate(90% ,-90%);
+    z-index: 12;
+    cursor: pointer;
+}
+.closePanelButton{
     width:30px;
     height:30px;
     background-color: red;
     padding:0px;
     border:0px;
-    z-index: 12;
-    cursor: pointer;
 }
 
 .copyUserListButton{
@@ -506,17 +508,10 @@ body{
     scrollbar-gutter: stable;
 }
 #createEventButton{
-    display:block;
-    position:absolute;
-    top: 0;
-    right: 0;
-    transform: translate(90% ,-90%);
     width:30px;
     height:30px;
     padding:0px;
     border:0px;
-    z-index: 12;
-    cursor: pointer;
 }
 .deleteModuleButton{
     display:block;
@@ -631,8 +626,6 @@ body{
     align-self: center;
     margin-top: 20px;
 }
-
-
 
 
 

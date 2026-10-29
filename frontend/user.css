@@ -356,21 +356,6 @@ body {
     resize: none;
 }
 
-.closeModulesWindow {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(90%, -90%);
-    width: 30px;
-    height: 30px;
-    background-color: red;
-    padding: 0;
-    border: 0;
-    z-index: 12;
-    cursor: pointer;
-}
-
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -450,4 +435,3 @@ input[type="range"]::-webkit-slider-thumb {
 #logoutButton{
     height:20px;
 }
-

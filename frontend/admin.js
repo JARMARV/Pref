@@ -327,15 +327,16 @@ function bindSlotCreation() {
             }
         }
         
-        if (!slotStartTime < slotEndTime ) {
-            alert("It seems the slot should start after it ends with the current specifications")
-            return
-        }
-        
         if (!slotDay || !slotStartTime || !slotEndTime) {
             alert("please fill out all information")
             return
         }
+        
+        if (!(slotStartTime < slotEndTime) ) {
+            alert("It seems the slot should start after it ends with the current specifications")
+            return
+        }
+        
         
         const response = await fetch(apiURL + "/api/v1/events/create/event/slot", {
             method: "POST",

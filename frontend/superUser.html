@@ -25,7 +25,7 @@
     </div>
 
     <template id="organizationsTemplate">
-        <button id="createOrganizationButton"><img src="icons\add.svg" alt=""></button>
+        <button class="topRightButton" id="createOrganizationButton"><img src="icons\add.svg" alt=""></button>
         <div id="organizationsHeaderContainer">
             <div id="organizationsHeader">Select Organization</div>
         </div>
@@ -33,7 +33,7 @@
     </template>
 
     <template id="organizationManagementTemplate">
-        <button id="closeOrganizationManagementButton"><img src="icons\close.svg" alt=""></button>
+        <button class="topRightButton closePanelButton" id="closeOrganizationManagementButton"><img src="icons\close.svg" alt=""></button>
         <div id="organizationManagementPanel">
             <div id="adminManagementHeader">
                 <button id="addAdminButton">create admin</button>
@@ -56,6 +56,22 @@
             </div>
         </div>
     </template>
+
+    <template id="createOrganizationTemplate">
+        <button class="topRightButton closePanelButton" id="closeOrganizationCreationButton"><img src="icons\close.svg" alt=""></button>
+        <div>
+            <h3>Test</h3>
+        </div>
+        <div>
+            Organization Name
+            <input class="inputStyle1" id="organizationnameInput" type="text" value="">
+        </div>
+        <button id="submitOrganizationCreationButton">
+            submit
+        </button>
+    </template>
+
+
     <script src="config.js"></script>
     <script src="superUser.js"></script>
 </body>

@@ -6,8 +6,16 @@ import { JWT_SECRET, JWT_EXPIRES_IN ,TEMP_USER_DELETION_INTERVAL} from "../confi
 export const getAllUsers = async (req, res) => {
     const client = await pool.connect();
     try{
-
-        const users = await client.query("SELECT * FROM users");
+        const organizationId = req.params.organizationID;
+        const authlevelPos = (req.user.authorizationLevel - 1);
+        const authlevelNeg = (authlevelPos * (-1));
+        const users = await client.query(`
+            SELECT name,user_id,organization_id,authorization_level FROM users
+            WHERE organization_id = $1
+            AND authorization_level IN ($2,$3)
+            `,
+            [organizationId,authlevelPos,authlevelNeg]
+        );
         res.json(users.rows);
 
     }catch(error){

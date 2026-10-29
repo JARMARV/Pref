@@ -87,7 +87,7 @@ try {
         (name,password_hash,authorization_level,organization_id)
          VALUES ($1,$2,$3,$4);
         `,
-        [adminName,hashedAdminPassword,adminAuth,null]
+        [adminName,hashedAdminPassword,adminAuth,"11111111-1111-1111-1111-111111111111"]
         )
 
 

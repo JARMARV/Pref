@@ -10,23 +10,28 @@ export const signIn=async (req,res) => {
         const name = req.body.name;
         const password = req.body.password;
         const organizationName = req.body.organizationName;
-
-        const organization = await client.query(
-            `
-            SELECT organization_id
-            FROM organizations
-            WHERE organization_name = $1
-            `,
-            [organizationName]
-        );
-        if (organization.rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Organization not found"
-            });
+        if (!name || !password){
+            return res.status(400).json({success:false,message:"not enough information"})
         }
-        const organizationID = organization.rows[0].organization_id;
-
+        let organizationID = null
+        if(organizationName){
+            const organization = await client.query(
+                `
+                SELECT organization_id
+                FROM organizations
+                WHERE organization_name = $1
+                `,
+                [organizationName]
+            );
+            if (organization.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Organization not found"
+                });
+            }
+            organizationID = organization.rows[0].organization_id;
+        }
+        console.log(name,organizationID)
         const users = await client.query("SELECT * FROM users WHERE name=$1 AND organization_id=$2",
         [name,organizationID]);
 
@@ -66,7 +71,6 @@ export const signIn=async (req,res) => {
                 return res.status(400).json({ message: "User not found" });
             }
         }
-        console.log(res.statusCode);
     }finally{
         client.release();
     }   

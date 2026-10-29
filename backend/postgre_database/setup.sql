@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 
 CREATE TABLE IF NOT EXISTS users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    password_id UUID DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     authorization_level INTEGER NOT NULL DEFAULT -1,
@@ -25,12 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
         ON DELETE CASCADE,
     expires_at TIMESTAMPTZ,
     CONSTRAINT unique_username_per_org
-        UNIQUE NULLS NOT DISTINCT (name, organization_id),
-    CONSTRAINT check_z_based_on_x
-        CHECK (
-            authorization_level = 3
-            OR organization_id IS NOT NULL
-        )
+        UNIQUE (name, organization_id)
 );
 
 ALTER TABLE users

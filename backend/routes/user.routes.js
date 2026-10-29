@@ -3,7 +3,7 @@ import { requireAdmin, requireTempUser ,requireUser } from '../middlewares/auth.
 import { getAllUsers, getEventUsers , newTempUser ,newUser,deleteUsers,savePref,getAssignedUsers} from '../controllers/user.controller.js';
 const userRouter = Router();
 
-userRouter.get('/',requireAdmin,getAllUsers);
+userRouter.get('/organization/:organizationID',requireAdmin,getAllUsers);
 
 userRouter.get('/event/:eventID',requireAdmin, getEventUsers);
 

@@ -1,3 +1,11 @@
+Saving tempUser passwords hashed and making admins generate a new password for the account every time
+the password for the user is not saved in client memory.
+
+Then to check if you have the latest password you have another id attached to every user representing the latest id of
+the users password.Each time the password is generated the id is generated again aswell. if the id inside the cleint matches
+the id stored inside the databse use the client side password if not generate new password and use the new password.
+
+
 outputting lists of users assigned to a module to check for attendance
 
 need to make the site "user friendly" and in general more appealing

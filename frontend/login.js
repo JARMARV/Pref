@@ -15,7 +15,7 @@ loginButton.addEventListener("click", async event => {
         return;
     }
     //checking if the user has assigned information to each input
-    if (!(passwordInput.value && organizationInput.value && userNameInput.value)){
+    if (!(passwordInput.value && userNameInput.value)){
         alert("Please fill out all information");
         return;
     }
