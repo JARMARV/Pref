@@ -29,13 +29,6 @@ CREATE TABLE IF NOT EXISTS users (
         UNIQUE (name, organization_id)
 );
 
-ALTER TABLE users
-    ALTER COLUMN authorization_level SET DEFAULT -1;
-
-UPDATE users
-SET authorization_level = -1
-WHERE authorization_level = 0
-AND expires_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS events (
     event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

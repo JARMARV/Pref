@@ -845,7 +845,7 @@ async function populateUserManagementPanel (){
     }
 
     //making the temp users Buttons add the temp users information to the admins clipboard
-    userEntryButtons = document.getElementsByClassName("userEntryButton");
+    const userEntryButtons = document.getElementsByClassName("userEntryButton");
     for (const button of userEntryButtons){
         button.addEventListener("click", async () => {
             try {
@@ -870,7 +870,7 @@ async function populateUserManagementPanel (){
             alert("no users to delete selected")
             return
         }
-        const response2 = await fetch(apiURL + "/api/v1/users/", {
+        const response2 = await fetch(apiURL + "/api/v1/users/organization/"+"12312312312", {
             method: "DELETE",
             credentials: "include",
             headers:{"Content-Type": "application/json"},

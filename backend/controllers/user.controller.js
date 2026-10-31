@@ -39,7 +39,11 @@ export const newTempUser = async (req, res) => {
         let userName;
         while (true) {
             userName = generateRandomString(8);
+
             const password = generateRandomString(12);
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+
             const authorizationLevel = 1 - reqAuthLevel ;
             if(!organizationID){
                 return res.status(400).json({success:false , message:"no organization id"})
@@ -51,18 +55,19 @@ export const newTempUser = async (req, res) => {
                     INSERT INTO users
                     (name, password_hash, organization_id, authorization_level, expires_at)
                     VALUES ($1, $2, $3, $4, NOW() + $5::interval)
-                    RETURNING user_id;
+                    RETURNING user_id,password_id;
                     `,
                     [
                         userName,
-                        password,
+                        hashedPassword,
                         organizationID,
                         authorizationLevel,
                         TEMP_USER_DELETION_INTERVAL
                     ]
                 );
+                const userID = result.rows[0].user_id;
+                const passwordID = result.rows[0].password_id;
                 if (authorizationLevel === 1){
-                    const userID = result.rows[0].user_id;
                     const eventID = req.params.eventID;
                     await client.query(
                         `
@@ -75,12 +80,22 @@ export const newTempUser = async (req, res) => {
                         ]
                     )
                 }
+                const orgNameQuery = await client.query(`
+                    SELECT organization_name FROM organizations 
+                    WHERE organization_id = $1
+                    `,
+                    [organizationID]
+                )
+                const orgName = orgNameQuery.rows[0].organization_name
                 await client.query("COMMIT");
                 res.status(201).json({
                     success: true,
                     message: "Temporary user created successfully",
                     userName: userName,
-                    password: password
+                    password: password,
+                    passwordID: passwordID,
+                    userID: userID,
+                    organizationName: orgName
                 });
                 break;
 
@@ -192,7 +207,16 @@ export const deleteUsers = async (req,res) => {
             message: "No users selected"
         });
     }
-    const maxDeletionLevel = req.user.authorizationLevel;
+    const maxDeletionLevelPos = req.user.authorizationLevel - 1;
+    const maxDeletionLevelNeg = maxDeletionLevelPos * (-1);
+    console.log(selectedUsers,req.user.organizationID,maxDeletionLevelPos,maxDeletionLevelNeg);
+    let organizationID ="";
+    if (maxDeletionLevelPos === 1){
+        organizationID = req.user.organizationID;
+    }
+    else if (maxDeletionLevelPos === 2){
+        organizationID = req.params.organizationID;
+    }
 
     const client = await pool.connect();
 
@@ -202,14 +226,14 @@ export const deleteUsers = async (req,res) => {
             DELETE FROM users
             WHERE user_id = ANY($1::uuid[])
             AND organization_id = $2
-            AND authorization_level < $3
+            AND authorization_level BETWEEN $4 AND $3
             RETURNING user_id;
             `,
-            [selectedUsers,req.user.organizationID,maxDeletionLevel]
+            [selectedUsers,organizationID,maxDeletionLevelPos,maxDeletionLevelNeg]
         );
         if (result.rowCount !== selectedUsers.length) {
             return res.status(200).json({
-                success: true,
+                success: false,
                 message: `couldnt delete ${selectedUsers.length - result.rowCount} user/s`
             });
         }
@@ -360,7 +384,62 @@ export const getAssignedUsers = async (req, res) => {
     }
 };
 
+export const newUserPassword = async (req, res) => {
 
+    const userID = req.params.userID;
+    const client = await pool.connect();
+    try {
+        const userquery = await client.query(`
+            SELECT * FROM users
+            WHERE user_id = $1`,
+            [userID]
+        )
+
+        if (!userquery.rows[0]){
+            return res.status(404).json({success: false});
+        };
+        if ((req.user.authorizationLevel - 1) < userquery.rows[0].authorization_level){
+            return res.status(403).json({success: false});
+        };
+
+        const organizationID = userquery.rows[0].organization_id;
+        
+        const password = generateRandomString(12);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        await client.query(`
+            UPDATE users 
+            SET password_hash = $1
+            WHERE user_id = $2`,
+            [hashedPassword,userID]
+        );
+        const orgNameQuery = await client.query(`
+            SELECT organization_name FROM organizations 
+            WHERE organization_id = $1
+            `,
+            [organizationID]
+        );
+        const orgName = orgNameQuery.rows[0].organization_name;
+        return res.status(200).json({
+            success: true,
+            password:password,
+            userName: userquery.rows[0].name,
+            password: password,
+            passwordID: userquery.rows[0].password_id,
+            userID: userID,
+            organizationName: orgName
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        return res.status(500).json({success: false,message: "Database error"});
+
+    } finally {
+        client.release();
+    }
+}
 //generates a random string of specified length with the characters in "chars"
 function generateRandomString(length) {
     const chars =

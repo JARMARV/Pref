@@ -4,8 +4,8 @@ const panel = document.getElementById("panel"); // panel displaying all kinds of
 const logoutButton = document.getElementById("logoutButton")
 let organizations = [];
 let selectedOrganizationUUID = "";
-
-
+let selectedUsers = [];
+let savedUserInfo = new Map();
 
 async function init(){
     await getAllOrganizations();
@@ -38,7 +38,7 @@ else{
     console.log("error could not find user Button")
 };
 
-function showPanel(templateID, display, panelData) {
+async function showPanel(templateID, display, panelData) {
     if (!panel) {
         console.log("panel not found")
         return
@@ -60,7 +60,7 @@ function showPanel(templateID, display, panelData) {
             break;
         }
         case "organizationManagementTemplate":{
-            renderOrganizationPanel(panelData);
+            await renderOrganizationPanel(panelData);
             addOrganizationManagementPanelLogic(panelData);
             break;
         }
@@ -120,6 +120,7 @@ function addOrganizationsPanelLogic(){
     const organizationButtons = document.getElementsByClassName("organizationButton");
     for(const button of organizationButtons){
         button.addEventListener("click", () => {
+            selectedOrganizationUUID = button.parentElement.id;
             showPanel("organizationManagementTemplate", "flex",button.parentElement.id);
         })
     }
@@ -182,13 +183,8 @@ async function renderOrganizationPanel(organizationID){
             tempUserList.innerHTML += userEntryHTML;
         }
     }
-    console.log(responseJson)
-
-
-
-
-
 }
+
 function addOrganizationManagementPanelLogic(organizationID){
     const closeOrganizationManagementButton = document.getElementById("closeOrganizationManagementButton");
     if ( closeOrganizationManagementButton){
@@ -207,12 +203,105 @@ function addOrganizationManagementPanelLogic(organizationID){
                 credentials: "include",
             });
             const responseJson = await response.json();
+            if (responseJson.success === true) {
+                const tempUserID = responseJson.userID;
+                const tempUserInfo = {
+                    password: responseJson.password,
+                    name: responseJson.userName,
+                    passwordID: responseJson.passwordID,
+                    organizationName: responseJson.organizationName
+                };
+                savedUserInfo.set(tempUserID, tempUserInfo);
+            }
             console.log(responseJson);
-            const organizationManagementPanel = document.getElementById("organizationManagementPanel");
-            //showPanel("organizationManagementTemplate", "grid",organizationManagementPanel.dataset.organizationid);
+            showPanel("organizationManagementTemplate","grid",selectedOrganizationUUID);
         })
     }
     else{console.log("error could not find add user button")}
+
+    //creating logic to delete the selected users of the selected users array
+    const deleteAdminsButton = document.getElementById("deleteAdminsButton");
+    if (deleteAdminsButton){
+        deleteAdminsButton.addEventListener("click", async () => {
+            if (selectedUsers.length === 0){
+                alert("no users to delete selected")
+                return
+            }
+            const response2 = await fetch(apiURL + "/api/v1/users/organization/"+selectedOrganizationUUID, {
+                method: "DELETE",
+                credentials: "include",
+                headers:{"Content-Type": "application/json"},
+                body: JSON.stringify({selectedUsers})
+            })
+            const responseJson2 = await response2.json();
+            console.log(responseJson2);
+            if (responseJson2.success === false){
+                alert("an error occured cannot delete users")
+                return
+            }
+            selectedUsers = [];
+            showPanel("organizationManagementTemplate","grid",selectedOrganizationUUID);
+        })
+    }
+    else{
+        console.log("error could not find delete admin button")
+    }
+
+    //making the temp users Buttons add the temp users information to the admins clipboard
+    const userEntryButtons = document.getElementsByClassName("userEntryButton");
+    for (const button of userEntryButtons){
+        button.addEventListener("click", async () => {
+            try {
+                const userID = button.dataset.userId;
+
+
+                if (!(savedUserInfo.has(userID))) {
+                    const response = await fetch(apiURL + "/api/v1/users/newPassword/"+userID, {
+                        method: "POST",
+                        credentials: "include",
+                    });
+                    const responseJson = await response.json();
+                    if (responseJson.success === true) {
+                        const tempUserID = responseJson.userID;
+                        const tempUserInfo = {
+                            password: responseJson.password,
+                            name: responseJson.userName,
+                            passwordID: responseJson.passwordID,
+                            organizationName: responseJson.organizationName
+                        };
+                        savedUserInfo.set(tempUserID, tempUserInfo);
+                    }
+                    console.log(responseJson)
+                }
+
+                const user = savedUserInfo.get(userID);
+                await navigator.clipboard.writeText(
+                    "Username:" + user.name +
+                    "\nPassword:" + user.password +
+                    "\norganization:" + user.organizationName
+                );
+
+                button.style.backgroundColor="green";
+            } catch (error) {
+                console.error("Failed to copy:", error);
+            }
+        });
+    }
+
+    const userCheckboxes = document.getElementsByClassName("userCheckbox");
+    for (const checkbox of userCheckboxes) {
+        checkbox.addEventListener("change", () => {
+            const userID = checkbox.dataset.userId;
+            if (checkbox.checked) {
+                selectedUsers.push(userID);
+            } else {
+                const index = selectedUsers.findIndex(id => id === userID);
+                if (index !== -1) {
+                    selectedUsers.splice(index, 1);
+                }
+            }
+        });
+    }
 }
 
 
