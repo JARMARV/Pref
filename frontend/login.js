@@ -39,7 +39,8 @@ loginButton.addEventListener("click", async event => {
     console.log(responseJson.success);
     console.log(responseJson.userAuth);
     localStorage.setItem("organizationName", organizationInput.value);
-
-    window.location.href = authSites[responseJson.userAuth];  
+    let auth = responseJson.userAuth;
+    if (auth < 0 ) auth = 0;
+    window.location.href = authSites[auth];  
 
 })

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     authorization_level INTEGER NOT NULL DEFAULT -1,
-    organization_id UUID
+    organization_id UUID NOT NULL 
         REFERENCES organizations(organization_id)
         ON DELETE CASCADE,
     expires_at TIMESTAMPTZ,

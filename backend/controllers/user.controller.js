@@ -125,8 +125,7 @@ export const newUser = async (req, res) => {
         // User data is already validated and attached by middleware
         const userID = req.user.userId;
         const organizationID = req.user.organizationID;
-        const tempAuthLevel = req.body.authorizationLevel;
-
+        const tempAuthLevel = req.user.authorizationLevel;
         const newUserName = req.body.name;
         const newUserPassword = req.body.password;
 
@@ -145,15 +144,17 @@ export const newUser = async (req, res) => {
                 message: "Username already exists"
             });
         };
+        
         await client.query("BEGIN");
         transactionStarted = true;
         const newAuthLevel = tempAuthLevel*(-1);
+        console.log(newUserName,newHashedPassword,newAuthLevel,userID,organizationID)
         const result = await client.query(`UPDATE users
             SET name = $1, 
             password_hash = $2, 
             authorization_level = $3,
             expires_at = NULL
-            WHERE user_id = $4 AND organization_id = $5 AND authorization_level = -1
+            WHERE user_id = $4 AND organization_id = $5 AND authorization_level < 0
             RETURNING user_id`,
             [newUserName,newHashedPassword,newAuthLevel,userID,organizationID]
         );

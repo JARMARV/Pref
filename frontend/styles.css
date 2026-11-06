@@ -94,7 +94,7 @@ body{
     justify-self: center;
     top:140px;
 }
-#adminPanel{
+#panel{
     max-width:90vw;
     background-color:#1e2447;
     justify-content:center;
@@ -109,19 +109,19 @@ body{
     padding:10px;
     box-sizing:border-box;
 }
-#adminPanel[data-panel="eventSelectorTemplate"]{
+#panel[data-panel="eventSelectorTemplate"]{
     flex-direction:column;
     align-items:center;
     justify-items:baseline;
 }
-#adminPanel[data-panel="slotAndModuleEditTemplate"]{
+#panel[data-panel="slotAndModuleEditTemplate"]{
     grid-template-rows:auto auto;
     max-width:90vw;
     width:auto;
 }
-#adminPanel[data-panel="adminCalendarSettingsTemplate"],
-#adminPanel[data-panel="adminSlotCreationTemplate"],
-#adminPanel[data-panel="eventEditingTemplate"]{
+#panel[data-panel="adminCalendarSettingsTemplate"],
+#panel[data-panel="adminSlotCreationTemplate"],
+#panel[data-panel="eventEditingTemplate"]{
     justify-items:center;
 }
 .inputStyle1{
@@ -626,7 +626,6 @@ body{
     align-self: center;
     margin-top: 20px;
 }
-
 
 
 

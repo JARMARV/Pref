@@ -6,8 +6,8 @@ const body = document.body;
 const hourIncrement = 90; // Height in pixels for each hour slot in the calendar
 
 // ---- Event selector panel ----
-const adminPanel = document.getElementById("adminPanel");
-let eventSelectorPanel = adminPanel;
+const panel = document.getElementById("panel");
+let eventSelectorPanel = panel;
 const mainGrid = document.getElementById("mainGrid");
 
 // ---- Data & State Variables ----
@@ -47,15 +47,15 @@ const calendarTimeColumn = document.getElementById("calendarTimeColumn"); // Dis
 const calendarMonth = document.getElementById("calendarMonth"); // Displays current month and year
 
 // ---- Calendar Settings Panel Elements ----
-let adminCalendarSettingsPanel = adminPanel; // Shared modal host for creating new events
+let adminCalendarSettingsPanel = panel; // Shared modal host for creating new events
 const selectEventButton = document.getElementById("selectEventButton"); // Button to open event selection
 
 // ---- Slot Creation Panel Elements ----
-let adminSlotCreationPanel = adminPanel; // Shared modal host for creating slots
+let adminSlotCreationPanel = panel; // Shared modal host for creating slots
 const newSlotButton = document.getElementById("newSlotButton"); // Button to open slot creation
 
 // ---- Slot & Module Editing Panel Elements ----
-let SlotAndModuleEditPanel = adminPanel; // Shared modal host for editing slots and modules
+let SlotAndModuleEditPanel = panel; // Shared modal host for editing slots and modules
 
 //  locks/unlocks the selected event
 const eventLockingButton = document.getElementById("eventLockingButton");
@@ -183,7 +183,7 @@ async function renderEventSelector(){
             const editEndDate = document.getElementById("editEndDate");
             const editStartTime = document.getElementById("editStartTime");
             const editEndTime = document.getElementById("editEndTime");
-            const eventEditingPanel = document.getElementById("adminPanel");
+            const eventEditingPanel = document.getElementById("panel");
             editEventName.value = eventData.eventName;
             editStartDate.value = start[0];
             editEndDate.value = end[0];
@@ -306,7 +306,7 @@ function bindSlotCreation() {
     if (closeSlotCreationButton){
         closeSlotCreationButton.addEventListener("click", () =>{
             darkenedSite.style.display = "none";
-            adminPanel.style.display = "none"
+            panel.style.display = "none"
             body.style.overflowY="auto";
         })
     }
@@ -350,7 +350,7 @@ function bindSlotCreation() {
         });
         const responseJson = await response.json()
         const slotID = responseJson.slotID;
-        if (adminPanel) adminPanel.style.display = "none"
+        if (panel) panel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
         
         if (eventData) {
@@ -659,9 +659,9 @@ function bindCalendarSettings() {
                 return;
             }
         eventData = result.event;
-        if (adminPanel) adminPanel.style.display = "none"
+        if (panel) panel.style.display = "none"
         if (darkenedSite) darkenedSite.style.display = "none"
-        if (adminPanel) adminPanel.style.display = "none"
+        if (panel) panel.style.display = "none"
         mainGrid.style.display = "grid";
         body.style.overflowY="auto";
         localStorage.selectedEventID = eventID;
@@ -708,7 +708,7 @@ function bindEventEditing() {
     const editEndDate = document.getElementById("editEndDate");
     const editStartTime = document.getElementById("editStartTime");
     const editEndTime = document.getElementById("editEndTime");
-    const eventEditingPanel = adminPanel;
+    const eventEditingPanel = panel;
     if (editEventSettingsButton){
     editEventSettingsButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
@@ -735,7 +735,7 @@ function bindEventEditing() {
 //closes the event editor
 function bindEventEditorClosing() {
     const closeEventEditor = document.getElementById("closeEventEditor");
-    const eventEditingPanel = adminPanel;
+    const eventEditingPanel = panel;
     if (closeEventEditor){
     closeEventEditor.addEventListener("click",async event => {
         eventEditingPanel.style.display = "none"
@@ -747,7 +747,7 @@ function bindEventEditorClosing() {
 //sends an api request to delete a event,closes the editor panel and renders the event selction panel
 function bindEventDeleting(){
     const deleteEventButton = document.getElementById("deleteEventButton");
-    const eventEditingPanel = adminPanel;
+    const eventEditingPanel = panel;
     if(deleteEventButton){
     deleteEventButton.addEventListener("click",async event => {
         const eventUUID = eventEditingPanel.dataset.eventID;
@@ -767,7 +767,7 @@ function bindEventDeleting(){
 //binds the button that closes the panel
 function bindUserManagementClosing(){
     const closeUserManagementButton = document.getElementById("closeUserManagementButton");
-    const userManagementPanel = adminPanel;
+    const userManagementPanel = panel;
     closeUserManagementButton.addEventListener("click", () => {
         userManagementPanel.style.display = "none";
         darkenedSite.style.display = "none";
