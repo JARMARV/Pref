@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAdmin, requireTempUser ,requireUser } from '../middlewares/auth.middleware.js';
-import { getAllUsers, getEventUsers , newTempUser ,newUser,deleteUsers,savePref,getAssignedUsers,newUserPassword} from '../controllers/user.controller.js';
+import { getAllUsers, getEventUsers , newTempUser ,newUser,deleteUsers,savePref,getAssignedUsers,newUserPassword,getUserPasswordID} from '../controllers/user.controller.js';
 const userRouter = Router();
 
 userRouter.get('/organization/:organizationID',requireAdmin,getAllUsers);
@@ -19,8 +19,8 @@ userRouter.get('/assigned/:moduleID', requireAdmin,getAssignedUsers);
 
 userRouter.post('/newPassword/:userID', requireAdmin,newUserPassword);
 
-//userRouter.put('/:id', (req,res) => res.send({title:'UPDATE user'}));
-//userRouter.get('/:id', (req,res) => res.send({title:'GET user details'}));
-//userRouter.delete('/:id', (req,res) => res.send({title:'DELETE user'}));
+userRouter.get('/passwordID/:userID',requireAdmin, getUserPasswordID);
+
+
 
 export default userRouter;

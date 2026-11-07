@@ -151,7 +151,7 @@ async function renderOrganizationPanel(organizationID){
                         class="userEntryButton userName"
                         data-username="${user.name}"
                         data-user-id="${user.user_id}"
-                        data-password="${user.password_hash}">
+                        data-password="${null}">
                         ${user.name}
                     </button>
 
@@ -170,7 +170,7 @@ async function renderOrganizationPanel(organizationID){
                         class="userEntryButton userName"
                         data-username="${user.name}"
                         data-user-id="${user.user_id}"
-                        data-password="${user.password_hash}">
+                        data-password="${null}">
                         ${user.name}
                     </button>
 
@@ -249,39 +249,71 @@ function addOrganizationManagementPanelLogic(organizationID){
 
     //making the temp users Buttons add the temp users information to the admins clipboard
     const userEntryButtons = document.getElementsByClassName("userEntryButton");
-    for (const button of userEntryButtons){
+    for (const button of userEntryButtons) {
         button.addEventListener("click", async () => {
             try {
                 const userID = button.dataset.userId;
+                let user = savedUserInfo.get(userID);
+                let needsNewPassword = false;
 
+                // Check whether we need new credentials
+                if (!user || user === null || user === undefined) {
+                    needsNewPassword = true;
+                }
+                
+                if (user) {
+                    const response = await fetch(
+                        `${apiURL}/api/v1/users/passwordID/${userID}`,
+                        {
+                            method: "GET",
+                            credentials: "include"
+                        }
+                    );
 
-                if (!(savedUserInfo.has(userID))) {
-                    const response = await fetch(apiURL + "/api/v1/users/newPassword/"+userID, {
-                        method: "POST",
-                        credentials: "include",
-                    });
-                    const responseJson = await response.json();
-                    if (responseJson.success === true) {
-                        const tempUserID = responseJson.userID;
-                        const tempUserInfo = {
-                            password: responseJson.password,
-                            name: responseJson.userName,
-                            passwordID: responseJson.passwordID,
-                            organizationName: responseJson.organizationName
-                        };
-                        savedUserInfo.set(tempUserID, tempUserInfo);
-                    }
-                    console.log(responseJson)
+                    if (!response.ok) throw new Error("Could not retrieve password ID");
+
+                    const data = await response.json();
+
+                    if (!data.success) throw new Error("Password ID retrieval failed");
+
+                    needsNewPassword = data.passwordID !== user.passwordID;
                 }
 
-                const user = savedUserInfo.get(userID);
+                // Generate new credentials if necessary
+                if (needsNewPassword) {
+                    const response = await fetch(
+                        `${apiURL}/api/v1/users/newPassword/${userID}`,
+                        {
+                            method: "POST",
+                            credentials: "include"
+                        }
+                    );
+
+                    if (!response.ok) throw new Error("Password generation failed");
+
+                    const data = await response.json();
+
+                    if (!data.success) throw new Error("Password generation failed");
+
+                    user = {
+                        password: data.password,
+                        name: data.userName,
+                        passwordID: data.passwordID,
+                        organizationName: data.organizationName
+                    };
+
+                    savedUserInfo.set(userID, user);
+                }
+
+                // Copy credentials
                 await navigator.clipboard.writeText(
-                    "Username:" + user.name +
-                    "\nPassword:" + user.password +
-                    "\norganization:" + user.organizationName
+                    `Username: ${user.name}\n` +
+                    `Password: ${user.password}\n` +
+                    `Organization: ${user.organizationName}`
                 );
 
-                button.style.backgroundColor="green";
+                button.style.backgroundColor = "green";
+
             } catch (error) {
                 console.error("Failed to copy:", error);
             }

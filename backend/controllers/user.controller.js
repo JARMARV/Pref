@@ -1,6 +1,7 @@
 import pool from "../postgre_database/database.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { JWT_SECRET, JWT_EXPIRES_IN ,TEMP_USER_DELETION_INTERVAL} from "../config/env.js";
 
 export const getAllUsers = async (req, res) => {
@@ -67,8 +68,8 @@ export const newTempUser = async (req, res) => {
                 );
                 const userID = result.rows[0].user_id;
                 const passwordID = result.rows[0].password_id;
-                if (authorizationLevel === 1){
-                    const eventID = req.params.eventID;
+                if (authorizationLevel === -1){
+                    const eventID = req.params.ID;
                     await client.query(
                         `
                         INSERT INTO users_in_events (user_id, event_id)
@@ -250,50 +251,36 @@ export const deleteUsers = async (req,res) => {
 }
 
 //returns all users in a specified event to the client
-export const getEventUsers = async (req,res) => {
+export const getEventUsers = async (req, res) => {
     const client = await pool.connect();
+
     try {
-        //getting the user data
-        const eventID = req.params.eventID
-        const response = await client.query(`SELECT * FROM users_in_events WHERE event_id = $1 `,[eventID])
+        const eventId = req.params.eventID;
 
-        const users = [];
-        const tempUsers = [];
-        for (const row of response.rows) {
-            const userResponse = await client.query(`SELECT * FROM users WHERE user_id = $1`,[row.user_id])
-            if (userResponse.rows[0] !== undefined) {
-                const user = userResponse.rows[0];
-                if (user.authorization_level === -1) {
-                    tempUsers.push(user);
-                } else {
-                    users.push(user);
-                }
-                continue;    
-            }
-            console.warn(`User with ID ${row.user_id} not found in users table`);
-        }
-        //making sure the password hash isnt sent to the client
-        for ( const user of users){
-            delete user.password_hash;
-            delete user.authorization_level;
-            delete user.organization_id;
-        }
-        for ( const user of tempUsers){
-            delete user.authorization_level;
-            delete user.organization_id;
-        }
-        //returning temp users and normal users
-        return res.status(200).json({users:users, tempUsers: tempUsers});
+        const authlevelPos = req.user.authorizationLevel - 1;
+        const authlevelNeg = authlevelPos * (-1);
 
+        const users = await client.query(`
+            SELECT name, user_id, organization_id, authorization_level
+            FROM users
+            WHERE user_id IN (
+                SELECT user_id
+                FROM users_in_events
+                WHERE event_id = $1
+            )
+            AND authorization_level IN ($2, $3)
+        `, [eventId, authlevelPos, authlevelNeg]);
 
-    } catch(error) {
+        return res.status(200).json({ users: users.rows });
+
+    } catch (error) {
         console.error(error);
-        return res.status(500).json({message:"Database error"});
+        return res.status(500).json({ message: "Database error" });
 
     } finally {
         client.release();
     }
-}
+};
 
 export const savePref = async (req,res) => { //saves the user preference to database using a list of json objects called userPref which contains pref value and module id
     const {userId} = req.user;
@@ -411,10 +398,12 @@ export const newUserPassword = async (req, res) => {
 
         await client.query(`
             UPDATE users 
-            SET password_hash = $1
-            WHERE user_id = $2`,
-            [hashedPassword,userID]
-        );
+            SET password_hash = $1,
+                password_id = $3
+            WHERE user_id = $2
+        `,
+        [hashedPassword, userID, crypto.randomUUID()]);
+
         const orgNameQuery = await client.query(`
             SELECT organization_name FROM organizations 
             WHERE organization_id = $1
@@ -441,6 +430,30 @@ export const newUserPassword = async (req, res) => {
         client.release();
     }
 }
+
+export const getUserPasswordID = async (req, res) => {
+    const userID = req.params.userID;
+    const client = await pool.connect();
+    try{
+        const result = await client.query(`SELECT password_id,authorization_level FROM users WHERE user_id = $1`,[userID]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({success: false, message: "User not found"});
+        }
+        if (req.user.authorizationLevel <= result.rows[0].authorization_level) {
+            return res.status(403).json({success: false});
+        }
+        return res.status(200).json({success: true, passwordID: result.rows[0].password_id});
+    } catch (error) {
+
+        console.error(error);
+        return res.status(500).json({success: false,message: "Database error"});
+
+    } finally {
+        client.release();
+    }
+}
+
+
 //generates a random string of specified length with the characters in "chars"
 function generateRandomString(length) {
     const chars =

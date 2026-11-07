@@ -216,12 +216,30 @@ export const lockEvent = async (req,res) =>{
             const assignments = await assignUsersToModules(client, eventID);
             if (!assignments.success){
                 await client.query("ROLLBACK");
-                return res.status(400).json({success:false , message:'found no feasible assignment with the current contraints'});
+                return res.status(400).json({success:false , message:'found no feasible assignment with the current contraints '});
+            }
+            if (assignments.assignments === "noUsers"){
+                const result = await client.query(`
+                    UPDATE events
+                    SET is_locked = NOT is_locked
+                    WHERE event_id = $1
+                    RETURNING is_locked;
+                    `,
+                    [eventID]
+                );
+                if (result.rowCount !== 1){
+                    await client.query("ROLLBACK");
+                    return res.status(500).json({success:false,message:'Database error'});
+                }
+
+                await client.query("COMMIT");
+                return res.status(200).json({success:true,message:"set is_locked of event to: "+ result.rows[0].is_locked + " but no users to assign were found"})
             }
             if (assignments.assignments.length < 1) {
                 await client.query("ROLLBACK");
                 return res.status(400).json({success: false,message: 'user assignment error'});
             }
+
             const values = [];
             const placeholders = [];
             assignments.assignments.forEach((assignment, i) => {
@@ -923,7 +941,9 @@ async function assignUsersToModules(client, eventID) {
     const userData = await getUserPreferenceData(client, eventID);
 
     let entangledFamilys = {};
-
+    if (userData.length === 0) {
+        return{success: true,assignments:"noUsers"};
+    };
     for (const slot of userData[0].slots) {
         for (const module of slot.modules) {
             if (!module.isEntangled) {continue;}
