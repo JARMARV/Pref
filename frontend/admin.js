@@ -65,7 +65,7 @@ function showAdminPanel(templateID, display) {
     if (!panel) return;
     const template = document.getElementById(templateID);
     if (!template) return;
-    panel.innerHTML = template.innerHTML;
+    panel.replaceChildren(template.content.cloneNode(true));
     panel.dataset.panel = templateID;
     panel.style.display = display;
     darkenedSite.style.display = "block";
@@ -155,14 +155,21 @@ async function renderEventSelector(){
     });
     const responseJson = await response.json()
     const events = responseJson.events
-    eventButtonsContainer.innerHTML = "";
+    eventButtonsContainer.replaceChildren();
     for (const event of events){
-        eventButtonsContainer.innerHTML += `
-        <div class="eventButtonContainer" id="${event.eventID}">
-            <button class="eventButton">${event.eventName}</button>
-            <button class="openEventEditorButton"></button>
-        </div>
-        `
+        const eventContainer = document.createElement("div");
+        eventContainer.className = "eventButtonContainer";
+        eventContainer.id = event.eventID;
+
+        const eventButton = document.createElement("button");
+        eventButton.className = "eventButton";
+        eventButton.textContent = event.eventName;
+
+        const openEventEditorButton = document.createElement("button");
+        openEventEditorButton.className = "openEventEditorButton";
+
+        eventContainer.append(eventButton, openEventEditorButton);
+        eventButtonsContainer.append(eventContainer);
     }
     const openEventEditorButtons = document.getElementsByClassName("openEventEditorButton");
     for (const button of openEventEditorButtons){
@@ -784,42 +791,10 @@ async function populateUserManagementPanel (){
     // populating the panel with the user Entrys
     for (const user of responseJson.users){
         if (user.authorization_level === 1){
-            const userEntryHTML = `
-                <div class="userEntry">
-                    <button
-                        class="userEntryButton userName"
-                        data-username="${user.name}"
-                        data-user-id="${user.user_id}"
-                        data-password="${null}">
-                        ${user.name}
-                    </button>
-
-                    <input
-                        type="checkbox"
-                        class="userCheckbox standardUserCheckbox"
-                        data-user-id="${user.user_id}">
-                </div>
-            `;
-            standardUserList.innerHTML += userEntryHTML;
+            standardUserList.append(createUserEntry(user, "standardUserCheckbox"));
         }
         else{
-            const userEntryHTML = `
-                <div class="userEntry">
-                    <button
-                        class="userEntryButton userName"
-                        data-username="${user.name}"
-                        data-user-id="${user.user_id}"
-                        data-password="${null}">
-                        ${user.name}
-                    </button>
-
-                    <input
-                        type="checkbox"
-                        class="userCheckbox tempUserCheckbox"
-                        data-user-id="${user.user_id}">
-                </div>
-            `;
-            tempUserList.innerHTML += userEntryHTML;
+            tempUserList.append(createUserEntry(user, "tempUserCheckbox"));
         }
     }
     //making the checkboxes add / delete the selected users from the selected users array
@@ -937,6 +912,24 @@ async function populateUserManagementPanel (){
     })
 }
 //adds functionaility to the select all users buttons
+function createUserEntry(user, checkboxClass) {
+    const entry = document.createElement("div");
+    entry.className = "userEntry";
+
+    const userButton = document.createElement("button");
+    userButton.className = "userEntryButton userName";
+    userButton.dataset.userId = user.user_id;
+    userButton.textContent = user.name;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = `userCheckbox ${checkboxClass}`;
+    checkbox.dataset.userId = user.user_id;
+
+    entry.append(userButton, checkbox);
+    return entry;
+}
+
 function bindSelectAllUsersButtons (){
     const standardUsersButton = document.getElementById("selectAllUsers");
     const tempUsersButton = document.getElementById("selectAllTempUsers");
@@ -981,7 +974,7 @@ function drawCalendarHeader(){
         console.log("error could not find calendar title object") 
         return
     }
-    headerTitle.innerHTML = eventData.eventName;
+    headerTitle.textContent = eventData.eventName;
 
 }
 /**
@@ -992,7 +985,7 @@ function drawCalendarHeader(){
 function drawCalendarTimeColumn() {
     if (!calendarTimeColumn || !mainCalendar) return;
 
-    calendarTimeColumn.innerHTML = "";
+    calendarTimeColumn.replaceChildren();
     if (!eventData){
         console.log("eventData not found");
         return;
@@ -1007,9 +1000,10 @@ function drawCalendarTimeColumn() {
 
     // Create a time slot for each hour
     for (let i = 0; i < maxTimeSpan; i++) {
-        calendarTimeColumn.innerHTML += `
-        <div class="calendarTimeSlot">${parseInt(startTimeValue[0]) + i}:00 </div>
-        `;
+        const timeSlot = document.createElement("div");
+        timeSlot.className = "calendarTimeSlot";
+        timeSlot.textContent = `${parseInt(startTimeValue[0]) + i}:00 `;
+        calendarTimeColumn.append(timeSlot);
     }
 
     calendarTimeColumn.style.gridTemplateRows = `repeat(${maxTimeSpan}, 1fr)`;
@@ -1028,7 +1022,7 @@ function drawSlots() {
 
     // Clear all columns
     for (let i = 0; i < calendarColumns.children.length; i++) {
-        calendarColumns.children[i].innerHTML = "";
+        calendarColumns.children[i].replaceChildren();
     }
 
     // Render each slot
@@ -1053,29 +1047,46 @@ function drawSlots() {
         // Create slot display - different styling for empty vs filled slots
         if (!eventData.slots[i].modules.length) {
             // Empty slot - show placeholder
-            targetColumn.innerHTML += `
-                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotActive" style="top:${topPosition}px; height:${slotHeight}px">
-                    <div>Click to set Modules</div>
-                </button>
-            `;
+            const slotButton = document.createElement("button");
+            slotButton.id = eventData.slots[i].slotID;
+            slotButton.className = "CalendarSlot calendarSlotActive";
+            slotButton.style.top = `${topPosition}px`;
+            slotButton.style.height = `${slotHeight}px`;
+            const placeholder = document.createElement("div");
+            placeholder.textContent = "Click to set Modules";
+            slotButton.append(placeholder);
+            targetColumn.append(slotButton);
         }
         else {
             // Slot with modules - display module information
-            let modulesHTML = "";
+            const slotButton = document.createElement("button");
+            slotButton.id = eventData.slots[i].slotID;
+            slotButton.className = "CalendarSlot calendarSlotInactive";
+            slotButton.style.top = `${topPosition}px`;
+            slotButton.style.height = `${slotHeight}px`;
             for (let j = 0; j < eventData.slots[i].modules.length; j++) {
-                modulesHTML += `
-                    <div class="calendarModule" id="${eventData.slots[i].modules[j].moduleID}">
-                        <div class="moduleName" style="font-size: 1rem;">${eventData.slots[i].modules[j].name}</div>
-                        <div class="moduleGeneralInfo">${eventData.slots[i].modules[j].additionalInfo}</div>
-                        <div class="moduleLocationShort">${eventData.slots[i].modules[j].locationInfoShort}</div>
-                    </div>
-                `;
+                const module = eventData.slots[i].modules[j];
+                const moduleElement = document.createElement("div");
+                moduleElement.className = "calendarModule";
+                moduleElement.id = module.moduleID;
+
+                const moduleName = document.createElement("div");
+                moduleName.className = "moduleName";
+                moduleName.style.fontSize = "1rem";
+                moduleName.textContent = module.name ?? "";
+
+                const moduleInfo = document.createElement("div");
+                moduleInfo.className = "moduleGeneralInfo";
+                moduleInfo.textContent = module.additionalInfo ?? "";
+
+                const moduleLocation = document.createElement("div");
+                moduleLocation.className = "moduleLocationShort";
+                moduleLocation.textContent = module.locationInfoShort ?? "";
+
+                moduleElement.append(moduleName, moduleInfo, moduleLocation);
+                slotButton.append(moduleElement);
             }
-            targetColumn.innerHTML += `
-                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotInactive" style="top:${topPosition}px; height:${slotHeight}px">
-                    ${modulesHTML}
-                </button>
-            `;
+            targetColumn.append(slotButton);
         }
     }
 };
@@ -1107,7 +1118,7 @@ function copyUserListFromSlotLogic (){
     for (const button of copyUserListButtons){
         button.addEventListener("click", async () => {
             const moduleID = button.parentElement.parentElement.id;
-            const response = await fetch(apiURL + "/api/v1/users/assigned/"+moduleID, {
+            const response = await fetch(apiURL + "/api/v1/users/assigned/" + eventID + "/" + moduleID, {
                 method: "GET",
                 credentials: "include"
             }); 
@@ -1134,45 +1145,10 @@ function populateSlotEditingPanel(selectedSlot){
 
     // Populate module editing panel with existing modules
     if (adminModulePanel) {
-        adminModulePanel.innerHTML = ``;
+        adminModulePanel.replaceChildren();
         if (selectedSlot && selectedSlot.modules.length) {
-            adminModulePanel.innerHTML = ``;
             for (const module of selectedSlot.modules) {
-                let checked = ""
-                if (module.isEntangled){
-                    checked = "checked"
-                }
-
-                let assignedUsersHTML = ``;
-                for (const user of module.assignedUsers ?? []) {
-                    assignedUsersHTML += `<div data-user-id="${user.userID}" data-user-name="${user.userName}"class="assignedUserPanel draggable" draggable="true">${user.userName}</div>`;
-                }
-                let assignedUsersPanelHTML = "";
-                if (eventData.isLocked){
-                    assignedUsersPanelHTML = `
-                        <div class="assignedUsersPanel">
-                            <button class="copyUserListButton" ><img src="icons/copy.svg" alt="copy"></button>
-                            <div class="assignedUsersList">
-                                ${assignedUsersHTML}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                adminModulePanel.innerHTML += `
-                    <div class="adminModulePanelSlot"id="${module.moduleID}">
-                        <button class="deleteModuleButton" type="button"><img src="icons/close.svg" alt="x"></button>
-                        <div class="nameEntangleContainer">
-                            <textarea class="moduleNamePanel inputStyle2" placeholder="Module name">${module.name ?? ""}</textarea>
-                            <input type="checkbox" class="entanglementCheckbox" ${checked}>
-                        </div>
-                        <textarea class="moduleInfoPanel inputStyle2" placeholder="General info">${module.additionalInfo ?? ""}</textarea>
-                        <textarea class="moduleLocationShortPanel inputStyle2" placeholder="Short location info">${module.locationInfoShort ?? ""}</textarea>
-                        <input class="moduleCapacityInput inputStyle2" type="number" placeholder="capacity" value="${module.capacity ?? ""}">
-                        ${assignedUsersPanelHTML}
-                    </div>
-                `;
-
+                adminModulePanel.append(createAdminModulePanelSlot(module, eventData.isLocked));
             }
         }   
     }
@@ -1187,6 +1163,75 @@ function populateSlotEditingPanel(selectedSlot){
         if (startTimeSlotPanel) startTimeSlotPanel.value = selectedSlot.start.split("T")[1];
         if (endTimeSlotPanel) endTimeSlotPanel.value = selectedSlot.end.split("T")[1];
     }
+}
+
+function createAdminModulePanelSlot(module, isLocked) {
+    const modulePanelSlot = document.createElement("div");
+    modulePanelSlot.className = "adminModulePanelSlot";
+    modulePanelSlot.id = module.moduleID ?? "";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "deleteModuleButton";
+    deleteButton.type = "button";
+    const deleteIcon = document.createElement("img");
+    deleteIcon.src = "icons/close.svg";
+    deleteIcon.alt = "x";
+    deleteButton.append(deleteIcon);
+
+    const nameEntangleContainer = document.createElement("div");
+    nameEntangleContainer.className = "nameEntangleContainer";
+    const moduleName = document.createElement("textarea");
+    moduleName.className = "moduleNamePanel inputStyle2";
+    moduleName.placeholder = "Module name";
+    moduleName.value = module.name ?? "";
+    const entanglementCheckbox = document.createElement("input");
+    entanglementCheckbox.type = "checkbox";
+    entanglementCheckbox.className = "entanglementCheckbox";
+    entanglementCheckbox.checked = Boolean(module.isEntangled);
+    nameEntangleContainer.append(moduleName, entanglementCheckbox);
+
+    const moduleInfo = document.createElement("textarea");
+    moduleInfo.className = "moduleInfoPanel inputStyle2";
+    moduleInfo.placeholder = "General info";
+    moduleInfo.value = module.additionalInfo ?? "";
+    const moduleLocation = document.createElement("textarea");
+    moduleLocation.className = "moduleLocationShortPanel inputStyle2";
+    moduleLocation.placeholder = "Short location info";
+    moduleLocation.value = module.locationInfoShort ?? "";
+    const moduleCapacity = document.createElement("input");
+    moduleCapacity.className = "moduleCapacityInput inputStyle2";
+    moduleCapacity.type = "number";
+    moduleCapacity.placeholder = "capacity";
+    moduleCapacity.value = module.capacity ?? "";
+
+    modulePanelSlot.append(deleteButton, nameEntangleContainer, moduleInfo, moduleLocation, moduleCapacity);
+
+    if (isLocked) {
+        const assignedUsersPanel = document.createElement("div");
+        assignedUsersPanel.className = "assignedUsersPanel";
+        const copyButton = document.createElement("button");
+        copyButton.className = "copyUserListButton";
+        const copyIcon = document.createElement("img");
+        copyIcon.src = "icons/copy.svg";
+        copyIcon.alt = "copy";
+        copyButton.append(copyIcon);
+
+        const assignedUsersList = document.createElement("div");
+        assignedUsersList.className = "assignedUsersList";
+        for (const user of module.assignedUsers ?? []) {
+            const userElement = document.createElement("div");
+            userElement.className = "assignedUserPanel draggable";
+            userElement.draggable = true;
+            userElement.dataset.userId = user.userID;
+            userElement.dataset.userName = user.userName;
+            userElement.textContent = user.userName;
+            assignedUsersList.append(userElement);
+        }
+        assignedUsersPanel.append(copyButton, assignedUsersList);
+        modulePanelSlot.append(assignedUsersPanel);
+    }
+
+    return modulePanelSlot;
 }
 
 
@@ -1283,19 +1328,6 @@ function addSlotEditingPanelLogic() {
 
             // Add the new module to the panel and eventData if creation was successful
             if (responseJson.success === true){
-                adminModulePanel.innerHTML += `
-                    <div class="adminModulePanelSlot" id="${responseJson.moduleID}">
-                        <button class="deleteModuleButton"> <img src="icons/close.svg" alt=""> </button>
-                        <div class="nameEntangleContainer">
-                            <textarea class="moduleNamePanel inputStyle2" placeholder="Module name"></textarea>
-                            <input type="checkbox" class="entanglementCheckbox" >
-                        </div>
-                        <textarea class="moduleInfoPanel inputStyle2" type="text" placeholder="General information"></textarea>
-                        <textarea class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Location info"></textarea>
-                        <input class="moduleCapacityInput inputStyle2" type="number" placeholder="capacity">
-                    </div>
-                `;
-
                 const emptyModule = {
                     additionalInfo:"",
                     locationInfoShort:"",
@@ -1304,6 +1336,7 @@ function addSlotEditingPanelLogic() {
                     slotID:selectedSlotUUID
                 }
 
+                adminModulePanel.append(createAdminModulePanelSlot(emptyModule, false));
                eventData.slots.find(slot => slot.slotID === selectedSlotUUID).modules.push(emptyModule)
             }
             else{
@@ -1342,17 +1375,21 @@ function drawDateRow() {
     for (let i = 0; i < calendarDateRow.children.length; i++) {
         const outputDate = new Date(weekStart);
         outputDate.setDate(weekStart.getDate() + i);
-        calendarDateRow.children[i].innerHTML = `
-            <div class="calendarDayName">${daysOfTheWeek[i]}</div>
-            <div class="calendarDayNumber">${outputDate.getDate()}</div>
-        `;
+        const dayName = document.createElement("div");
+        dayName.className = "calendarDayName";
+        dayName.textContent = daysOfTheWeek[i];
+        const dayNumber = document.createElement("div");
+        dayNumber.className = "calendarDayNumber";
+        dayNumber.textContent = outputDate.getDate();
+        calendarDateRow.children[i].replaceChildren(dayName, dayNumber);
 
         // Update month display for the first day of the week
         if (i === 0) {
-            calendarMonth.innerHTML = `
-            <div>${monthsOfTheYear[outputDate.getMonth()]}</div>
-            <div>${outputDate.getFullYear()}</div>
-            `;
+            const monthName = document.createElement("div");
+            monthName.textContent = monthsOfTheYear[outputDate.getMonth()];
+            const year = document.createElement("div");
+            year.textContent = outputDate.getFullYear();
+            calendarMonth.replaceChildren(monthName, year);
         }
     }
 };
@@ -1458,7 +1495,7 @@ function bindDisableingSlotChoice(){
     const disableUserChoiceButton = document.getElementById("disableUserChoiceButton")
     const selectedSlotUUID = SlotAndModuleEditPanel.dataset.idOfSelectedSlot;
     disableUserChoiceButton.addEventListener("click", async event => {
-        const response = await fetch(apiURL + "/api/v1/events/disable-user-choice/" + selectedSlotUUID, {
+        const response = await fetch(apiURL + "/api/v1/events/disable-user-choice/" + eventID + "/" + selectedSlotUUID, {
             method: "PATCH",
             credentials: "include",
         });

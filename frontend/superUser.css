@@ -1,16 +1,6 @@
-#panel{
-    max-width:90vw;
-    background-color:#1e2447;
-    display:none;
-    border-radius:10px;
-    position:fixed;
+#organizationsHeaderContainer{
     flex-direction: column;
-    z-index:11;
-    justify-self:center;
-    top:140px;
     width:auto;
-    min-height:500px;
-    padding:10px;
     box-sizing:border-box;
 }
 

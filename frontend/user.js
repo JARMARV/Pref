@@ -51,7 +51,7 @@ const calendarTimeColumn = document.getElementById("calendarTimeColumn"); // Dis
 const calendarMonth = document.getElementById("calendarMonth"); // Displays current month and year
 
 function showUserPanelParent(template, display) {
-    userPanelParent.innerHTML = template.innerHTML;
+    userPanelParent.replaceChildren(template.content.cloneNode(true));
     userPanelParent.dataset.panel = template.id;
     userPanelParent.style.display = display;
     eventButtonsContainer = document.getElementById("eventButtonsContainer");
@@ -113,7 +113,7 @@ function renderCalendar() {
 
 function drawCalendarTimeColumn() {
     if (!calendarTimeColumn || !mainCalendar) return
-    calendarTimeColumn.innerHTML = ""
+    calendarTimeColumn.replaceChildren()
     if (!eventData) return
 
     const startTimeValue = eventData.startDate.split("T")[1].split(":")
@@ -122,9 +122,10 @@ function drawCalendarTimeColumn() {
     mainCalendar.style.height = `${(maxTimeSpan * hourIncrement) + 100}px`
 
     for (let i = 0; i < maxTimeSpan; i++) {
-        calendarTimeColumn.innerHTML += `
-        <div class="calendarTimeSlot">${parseInt(startTimeValue[0]) + i}:00 </div>
-        `
+        const timeSlot = document.createElement("div")
+        timeSlot.className = "calendarTimeSlot"
+        timeSlot.textContent = `${parseInt(startTimeValue[0]) + i}:00 `
+        calendarTimeColumn.append(timeSlot)
     }
 
     calendarTimeColumn.style.gridTemplateRows = `repeat(${maxTimeSpan}, 1fr)`
@@ -136,7 +137,7 @@ function drawSlots() {
     if (!eventData) return
 
     for (let i = 0; i < calendarColumns.children.length; i++) {
-        calendarColumns.children[i].innerHTML = ""
+        calendarColumns.children[i].replaceChildren()
     }
 
     const eventStartDate = new Date(eventData.startDate)
@@ -156,28 +157,45 @@ function drawSlots() {
         const slotWeekIndex = Math.trunc((slotStartDate - eventStartDate) / 604800000)
         if (slotWeekIndex !== currentWeekIndex) continue;
         if (!eventData.slots[i].modules.length) {
-            targetColumn.innerHTML += `
-                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotActive" style="top:${topPosition}px; height:${slotHeight}px">
-                    <div>No modules for this time slot</div>
-                </button>
-            `
+            const slotButton = document.createElement("button")
+            slotButton.id = eventData.slots[i].slotID
+            slotButton.className = "CalendarSlot calendarSlotActive"
+            slotButton.style.top = `${topPosition}px`
+            slotButton.style.height = `${slotHeight}px`
+            const placeholder = document.createElement("div")
+            placeholder.textContent = "No modules for this time slot"
+            slotButton.append(placeholder)
+            targetColumn.append(slotButton)
         }
         else {
-            let modulesHTML = ""
+            const slotButton = document.createElement("button")
+            slotButton.id = eventData.slots[i].slotID
+            slotButton.className = "CalendarSlot calendarSlotInactive"
+            slotButton.style.top = `${topPosition}px`
+            slotButton.style.height = `${slotHeight}px`
             for (let j = 0; j < eventData.slots[i].modules.length; j++) {
-                modulesHTML += `
-                    <div class="calendarModule preferenceLevel${eventData.slots[i].modules[j].userPreference}">
-                        <div class="moduleName" style="font-size: 1rem;">${eventData.slots[i].modules[j].name}</div>
-                        <div class="moduleGeneralInfo">${eventData.slots[i].modules[j].additionalInfo}</div>
-                        <div class="moduleLocationShort">${eventData.slots[i].modules[j].locationInfoShort}</div>
-                    </div>
-                `
+                const module = eventData.slots[i].modules[j]
+                const moduleElement = document.createElement("div")
+                moduleElement.className = "calendarModule"
+                const preference = Number(module.userPreference)
+                if (Number.isInteger(preference) && preference >= 1 && preference <= 5) {
+                    moduleElement.classList.add(`preferenceLevel${preference}`)
+                }
+
+                const moduleName = document.createElement("div")
+                moduleName.className = "moduleName"
+                moduleName.style.fontSize = "1rem"
+                moduleName.textContent = module.name ?? ""
+                const moduleInfo = document.createElement("div")
+                moduleInfo.className = "moduleGeneralInfo"
+                moduleInfo.textContent = module.additionalInfo ?? ""
+                const moduleLocation = document.createElement("div")
+                moduleLocation.className = "moduleLocationShort"
+                moduleLocation.textContent = module.locationInfoShort ?? ""
+                moduleElement.append(moduleName, moduleInfo, moduleLocation)
+                slotButton.append(moduleElement)
             }
-            targetColumn.innerHTML += `
-                <button id="${eventData.slots[i].slotID}" class="CalendarSlot calendarSlotInactive" style="top:${topPosition}px; height:${slotHeight}px">
-                    ${modulesHTML}
-                </button>
-            `
+            targetColumn.append(slotButton)
         }
         
     }
@@ -197,60 +215,30 @@ function makeSlotLogic() {
             const selectedSlot = eventData.slots.find(slot => slot.slotID === selectedSlotID)
 
             if (userModulePanel) {
-                userModulePanel.innerHTML = ``
-                let modulesHTML = ""
+                userModulePanel.replaceChildren()
                 if (selectedSlot && selectedSlot.modules.length) {
                     if (eventData.isLocked ){
                         const module = selectedSlot.modules[0];
                         saveUserPreference.style.display = "none";
                         userModulePanel.style.justifyContent = "center";
-                        modulesHTML += `
-                            <div class="userModulePanelSlot" id="${module.moduleID}">d
-                                <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
-                                <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
-                                <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
-                            </div>
-                        `;
+                        userModulePanel.append(createUserModulePanelSlot(module, false));
                     }
                     else if (selectedSlot.choiceEnabled === false){
                         saveUserPreference.style.display = "none";
                         userModulePanel.style.justifyContent = "start";
                         for (const module of  selectedSlot.modules) {
-                            modulesHTML += `
-                                <div class="userModulePanelSlot" id="${module.moduleID}">
-                                    <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
-                                    <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
-                                    <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
-                                </div>
-                            `;
+                            userModulePanel.append(createUserModulePanelSlot(module, false));
                         }
                     }
                     else{
                         saveUserPreference.style.display = "block";
                         userModulePanel.style.justifyContent = "start";
                         for (const module of  selectedSlot.modules) {
-                            modulesHTML += `
-                                <div class="userModulePanelSlot" id="${module.moduleID}">
-                                    <textarea readonly class="moduleNamePanel inputStyle2" type="text" placeholder="Module name">${module.name}</textarea>
-                                    <textarea readonly class="moduleInfoPanel inputStyle2" type="text" placeholder="General info">${module.additionalInfo}</textarea>
-                                    <textarea readonly class="moduleLocationShortPanel inputStyle2" type="text" placeholder="Short location info">${module.locationInfoShort}</textarea>
-                                    <div class="preferenceContainer">
-                                        <div class="minMaxValuesSlider">
-                                            <div>1</div>
-                                            <div>preference</div>
-                                            <div>5</div>
-                                        </div>
-                                        <div class="sliderContainer">
-                                            <input type="range" class="sliderInput" min="1" max="5" value="${module.userPreference || 3}">
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
+                            userModulePanel.append(createUserModulePanelSlot(module, true));
                         }
                     }
                 }
 
-                userModulePanel.innerHTML += modulesHTML
                 SlotAndModuleEditPanel.dataset.idOfSelectedSlot = String(selectedSlotID);
             }
 
@@ -263,6 +251,51 @@ function makeSlotLogic() {
             bindModulePanelInteractions()
         })
     }
+}
+
+function createUserModulePanelSlot(module, showPreference) {
+    const modulePanelSlot = document.createElement("div");
+    modulePanelSlot.className = "userModulePanelSlot";
+    modulePanelSlot.id = module.moduleID;
+
+    for (const [className, placeholder, value] of [
+        ["moduleNamePanel inputStyle2", "Module name", module.name],
+        ["moduleInfoPanel inputStyle2", "General info", module.additionalInfo],
+        ["moduleLocationShortPanel inputStyle2", "Short location info", module.locationInfoShort]
+    ]) {
+        const field = document.createElement("textarea");
+        field.readOnly = true;
+        field.className = className;
+        field.placeholder = placeholder;
+        field.value = value ?? "";
+        modulePanelSlot.append(field);
+    }
+
+    if (showPreference) {
+        const preferenceContainer = document.createElement("div");
+        preferenceContainer.className = "preferenceContainer";
+        const minMaxValues = document.createElement("div");
+        minMaxValues.className = "minMaxValuesSlider";
+        for (const label of ["1", "preference", "5"]) {
+            const value = document.createElement("div");
+            value.textContent = label;
+            minMaxValues.append(value);
+        }
+
+        const sliderContainer = document.createElement("div");
+        sliderContainer.className = "sliderContainer";
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.className = "sliderInput";
+        slider.min = "1";
+        slider.max = "5";
+        slider.value = module.userPreference || 3;
+        sliderContainer.append(slider);
+        preferenceContainer.append(minMaxValues, sliderContainer);
+        modulePanelSlot.append(preferenceContainer);
+    }
+
+    return modulePanelSlot;
 }
 
 function bindModulePanelInteractions() {
@@ -300,23 +333,27 @@ function drawDateRow() {
     for (let i = 0; i < calendarDateRow.children.length; i++) {
         const outputDate = new Date(weekStart)
         outputDate.setDate(weekStart.getDate() + i)
-        calendarDateRow.children[i].innerHTML = `
-            <div class="calendarDayName">${daysOfTheWeek[i]}</div>
-            <div class="calendarDayNumber">${outputDate.getDate()}</div>
-        `
+        const dayName = document.createElement("div")
+        dayName.className = "calendarDayName"
+        dayName.textContent = daysOfTheWeek[i]
+        const dayNumber = document.createElement("div")
+        dayNumber.className = "calendarDayNumber"
+        dayNumber.textContent = outputDate.getDate()
+        calendarDateRow.children[i].replaceChildren(dayName, dayNumber)
 
         if (i === 0) {
-            calendarMonth.innerHTML = `
-            <div>${monthsOfTheYear[outputDate.getMonth()]}</div>
-            <div>${outputDate.getFullYear()}</div>
-            `
+            const monthName = document.createElement("div")
+            monthName.textContent = monthsOfTheYear[outputDate.getMonth()]
+            const year = document.createElement("div")
+            year.textContent = outputDate.getFullYear()
+            calendarMonth.replaceChildren(monthName, year)
         }
     }
 }
 
 function drawCalendarHeader() {
     const headerTitle = document.getElementById("headerTitle")
-    if (headerTitle) headerTitle.innerHTML = eventData.eventName
+    if (headerTitle) headerTitle.textContent = eventData.eventName
 }
 
 async function renderEventSelector(){
@@ -362,14 +399,19 @@ async function renderEventSelector(){
     //rendering the event selector if there are multiple events
     showUserPanelParent(eventSelectorTemplate, "flex");
     const events = responseJson.events
-    eventButtonsContainer.innerHTML = "";
+    eventButtonsContainer.replaceChildren();
     for (const event of events){
-        eventButtonsContainer.innerHTML += `
-        <div class="eventButtonContainer" id="${event.eventID}">
-            <button class="eventButton">${event.eventName}</button>
-            <button class="openEventEditorButton">x</button>
-        </div>
-        `
+        const eventContainer = document.createElement("div");
+        eventContainer.className = "eventButtonContainer";
+        eventContainer.id = event.eventID;
+        const eventButton = document.createElement("button");
+        eventButton.className = "eventButton";
+        eventButton.textContent = event.eventName;
+        const openEventEditorButton = document.createElement("button");
+        openEventEditorButton.className = "openEventEditorButton";
+        openEventEditorButton.textContent = "x";
+        eventContainer.append(eventButton, openEventEditorButton);
+        eventButtonsContainer.append(eventContainer);
     }
 
     eventSelectorPanel.style.display = "flex";
@@ -451,7 +493,7 @@ function bindUserPreferenceSaving() {
                 userPref.push({preferenceValue:child.querySelector(".sliderInput").value, moduleID:child.closest("[id]").id})
             }
             
-            const response = await fetch(apiURL + "/api/v1/users/savepref", {
+            const response = await fetch(apiURL + "/api/v1/users/savepref/"+ eventID, {
                 method: "POST",
                 credentials: "include",
                 headers:{"Content-Type": "application/json"},

@@ -30,7 +30,31 @@ export const getAllUsers = async (req, res) => {
 export const newTempUser = async (req, res) => {
     const client = await pool.connect();
 
+    const reqID = req.params.ID;
+    const organizationID = req.user?.organizationID;
+
+
     try {
+        // Ownership check
+        if (req.user.authorizationLevel === 2) {
+            if (!reqID || !organizationID) {
+                return res.status(400).json({ message: "Missing event or organization" });
+            }
+            
+            const result = await pool.query(
+                `SELECT 1 FROM events
+                    WHERE event_id = $1 AND organization_id = $2`,
+                [reqID, organizationID]
+            );
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: "Event not found" });
+            }
+        } else if (req.user.authorizationLevel === 3) {
+            if (!reqID) {
+                return res.status(400).json({ message: "Missing organization" });
+            }
+        }
         // User data is already validated and attached by middleware
         const reqAuthLevel = req.user.authorizationLevel;
         let organizationID = "";
@@ -295,7 +319,21 @@ export const savePref = async (req,res) => { //saves the user preference to data
         });
     }
     const client = await pool.connect();
+
     try {
+        const moduleIdValidationQuery = await client.query( `
+            SELECT m.module_id FROM modules m
+            JOIN slots s ON m.slot_id = s.slot_id
+            WHERE m.module_id = ANY($1::uuid[]) AND s.event_id = $2`,
+            [userPref.map(pref => pref.moduleID), eventID]);
+    
+        if (moduleIdValidationQuery.rows.length !== userPref.length) {
+            return res.status(400).json({
+                success: false,
+                message: "One or more moduleIDs are invalid for the given eventID"
+            });
+        }
+        
         const result = await client.query(`
             SELECT m.module_id
             FROM events e

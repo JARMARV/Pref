@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/env.js";
-
+import pool from "../postgre_database/database.js";
 // Middleware to verify JWT token and extract user data
 export const verifyToken = (req, res, next) => {
     try {
@@ -78,3 +78,27 @@ export const requireTempUser = (req, res, next) => {
     });
 };
 
+export const requireOwnEvent = async (req, res, next) => {
+    const eventID = req.params.eventID;
+    const organizationID = req.user?.organizationID;
+
+    if (!eventID || !organizationID) {
+        return res.status(400).json({ message: "Missing event or organization" });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT 1 FROM events
+             WHERE event_id = $1 AND organization_id = $2`,
+            [eventID, organizationID]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Event not found" });
+        }
+
+        next();
+    } catch (error) {
+        next(error);
+    }
+};

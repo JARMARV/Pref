@@ -29,18 +29,6 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/events', eventRouter);
 app.use('/api/v1/organization', organizationRouter);
 
-
-app.get('/', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM users');
-        res.json(result.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Database error');
-    }
-});
-
-
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
 

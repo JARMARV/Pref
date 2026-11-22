@@ -93,10 +93,17 @@ export const updateEvent = async (req,res) => {
         const endDate = req.body.endDate;
         const eventName = req.body.eventName;
 
-
         if (!eventID||!startDate||!endDate||!eventName){
             return res.status(400).json({ success:false, message:"missing information"})
         }
+        const adminCheck = await client.query("SELECT organization_id FROM events WHERE event_id = $1",[eventID]);
+        if (!adminCheck.rows[0] || !adminCheck.rows[0].organization_id){
+            return res.status(403).json({success:false,message:"user is not an admin of any organization"})
+        }
+        if (adminCheck.rows[0].organization_id !== req.user.organizationID){
+            return res.status(403).json({success:false,message:"user is not an admin of the organization that owns this event"})
+        }
+
         const result = await client.query(`UPDATE events SET 
             start_date = $1::timestamp AT TIME ZONE 'Europe/Berlin',
             end_date = $2::timestamp AT TIME ZONE 'Europe/Berlin',
@@ -365,6 +372,7 @@ export const changeSlotAssignments = async (req,res) => {
 //deletion
 export const deleteEvent = async (req,res) => {
     const client = await pool.connect();
+    
     try{
         // User data is already validated and attached by middleware
         const eventID = req.params.eventID

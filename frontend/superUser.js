@@ -49,7 +49,7 @@ async function showPanel(templateID, display, panelData) {
         console.log("template not found")
         return
     }
-    panel.innerHTML = template.innerHTML;
+    panel.replaceChildren(template.content.cloneNode(true));
     panel.dataset.panel = templateID;
     panel.style.display = display;
     body.style.overflowY ="hidden";
@@ -107,13 +107,16 @@ async function getAllOrganizations(){
 
 function renderOrganizationsPanel(){
     const organizationButtonsContainer = document.getElementById("organizationButtonsContainer")
-    organizationButtonsContainer.innerHTML = ``;
+    organizationButtonsContainer.replaceChildren();
     for (const organization of organizations){
-        organizationButtonsContainer.innerHTML += `
-            <div class="organizationButtonContainer" id="${organization.organization_id}">
-                <button class="organizationButton">${organization.organization_name}</button>
-            </div>
-        `;
+        const organizationContainer = document.createElement("div");
+        organizationContainer.className = "organizationButtonContainer";
+        organizationContainer.id = organization.organization_id;
+        const organizationButton = document.createElement("button");
+        organizationButton.className = "organizationButton";
+        organizationButton.textContent = organization.organization_name;
+        organizationContainer.append(organizationButton);
+        organizationButtonsContainer.append(organizationContainer);
     }
 }
 function addOrganizationsPanelLogic(){
@@ -145,44 +148,30 @@ async function renderOrganizationPanel(organizationID){
     const responseJson = await response.json();
     for (const user of responseJson){
         if (user.authorization_level === 2){
-            const userEntryHTML = `
-                <div class="userEntry">
-                    <button
-                        class="userEntryButton userName"
-                        data-username="${user.name}"
-                        data-user-id="${user.user_id}"
-                        data-password="${null}">
-                        ${user.name}
-                    </button>
-
-                    <input
-                        type="checkbox"
-                        class="userCheckbox standardUserCheckbox"
-                        data-user-id="${user.user_id}">
-                </div>
-            `;
-            standardUserList.innerHTML += userEntryHTML;
+            standardUserList.append(createUserEntry(user, "standardUserCheckbox"));
         }
         else{
-            const userEntryHTML = `
-                <div class="userEntry">
-                    <button
-                        class="userEntryButton userName"
-                        data-username="${user.name}"
-                        data-user-id="${user.user_id}"
-                        data-password="${null}">
-                        ${user.name}
-                    </button>
-
-                    <input
-                        type="checkbox"
-                        class="userCheckbox tempUserCheckbox"
-                        data-user-id="${user.user_id}">
-                </div>
-            `;
-            tempUserList.innerHTML += userEntryHTML;
+            tempUserList.append(createUserEntry(user, "tempUserCheckbox"));
         }
     }
+}
+
+function createUserEntry(user, checkboxClass) {
+    const entry = document.createElement("div");
+    entry.className = "userEntry";
+
+    const userButton = document.createElement("button");
+    userButton.className = "userEntryButton userName";
+    userButton.dataset.userId = user.user_id;
+    userButton.textContent = user.name;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = `userCheckbox ${checkboxClass}`;
+    checkbox.dataset.userId = user.user_id;
+
+    entry.append(userButton, checkbox);
+    return entry;
 }
 
 function addOrganizationManagementPanelLogic(organizationID){
