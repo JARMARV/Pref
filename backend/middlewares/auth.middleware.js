@@ -102,3 +102,78 @@ export const requireOwnEvent = async (req, res, next) => {
         next(error);
     }
 };
+
+export const requireUserInEvent = async (req, res, next) => {
+    const eventID = req.params.eventID;
+    const userID = req.user?.userId;
+
+    if (!eventID || !userID) {
+        return res.status(400).json({ message: "Missing event or organization" });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT 1 FROM users_in_events
+             WHERE event_id = $1 AND user_id = $2`,
+            [eventID, userID]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "User is not assigned to this event" });
+        }
+
+        next();
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const requireSlotInEvent = async (req, res, next) => {
+    const eventID = req.params.eventID;
+    const slotID = req.params.slotID;
+
+    if (!eventID || !slotID) {
+        return res.status(400).json({ message: "Missing event or slot" });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT 1 FROM slots
+             WHERE event_id = $1 AND slot_id = $2`,
+            [eventID, slotID]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Slot not found" });
+        }
+
+        next();
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const requireModuleInSlot = async (req, res, next) => {
+    const slotID = req.params.slotID;
+    const moduleID = req.params.moduleID;
+
+    if (!slotID || !moduleID) {
+        return res.status(400).json({ message: "Missing slot or module" });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT 1 FROM modules
+             WHERE slot_id = $1 AND module_id = $2`,
+            [slotID, moduleID]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Module not found" });
+        }
+
+        next();
+    } catch (error) {
+        next(error);
+    }
+}

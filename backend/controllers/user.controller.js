@@ -413,8 +413,24 @@ export const getAssignedUsers = async (req, res) => {
 export const newUserPassword = async (req, res) => {
 
     const userID = req.params.userID;
+    const reqUserID = req.user.userId;
+
+    if (!userID || !reqUserID){
+        return res.status(400).json({success: false, message: "Missing userID"});
+    }
+
     const client = await pool.connect();
     try {
+        if (req.user.authorizationLevel < 3){
+            const userOrg = await client.query(`SELECT organization_id FROM users WHERE user_id = $1`,[userID]);
+            const reqUserOrg = await client.query(`SELECT organization_id FROM users WHERE user_id = $1`,[reqUserID]);
+            if (userOrg.rows[0].organization_id !== reqUserOrg.rows[0].organization_id) {
+                return res.status(403).json({success: false, message: "Access denied"});
+            }
+        }
+
+
+
         const userquery = await client.query(`
             SELECT * FROM users
             WHERE user_id = $1`,
@@ -471,8 +487,20 @@ export const newUserPassword = async (req, res) => {
 
 export const getUserPasswordID = async (req, res) => {
     const userID = req.params.userID;
+    const reqUserID = req.user.userId;
+    if (!userID || !reqUserID){
+        return res.status(400).json({success: false, message: "Missing userID"});
+    }
     const client = await pool.connect();
     try{
+        if (req.user.authorizationLevel < 3){
+            const userOrg = await client.query(`SELECT organization_id FROM users WHERE user_id = $1`,[userID]);
+            const reqUserOrg = await client.query(`SELECT organization_id FROM users WHERE user_id = $1`,[reqUserID]);
+            if (userOrg.rows[0].organization_id !== reqUserOrg.rows[0].organization_id) {
+                return res.status(403).json({success: false, message: "Access denied"});
+            }
+        }
+
         const result = await client.query(`SELECT password_id,authorization_level FROM users WHERE user_id = $1`,[userID]);
         if (result.rows.length === 0) {
             return res.status(404).json({success: false, message: "User not found"});

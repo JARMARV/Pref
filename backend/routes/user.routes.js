@@ -1,17 +1,17 @@
 import { Router } from 'express';
-import { requireAdmin, requireTempUser ,requireUser,requireOwnEvent } from '../middlewares/auth.middleware.js';
+import { requireAdmin, requireTempUser ,requireUser,requireOwnEvent,requireUserInEvent } from '../middlewares/auth.middleware.js';
 import { getAllUsers, getEventUsers , newTempUser ,newUser,deleteUsers,savePref,getAssignedUsers,newUserPassword,getUserPasswordID} from '../controllers/user.controller.js';
 const userRouter = Router();
 
 userRouter.get('/organization/:organizationID',requireAdmin,getAllUsers);
 
-userRouter.get('/event/:eventID',requireAdmin, getEventUsers);
+userRouter.get('/event/:eventID',requireAdmin,requireOwnEvent, getEventUsers);
 
 userRouter.post('/temp/:ID', requireAdmin, newTempUser);
 
 userRouter.post('/user', requireTempUser, newUser);
 
-userRouter.post('/savepref/:eventID', requireUser , savePref);
+userRouter.post('/savepref/:eventID', requireUser ,requireUserInEvent, savePref);
 
 userRouter.delete('/organization/:organizationID', requireAdmin, deleteUsers); //needs an array of user ids to delete in the request
 
